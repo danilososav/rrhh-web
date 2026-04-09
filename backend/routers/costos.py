@@ -6,11 +6,11 @@ y devuelve JSON completo para todos los gráficos del módulo.
 """
 
 import io
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 import pandas as pd
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import JSONResponse
 
@@ -116,16 +116,35 @@ def _sum(df: pd.DataFrame, col: str) -> float:
 # ══════════════════════════════════════════════════════════════════════════════
 
 @router.post("")
-async def procesar_costos(files: List[UploadFile] = File(...)):
-
+async def procesar_costos(
+    files: List[UploadFile] = File(...),
+    hoja: Optional[str] = Form(None),
+):
     # ── Leer y concatenar archivos ────────────────────────────────────────────
     dfs: list[pd.DataFrame] = []
+    todas_hojas: list[str] = []
+    hoja_activa: str = ""
+
     for f in files:
         try:
             contents = await validar_excel(f)
             xl = pd.ExcelFile(io.BytesIO(contents))
-            hoja = xl.sheet_names[0]
-            df_tmp = pd.read_excel(xl, sheet_name=hoja)
+
+            # Acumular hojas únicas (preservando orden de aparición)
+            for h in xl.sheet_names:
+                if h not in todas_hojas:
+                    todas_hojas.append(h)
+
+            # Elegir hoja: la pedida si existe en este archivo, sino la primera
+            if hoja and hoja in xl.sheet_names:
+                hoja_sel = hoja
+            else:
+                hoja_sel = xl.sheet_names[0]
+
+            if not hoja_activa:
+                hoja_activa = hoja_sel
+
+            df_tmp = pd.read_excel(xl, sheet_name=hoja_sel)
             df_tmp["_archivo"] = f.filename
             dfs.append(df_tmp)
         except HTTPException:
@@ -317,6 +336,8 @@ async def procesar_costos(files: List[UploadFile] = File(...)):
 
     # ── Respuesta ─────────────────────────────────────────────────────────────
     result = {
+        "hojas":           todas_hojas,
+        "hoja_activa":     hoja_activa,
         "kpis":            kpis,
         "por_agencia":     por_agencia,
         "por_tipo_salida": por_tipo_salida,

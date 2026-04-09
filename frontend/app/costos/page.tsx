@@ -1,14 +1,16 @@
 "use client";
 
-import { useState } from "react";
-import FileUpload from "@/components/FileUpload";
+import { useState, useRef, DragEvent, ChangeEvent } from "react";
 import KpiCard from "@/components/KpiCard";
 import PlotChart from "@/components/PlotChart";
 import DataTable from "@/components/DataTable";
 import { useDashboard } from "@/context/DashboardContext";
+import { authHeaders } from "@/lib/auth";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type AnyObj = Record<string, any>;
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -24,17 +26,13 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 function UploadIllustration() {
   return (
     <svg width="140" height="100" viewBox="0 0 140 100" fill="none">
-      {/* Coin stack */}
       <ellipse cx="70" cy="72" rx="28" ry="8" fill="#1a1f2e" stroke="#2d3748" strokeWidth="1.5" />
       <rect x="42" y="52" width="56" height="20" rx="2" fill="#1a1f2e" stroke="#2d3748" strokeWidth="1.5" />
       <ellipse cx="70" cy="52" rx="28" ry="8" fill="#1a1f2e" stroke="#2d3748" strokeWidth="1.5" />
       <rect x="42" y="36" width="56" height="16" rx="2" fill="#1a1f2e" stroke="#2d3748" strokeWidth="1.5" />
       <ellipse cx="70" cy="36" rx="28" ry="8" fill="#4f8ef7" opacity="0.25" stroke="#4f8ef7" strokeWidth="1" strokeOpacity="0.4" />
-      {/* Dollar sign */}
       <text x="70" y="40" textAnchor="middle" fontSize="10" fill="#4f8ef7" opacity="0.7" fontWeight="bold">₲</text>
-      {/* Arrow up */}
       <path d="M105 28V16M101 20l4-4 4 4" stroke="#4f8ef7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
-      {/* Warning triangle for overcost */}
       <path d="M22 38l8-14 8 14H22Z" fill="#f59e0b" opacity="0.2" stroke="#f59e0b" strokeWidth="1.2" strokeOpacity="0.5" strokeLinejoin="round" />
       <text x="30" y="36" textAnchor="middle" fontSize="8" fill="#f59e0b" opacity="0.8">!</text>
     </svg>
@@ -43,14 +41,70 @@ function UploadIllustration() {
 
 export default function CostosPage() {
   const { setCostosData } = useDashboard();
-  const [data, setData] = useState<AnyObj | null>(null);
+  const [data, setData]             = useState<AnyObj | null>(null);
+  const [storedFiles, setStoredFiles] = useState<File[]>([]);
+  const [hojas, setHojas]           = useState<string[]>([]);
+  const [hojaActiva, setHojaActiva] = useState<string>("");
+  const [loading, setLoading]       = useState(false);
+  const [error, setError]           = useState<string | null>(null);
+  const [dragging, setDragging]     = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  function handleResult(result: AnyObj) {
-    setData(result);
-    setCostosData(result);
+  async function postFiles(files: File[], hoja?: string) {
+    setLoading(true);
+    setError(null);
+    const form = new FormData();
+    files.forEach((f) => form.append("files", f));
+    if (hoja) form.append("hoja", hoja);
+
+    try {
+      const res = await fetch(`${API_URL}/api/costos`, {
+        method: "POST",
+        headers: authHeaders(),
+        body: form,
+      });
+      if (!res.ok) {
+        const detail = await res.json().catch(() => ({ detail: res.statusText }));
+        throw new Error(detail?.detail ?? `Error ${res.status}`);
+      }
+      const json = await res.json();
+      setData(json);
+      setCostosData(json);
+      setHojas(json.hojas ?? []);
+      setHojaActiva(json.hoja_activa ?? "");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Error desconocido");
+    } finally {
+      setLoading(false);
+    }
   }
 
-  if (!data) {
+  function handleFiles(files: FileList) {
+    const arr = Array.from(files);
+    setStoredFiles(arr);
+    setData(null);
+    setHojas([]);
+    setHojaActiva("");
+    postFiles(arr);
+  }
+
+  function handleHojaChange(h: string) {
+    if (!storedFiles.length || h === hojaActiva) return;
+    postFiles(storedFiles, h);
+  }
+
+  function handleDrop(e: DragEvent<HTMLDivElement>) {
+    e.preventDefault();
+    setDragging(false);
+    if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+  }
+
+  function handleChange(e: ChangeEvent<HTMLInputElement>) {
+    if (e.target.files?.length) handleFiles(e.target.files);
+  }
+
+  // ── Estado: sin datos todavía ────────────────────────────────────────────
+  if (!data && !loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[72vh] gap-6">
         <UploadIllustration />
@@ -65,23 +119,65 @@ export default function CostosPage() {
           </p>
         </div>
         <div className="w-full max-w-md">
-          <FileUpload endpoint="/api/costos" fieldName="files" multiple onResult={handleResult} />
+          <div
+            onClick={() => inputRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={handleDrop}
+            className={[
+              "relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-6 py-10 cursor-pointer transition-colors select-none",
+              dragging
+                ? "border-[#4f8ef7] bg-[#4f8ef7]/8"
+                : "border-white/[0.08] bg-[#1a1f2e] hover:border-[#4f8ef7]/50 hover:bg-[#1a2240]",
+            ].join(" ")}
+          >
+            <svg className={`w-10 h-10 ${dragging ? "text-[#4f8ef7]" : "text-slate-400"}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0-3 3m3-3 3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.338-2.032A4.5 4.5 0 0 1 17.25 19.5H6.75Z" />
+            </svg>
+            <p className="text-sm text-slate-300 text-center">
+              Arrastrá los archivos Excel aquí o hacé clic para seleccionar
+            </p>
+            <p className="text-xs text-slate-500">Formatos: .xlsx .xls</p>
+            <input ref={inputRef} type="file" multiple accept=".xlsx,.xls" className="hidden" onChange={handleChange} />
+          </div>
+          {error && (
+            <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-700 bg-red-900/30 px-4 py-3 text-sm text-red-300">
+              <svg className="mt-0.5 w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+              </svg>
+              <span>{error}</span>
+            </div>
+          )}
         </div>
       </div>
     );
   }
 
-  const kpis: AnyObj      = (data.kpis            as AnyObj) ?? {};
-  const porAg: AnyObj     = (data.por_agencia      as AnyObj) ?? {};
-  const porTipo: AnyObj   = (data.por_tipo_salida  as AnyObj) ?? {};
-  const porNivel: AnyObj  = (data.por_nivel        as AnyObj) ?? {};
-  const comp: AnyObj      = (data.composicion      as AnyObj) ?? {};
-  const tendencia: AnyObj = (data.tendencia        as AnyObj) ?? {};
-  const tabla: AnyObj[]   = (data.tabla            as AnyObj[]) ?? [];
+  // ── Estado: cargando (primera carga o cambio de hoja) ───────────────────
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[72vh] gap-4">
+        <svg className="animate-spin w-8 h-8 text-[#4f8ef7]" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+        </svg>
+        <p className="text-sm text-slate-400">Procesando liquidaciones…</p>
+      </div>
+    );
+  }
 
-  const agSob: AnyObj[]  = porAg.sobrecosto_total ?? [];
-  const agCant: AnyObj[] = porAg.cantidad ?? [];
-  const tipoData         = porTipo.por_tipo;
+  // ── Dashboard ────────────────────────────────────────────────────────────
+  const kpis: AnyObj      = (data!.kpis            as AnyObj) ?? {};
+  const porAg: AnyObj     = (data!.por_agencia      as AnyObj) ?? {};
+  const porTipo: AnyObj   = (data!.por_tipo_salida  as AnyObj) ?? {};
+  const porNivel: AnyObj  = (data!.por_nivel        as AnyObj) ?? {};
+  const comp: AnyObj      = (data!.composicion      as AnyObj) ?? {};
+  const tendencia: AnyObj = (data!.tendencia        as AnyObj) ?? {};
+  const tabla: AnyObj[]   = (data!.tabla            as AnyObj[]) ?? [];
+
+  const agSob: AnyObj[]    = porAg.sobrecosto_total ?? [];
+  const agCant: AnyObj[]   = porAg.cantidad ?? [];
+  const tipoData           = porTipo.por_tipo;
   const nivCosto: AnyObj[] = porNivel.costo_total ?? [];
   const nivComp: AnyObj[]  = porNivel.comparativo ?? [];
   const sobAno: AnyObj[]   = tendencia.sobrecosto_por_ano ?? [];
@@ -97,12 +193,33 @@ export default function CostosPage() {
           <h1 className="page-title">Costos de Liquidaciones</h1>
         </div>
         <button
-          onClick={() => setData(null)}
+          onClick={() => { setData(null); setHojas([]); setHojaActiva(""); setStoredFiles([]); setError(null); }}
           className="rounded-lg border border-white/[0.08] bg-[#1a1f2e] px-4 py-2 text-sm text-slate-400 transition hover:border-[#4f8ef7]/40 hover:text-[#4f8ef7]"
         >
           Nueva carga
         </button>
       </div>
+
+      {/* Selector de hoja — solo cuando hay más de una */}
+      {hojas.length > 1 && (
+        <div className="mb-6 flex flex-wrap items-center gap-2">
+          <span className="text-xs text-slate-500 mr-1">Hoja:</span>
+          {hojas.map((h) => (
+            <button
+              key={h}
+              onClick={() => handleHojaChange(h)}
+              className={[
+                "rounded-md px-3 py-1 text-xs font-medium transition",
+                h === hojaActiva
+                  ? "bg-[#4f8ef7] text-white"
+                  : "border border-white/[0.08] bg-[#1a1f2e] text-slate-400 hover:border-[#4f8ef7]/40 hover:text-[#4f8ef7]",
+              ].join(" ")}
+            >
+              {h}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
