@@ -34,12 +34,16 @@ app.add_middleware(
 )
 
 # ─── Routers ──────────────────────────────────────────────────────────────────
-from routers import nomina, rotacion, reclutamiento, costos, resumen
-app.include_router(nomina.router,         prefix="/api/nomina",         tags=["nomina"])
-app.include_router(rotacion.router,       prefix="/api/rotacion",       tags=["rotacion"])
-app.include_router(reclutamiento.router,  prefix="/api/reclutamiento",  tags=["reclutamiento"])
-app.include_router(costos.router,         prefix="/api/costos",         tags=["costos"])
-app.include_router(resumen.router,        prefix="/api/resumen",        tags=["resumen"])
+from routers import nomina, rotacion, reclutamiento, costos, resumen, auth as auth_router
+from services.auth import verify_token
+from fastapi import Depends
+
+app.include_router(auth_router.router,    prefix="/auth",               tags=["auth"])
+app.include_router(nomina.router,         prefix="/api/nomina",         tags=["nomina"],        dependencies=[Depends(verify_token)])
+app.include_router(rotacion.router,       prefix="/api/rotacion",       tags=["rotacion"],      dependencies=[Depends(verify_token)])
+app.include_router(reclutamiento.router,  prefix="/api/reclutamiento",  tags=["reclutamiento"], dependencies=[Depends(verify_token)])
+app.include_router(costos.router,         prefix="/api/costos",         tags=["costos"],        dependencies=[Depends(verify_token)])
+app.include_router(resumen.router,        prefix="/api/resumen",        tags=["resumen"],       dependencies=[Depends(verify_token)])
 
 
 @app.exception_handler(Exception)

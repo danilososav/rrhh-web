@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { clearToken } from "@/lib/auth";
 
 const NAV_ITEMS = [
   {
@@ -76,7 +77,13 @@ const NAV_ITEMS = [
 
 export default function Sidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [imgError, setImgError] = useState(false);
+
+  function handleLogout() {
+    clearToken();
+    router.push("/login");
+  }
 
   return (
     <aside className="fixed left-0 top-0 h-screen w-56 flex flex-col bg-[#0d1117] border-r border-white/[0.06] z-40">
@@ -123,8 +130,21 @@ export default function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="px-4 py-3.5 border-t border-white/[0.06] text-[10px] uppercase tracking-widest text-slate-700 text-center">
-        Portal RRHH &copy; {new Date().getFullYear()}
+      <div className="px-3 py-3 border-t border-white/[0.06] space-y-2">
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-slate-500 hover:text-red-400 hover:bg-red-900/10 transition-all"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round"
+              d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"
+            />
+          </svg>
+          Cerrar sesión
+        </button>
+        <p className="text-[10px] uppercase tracking-widest text-slate-700 text-center">
+          Portal RRHH &copy; {new Date().getFullYear()}
+        </p>
       </div>
     </aside>
   );

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useDashboard } from "@/context/DashboardContext";
+import { authHeaders } from "@/lib/auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -158,7 +159,7 @@ export default function ResumenEjecutivoPage() {
       };
       const res = await fetch(`${API_URL}/api/resumen`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify(body),
       });
       if (!res.ok) {

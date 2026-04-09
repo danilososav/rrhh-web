@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, DragEvent, ChangeEvent } from "react";
+import { authHeaders } from "@/lib/auth";
 
 interface FileUploadProps {
   /** FastAPI endpoint path, e.g. "/api/nomina" */
@@ -44,6 +45,7 @@ export default function FileUpload({
     try {
       const res = await fetch(`${API_URL}${endpoint}`, {
         method: "POST",
+        headers: authHeaders(),
         body: form,
       });
       if (!res.ok) {
