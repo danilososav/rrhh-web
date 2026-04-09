@@ -156,7 +156,20 @@ async def procesar_costos(
         raise HTTPException(status_code=422, detail="No se recibieron archivos válidos.")
 
     try:
-        df = normalizar_costos(pd.concat(dfs, ignore_index=True))
+        df_concat = pd.concat(dfs, ignore_index=True)
+        debug_filas_raw = len(df_concat)
+        debug_cols_raw  = df_concat.columns.tolist()
+        # Suma del SOBRECOSTO antes de cualquier normalización (busca la columna con nombre original)
+        _sob_col_raw = next(
+            (c for c in df_concat.columns
+             if str(c).strip().upper().replace("Ó", "O") == "SOBRECOSTO"),
+            None,
+        )
+        debug_sobrecosto_raw_sum = (
+            float(pd.to_numeric(df_concat[_sob_col_raw], errors="coerce").fillna(0).sum())
+            if _sob_col_raw else None
+        )
+        df = normalizar_costos(df_concat)
     except Exception:
         raise HTTPException(status_code=422, detail="Error al procesar el archivo de liquidaciones. Verificá que el formato sea correcto.")
 
@@ -336,6 +349,15 @@ async def procesar_costos(
 
     # ── Respuesta ─────────────────────────────────────────────────────────────
     result = {
+        # ── DEBUG TEMPORAL — borrar una vez resuelto el problema ──────────────
+        "debug_total_filas_raw":        debug_filas_raw,
+        "debug_total_filas_post_clean": len(df),
+        "debug_hoja_leida":             hoja_activa,
+        "debug_columnas_raw":           debug_cols_raw,
+        "debug_columnas_post_clean":    df.columns.tolist(),
+        "debug_sobrecosto_raw_sum":     debug_sobrecosto_raw_sum,
+        "debug_sobrecosto_post_sum":    float(df["SOBRECOSTO"].sum()) if "SOBRECOSTO" in df.columns else None,
+        # ─────────────────────────────────────────────────────────────────────
         "hojas":           todas_hojas,
         "hoja_activa":     hoja_activa,
         "kpis":            kpis,
