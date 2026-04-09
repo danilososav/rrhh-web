@@ -156,25 +156,16 @@ async def procesar_costos(
         raise HTTPException(status_code=422, detail="No se recibieron archivos válidos.")
 
     try:
-        df_concat = pd.concat(dfs, ignore_index=True)
-        debug_filas_raw = len(df_concat)
-        debug_cols_raw  = df_concat.columns.tolist()
-        # Suma del SOBRECOSTO antes de cualquier normalización (busca la columna con nombre original)
-        _sob_col_raw = next(
-            (c for c in df_concat.columns
-             if str(c).strip().upper().replace("Ó", "O") == "SOBRECOSTO"),
-            None,
-        )
-        debug_sobrecosto_raw_sum = (
-            float(pd.to_numeric(df_concat[_sob_col_raw], errors="coerce").fillna(0).sum())
-            if _sob_col_raw else None
-        )
-        df = normalizar_costos(df_concat)
+        df = normalizar_costos(pd.concat(dfs, ignore_index=True))
     except Exception:
         raise HTTPException(status_code=422, detail="Error al procesar el archivo de liquidaciones. Verificá que el formato sea correcto.")
 
     if df.empty:
         raise HTTPException(status_code=422, detail="El archivo no contiene datos.")
+
+    # Eliminar filas de totales y filas vacías (AGENCIA null o vacío)
+    if "AGENCIA" in df.columns:
+        df = df[df["AGENCIA"].notna() & (df["AGENCIA"].str.strip() != "")]
 
     # ══════════════════════════════════════════════════════════════════════════
     # KPIs
@@ -317,17 +308,21 @@ async def procesar_costos(
         MESES = {1: "Ene", 2: "Feb", 3: "Mar", 4: "Abr", 5: "May", 6: "Jun",
                  7: "Jul", 8: "Ago", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic"}
 
-        ano_sob = (df.groupby("ANO_SALIDA")["SOBRECOSTO"].sum()
+        # Usar solo filas con año válido para que el groupby no descarte
+        # silenciosamente filas con SOBRECOSTO pero sin FECHA_SALIDA.
+        df_dated = df[df["ANO_SALIDA"].notna()]
+
+        ano_sob = (df_dated.groupby("ANO_SALIDA")["SOBRECOSTO"].sum()
                      .reset_index().rename(columns={"ANO_SALIDA": "ano", "SOBRECOSTO": "sobrecosto"}))
         ano_sob["ano"] = ano_sob["ano"].astype(str)
         tendencia["sobrecosto_por_ano"] = _safe_records(ano_sob)
 
-        ano_n = df.groupby("ANO_SALIDA").size().reset_index(name="liquidaciones")
+        ano_n = df_dated.groupby("ANO_SALIDA").size().reset_index(name="liquidaciones")
         ano_n["ANO_SALIDA"] = ano_n["ANO_SALIDA"].astype(str)
         tendencia["liquidaciones_por_ano"] = _safe_records(ano_n.rename(columns={"ANO_SALIDA": "ano"}))
 
         if "MES_SALIDA_N" in df.columns:
-            mes_sob = (df.groupby(["ANO_SALIDA", "MES_SALIDA_N"])["SOBRECOSTO"].sum()
+            mes_sob = (df_dated.groupby(["ANO_SALIDA", "MES_SALIDA_N"])["SOBRECOSTO"].sum()
                          .reset_index().rename(columns={"ANO_SALIDA": "ano",
                                                          "MES_SALIDA_N": "mes_n",
                                                          "SOBRECOSTO": "sobrecosto"}))
@@ -349,15 +344,6 @@ async def procesar_costos(
 
     # ── Respuesta ─────────────────────────────────────────────────────────────
     result = {
-        # ── DEBUG TEMPORAL — borrar una vez resuelto el problema ──────────────
-        "debug_total_filas_raw":        debug_filas_raw,
-        "debug_total_filas_post_clean": len(df),
-        "debug_hoja_leida":             hoja_activa,
-        "debug_columnas_raw":           debug_cols_raw,
-        "debug_columnas_post_clean":    df.columns.tolist(),
-        "debug_sobrecosto_raw_sum":     debug_sobrecosto_raw_sum,
-        "debug_sobrecosto_post_sum":    float(df["SOBRECOSTO"].sum()) if "SOBRECOSTO" in df.columns else None,
-        # ─────────────────────────────────────────────────────────────────────
         "hojas":           todas_hojas,
         "hoja_activa":     hoja_activa,
         "kpis":            kpis,
