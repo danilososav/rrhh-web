@@ -1,0 +1,25 @@
+Leé el archivo CONTEXTO.md de este proyecto.
+
+Creá la estructura completa de carpetas y archivos vacíos para una 
+app con este stack
+- Backend FastAPI en carpeta backend
+- Frontend Next.js 14 en carpeta frontend
+
+Para el backend, creá
+- backendmain.py (app FastAPI con CORS configurado para localhost y dominio Vercel)
+- backendrequirements.txt con fastapi, uvicorn, pandas, openpyxl, 
+  numpy, anthropic, python-dotenv, python-multipart
+- backendrouters (carpeta vacía con __init__.py)
+- backendservices (carpeta vacía con __init__.py)
+- backend.env.example con ANTHROPIC_API_KEY=
+
+Para el frontend, iniciá un proyecto Next.js 14 con App Router, 
+TypeScript y Tailwind CSS. Luego creá estas rutas vacías
+- frontendapppage.tsx (home)
+- frontendappreclutamientopage.tsx
+- frontendapprotacionpage.tsx
+- frontendappcostospage.tsx
+- frontendappnominapage.tsx
+- frontendappresumen-ejecutivopage.tsx
+
+No escribas lógica todavía. Solo estructura y archivos de configuración.

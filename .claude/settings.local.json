@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip show:*)",
+      "Bash(pip install:*)",
+      "Bash(node:*)",
+      "Bash(npx create-next-app@14:*)",
+      "Bash(python:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm install:*)",
+      "Bash(grep:*)"
+    ]
+  }
+}

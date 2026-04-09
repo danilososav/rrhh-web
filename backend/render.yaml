@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: rrhh-texo-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false   # marcada como secret — se carga manualmente en el dashboard de Render
+      - key: FRONTEND_URL
+        value: https://rrhh-texo.vercel.app   # actualizar con la URL real de Vercel
