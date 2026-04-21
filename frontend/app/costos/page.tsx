@@ -95,9 +95,19 @@ function computeFromRows(rows: Row[]) {
     .sort((a, b) => b.sobrecosto - a.sobrecosto)
     .slice(0, 10);
 
+  const agSobDesc = Object.entries(agMap)
+    .map(([ag, r]) => ({ AGENCIA: ag, SOBRECOSTO: sumField(r, "SOBRECOSTO") }))
+    .sort((a, b) => b.SOBRECOSTO - a.SOBRECOSTO);
+
   const nivMap   = groupBy(rows, "NIVEL_AIC");
   const nivCosto = Object.entries(nivMap)
     .map(([n, r]) => ({ nivel: n, total_costo: sumField(r, "TOTAL_COSTO") }));
+  const nivCant  = Object.entries(nivMap)
+    .map(([n, r]) => ({ nivel: n, cantidad: r.length }));
+  const nivSob   = Object.entries(nivMap)
+    .map(([n, r]) => ({ nivel: n, sobrecosto: sumField(r, "SOBRECOSTO") }));
+  const nivProm  = Object.entries(nivMap)
+    .map(([n, r]) => ({ nivel: n, prom: r.length ? sumField(r, "TOTAL_COSTO") / r.length : 0 }));
   const nivComp  = Object.entries(nivMap)
     .map(([n, r]) => ({ nivel: n, total_costo: sumField(r, "TOTAL_COSTO"), sobrecosto: sumField(r, "SOBRECOSTO") }));
 
@@ -110,7 +120,7 @@ function computeFromRows(rows: Row[]) {
     .map(([ano, r]) => ({ ano: String(ano), liquidaciones: r.length }))
     .sort((a, b) => a.ano.localeCompare(b.ano));
 
-  return { kpis, agSob, agCant, agProm, composicion, tipoData, top10motivo, nivCosto, nivComp, sobAno, liqAno };
+  return { kpis, agSob, agSobDesc, agCant, agProm, composicion, tipoData, top10motivo, nivCosto, nivCant, nivSob, nivProm, nivComp, sobAno, liqAno };
 }
 
 function ChartCard({ title, children, fullWidth }: { title: string; children: React.ReactNode; fullWidth?: boolean }) {
@@ -262,7 +272,7 @@ export default function CostosPage() {
   // ── Dashboard ─────────────────────────────────────────────────────────────
   const rawRows: Row[] = (data!.raw_rows as Row[]) ?? [];
   const filteredRows   = applyFilters(rawRows, selected);
-  const { kpis, agSob, agCant, agProm, composicion, tipoData, top10motivo, nivCosto, nivComp, sobAno, liqAno } =
+  const { kpis, agSob, agSobDesc, agCant, agProm, composicion, tipoData, top10motivo, nivCosto, nivCant, nivSob, nivProm, nivComp, sobAno, liqAno } =
     computeFromRows(filteredRows);
   const tabla: AnyObj[] = (data!.tabla as AnyObj[]) ?? [];
 
@@ -383,6 +393,110 @@ export default function CostosPage() {
                 height={320}
               />
             </ChartCard>
+          )}
+
+          {agSobDesc.length > 0 && (
+            <ChartCard title="Sobrecosto por Agencia (costo de la no retención)">
+              <PlotChart
+                data={[{
+                  type: "bar",
+                  x: agSobDesc.map((r) => r.AGENCIA),
+                  y: agSobDesc.map((r) => r.SOBRECOSTO),
+                  marker: { color: agColors(agSobDesc.length) },
+                }]}
+                layout={{ xaxis: { title: { text: "AGENCIA" } }, yaxis: { title: { text: "Sobrecosto" } }, margin: { t: 8, r: 16, b: 60, l: 80 } }}
+                height={340}
+              />
+            </ChartCard>
+          )}
+
+          {/* Análisis por Nivel AIC */}
+          {(nivCosto.length > 0 || nivCant.length > 0) && (
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-widest text-[#4f8ef7] mb-3 mt-2">🎯 Análisis por Nivel AIC</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+              {nivCosto.length > 0 && (
+                <ChartCard title="Costo Total de Liquidaciones por Nivel AIC">
+                  <PlotChart
+                    data={[{
+                      type: "bar",
+                      x: nivCosto.map((r) => r.nivel),
+                      y: nivCosto.map((r) => r.total_costo),
+                      marker: { color: agColors(nivCosto.length) },
+                      text: nivCosto.map((r) => fmtGs(r.total_costo)),
+                      textposition: "outside" as const,
+                    }]}
+                    layout={{ xaxis: { title: { text: "Nivel AIC" } }, yaxis: { title: { text: "Total Costo" } }, margin: { t: 32, r: 16, b: 48, l: 80 } }}
+                    height={320}
+                  />
+                </ChartCard>
+              )}
+              {nivCant.length > 0 && (
+                <ChartCard title="Cantidad de Liquidaciones por Nivel AIC">
+                  <PlotChart
+                    data={[{
+                      type: "bar",
+                      x: nivCant.map((r) => r.nivel),
+                      y: nivCant.map((r) => r.cantidad),
+                      marker: { color: agColors(nivCant.length) },
+                      text: nivCant.map((r) => String(r.cantidad)),
+                      textposition: "outside" as const,
+                    }]}
+                    layout={{ xaxis: { title: { text: "Nivel AIC" } }, yaxis: { title: { text: "Cantidad" } }, margin: { t: 32, r: 16, b: 48, l: 80 } }}
+                    height={320}
+                  />
+                </ChartCard>
+              )}
+              {nivSob.length > 0 && (
+                <ChartCard title="⚠️ Sobrecosto por Nivel AIC (impacto financiero de desvinculaciones)">
+                  <PlotChart
+                    data={[{
+                      type: "bar",
+                      x: nivSob.map((r) => r.nivel),
+                      y: nivSob.map((r) => r.sobrecosto),
+                      marker: {
+                        color: nivSob.map((r) => r.sobrecosto),
+                        colorscale: [[0, "#ffc8c8"], [1, "#c00000"]] as [number, string][],
+                        showscale: false,
+                      },
+                      text: nivSob.map((r) => fmtGs(r.sobrecosto)),
+                      textposition: "outside" as const,
+                    }]}
+                    layout={{ xaxis: { title: { text: "Nivel AIC" } }, yaxis: { title: { text: "Sobrecosto" } }, margin: { t: 32, r: 16, b: 48, l: 80 } }}
+                    height={320}
+                  />
+                </ChartCard>
+              )}
+              {nivProm.length > 0 && (
+                <ChartCard title="Costo Promedio por Liquidación según Nivel AIC">
+                  <PlotChart
+                    data={[{
+                      type: "bar",
+                      x: nivProm.map((r) => r.nivel),
+                      y: nivProm.map((r) => r.prom),
+                      marker: { color: agColors(nivProm.length) },
+                      text: nivProm.map((r) => fmtGs(r.prom)),
+                      textposition: "outside" as const,
+                    }]}
+                    layout={{ xaxis: { title: { text: "Nivel AIC" } }, yaxis: { title: { text: "Costo Promedio" } }, margin: { t: 32, r: 16, b: 48, l: 80 } }}
+                    height={320}
+                  />
+                </ChartCard>
+              )}
+              {nivComp.length > 0 && (
+                <ChartCard title="Costo Total vs Sobrecosto por Nivel AIC" fullWidth>
+                  <PlotChart
+                    data={[
+                      { type: "bar", name: "Costo Total", x: nivComp.map((r) => r.nivel), y: nivComp.map((r) => r.total_costo), marker: { color: "#4f8ef7" } },
+                      { type: "bar", name: "Sobrecosto",  x: nivComp.map((r) => r.nivel), y: nivComp.map((r) => r.sobrecosto),  marker: { color: "#f43f5e" } },
+                    ]}
+                    layout={{ barmode: "group", xaxis: { title: { text: "Nivel AIC" } }, yaxis: { title: { text: "Monto" } }, margin: { t: 8, r: 16, b: 48, l: 80 } }}
+                    height={340}
+                  />
+                </ChartCard>
+              )}
+            </div>
+            </div>
           )}
         </div>
       )}
