@@ -457,7 +457,7 @@ export default function RotacionPage() {
           {permHist.length > 0 && (
             <ChartCard title="Distribución de Permanencia al Momento de la Salida (meses)">
               <PlotChart
-                data={[{ type: "histogram", x: permHist, nbinsx: 24, marker: { color: "#4f8ef7" } }]}
+                data={[{ type: "histogram", x: permHist, marker: { color: "#4f8ef7" } } as AnyObj]}
                 layout={{ margin: { t: 16, r: 16, b: 50, l: 50 } }}
                 height={280}
               />
