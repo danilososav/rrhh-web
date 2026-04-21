@@ -365,12 +365,14 @@ async def procesar_rotacion(files: List[UploadFile] = File(...)):
     raw_cols = [c for c in [
         "EMPRESA", "TIPO_SALIDA", "MOTIVO_SALIDA", "MOTIVO_CATEGORIA",
         "ANO_REPORTE", "MES_REPORTE", "SITUACION", "MESES_PERMANENCIA",
+        "CARGO", "AREA", "DEPARTAMENTO",
     ] if c in df.columns]
     raw_rows = _safe_records(df[raw_cols].copy())
 
     # Tabla = raw_rows de salidas con info de motivos
     tabla_rot_cols = [c for c in [
-        "EMPRESA", "TIPO_SALIDA", "MOTIVO_SALIDA", "MOTIVO_CATEGORIA",
+        "EMPRESA", "CARGO", "AREA", "DEPARTAMENTO",
+        "TIPO_SALIDA", "MOTIVO_SALIDA", "MOTIVO_CATEGORIA",
         "ANO_REPORTE", "MES_REPORTE", "SITUACION", "MESES_PERMANENCIA",
     ] if c in df_sal.columns]
     tabla = _safe_records(df_sal[tabla_rot_cols].copy()) if not df_sal.empty else []
