@@ -306,9 +306,8 @@ async def procesar_rotacion(files: List[UploadFile] = File(...)):
                            .reset_index(name="salidas"))
         sal_trend["mes_nombre"] = sal_trend["MES_REPORTE"].map(MESES_NOMBRE)
         sal_trend["ANO_REPORTE"] = sal_trend["ANO_REPORTE"].astype(str)
-        tendencia["mensual"] = _safe_records(sal_trend.rename(columns={
-            "ANO_REPORTE": "ano", "MES_REPORTE": "mes"
-        }))
+        sal_trend = sal_trend.rename(columns={"ANO_REPORTE": "ano", "MES_REPORTE": "mes"})
+        tendencia["mensual"] = _safe_records(sal_trend)
 
         # Meses y valores para el gráfico de línea (todos los años juntos)
         tendencia["meses"]  = sal_trend["mes_nombre"].tolist()
