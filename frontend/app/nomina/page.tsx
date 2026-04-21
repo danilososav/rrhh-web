@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FileUpload from "@/components/FileUpload";
 import KpiCard from "@/components/KpiCard";
 import PlotChart from "@/components/PlotChart";
@@ -139,13 +139,20 @@ function UploadIllustration() {
 }
 
 export default function NominaPage() {
-  const { setNominaData } = useDashboard();
-  const { selected, register, reset } = useFilter();
-  const [data, setData] = useState<AnyObj | null>(null);
+  const { nominaData, setNominaData } = useDashboard();
+  const { selected, register } = useFilter();
+  const [data, setData] = useState<AnyObj | null>(nominaData);
+  const [showUpload, setShowUpload] = useState(false);
+
+  useEffect(() => {
+    if (nominaData) register(FILTER_CONFIGS, (nominaData.tabla as Row[]) ?? []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleResult(result: AnyObj) {
     setData(result);
     setNominaData(result);
+    setShowUpload(false);
     register(FILTER_CONFIGS, (result.tabla as Row[]) ?? []);
   }
 
@@ -180,12 +187,22 @@ export default function NominaPage() {
           <h1 className="page-title">Análisis de Colaboradores</h1>
         </div>
         <button
-          onClick={() => { setData(null); reset(); }}
+          onClick={() => setShowUpload((v) => !v)}
           className="rounded-lg border border-white/[0.08] bg-[#1a1f2e] px-4 py-2 text-sm text-slate-400 transition hover:border-[#4f8ef7]/40 hover:text-[#4f8ef7]"
         >
-          Nueva carga
+          Actualizar datos
         </button>
       </div>
+
+      {showUpload && (
+        <div className="mb-6 rounded-xl border border-[#4f8ef7]/30 bg-[#1a1f2e] p-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-medium text-slate-300">Cargar nuevos datos de nómina</p>
+            <button onClick={() => setShowUpload(false)} className="text-xs text-slate-500 hover:text-slate-300 transition">Cancelar</button>
+          </div>
+          <FileUpload endpoint="/api/nomina" fieldName="file" multiple={false} onResult={handleResult} />
+        </div>
+      )}
 
       <div>
           {/* KPIs */}

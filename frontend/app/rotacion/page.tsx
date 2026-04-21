@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import FileUpload from "@/components/FileUpload";
 import KpiCard from "@/components/KpiCard";
 import PlotChart from "@/components/PlotChart";
@@ -206,14 +206,21 @@ function UploadIllustration() {
 const COLOR_SEQ = ["#4C6FFF","#22c55e","#f97316","#a855f7","#06b6d4","#f43f5e","#eab308","#10b981","#ec4899","#8b5cf6"];
 
 export default function RotacionPage() {
-  const { setRotacionData } = useDashboard();
-  const { selected, register, reset } = useFilter();
-  const [data, setData]     = useState<AnyObj | null>(null);
+  const { rotacionData, setRotacionData } = useDashboard();
+  const { selected, register } = useFilter();
+  const [data, setData]     = useState<AnyObj | null>(rotacionData);
   const [activeTab, setActiveTab] = useState(0);
+  const [showUpload, setShowUpload] = useState(false);
+
+  useEffect(() => {
+    if (rotacionData) register(FILTER_CONFIGS, (rotacionData.raw_rows as Row[]) ?? []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function handleResult(result: AnyObj) {
     setData(result);
     setRotacionData(result);
+    setShowUpload(false);
     register(FILTER_CONFIGS, (result.raw_rows as Row[]) ?? []);
   }
 
@@ -284,12 +291,22 @@ export default function RotacionPage() {
           <h1 className="page-title">Rotación de Personal</h1>
         </div>
         <button
-          onClick={() => { setData(null); reset(); setActiveTab(0); }}
+          onClick={() => setShowUpload((v) => !v)}
           className="rounded-lg border border-white/[0.08] bg-[#1a1f2e] px-4 py-2 text-sm text-slate-400 transition hover:border-[#4f8ef7]/40 hover:text-[#4f8ef7]"
         >
-          Nueva carga
+          Actualizar datos
         </button>
       </div>
+
+      {showUpload && (
+        <div className="mb-6 rounded-xl border border-[#4f8ef7]/30 bg-[#1a1f2e] p-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-medium text-slate-300">Cargar nuevos datos de rotación</p>
+            <button onClick={() => setShowUpload(false)} className="text-xs text-slate-500 hover:text-slate-300 transition">Cancelar</button>
+          </div>
+          <FileUpload endpoint="/api/rotacion" fieldName="files" multiple onResult={handleResult} />
+        </div>
+      )}
 
       {advertencias.length > 0 && (
         <div className="mb-5 rounded-lg border border-amber-700/50 bg-amber-900/10 px-4 py-3 text-sm text-amber-400">

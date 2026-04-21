@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, DragEvent, ChangeEvent } from "react";
+import { useState, useRef, useEffect, DragEvent, ChangeEvent } from "react";
 import KpiCard from "@/components/KpiCard";
 import PlotChart from "@/components/PlotChart";
 import DataTable from "@/components/DataTable";
@@ -196,17 +196,23 @@ function UploadIllustration() {
 }
 
 export default function CostosPage() {
-  const { setCostosData } = useDashboard();
-  const { selected, register, reset } = useFilter();
-  const [data, setData]               = useState<AnyObj | null>(null);
+  const { costosData, setCostosData } = useDashboard();
+  const { selected, register } = useFilter();
+  const [data, setData]               = useState<AnyObj | null>(costosData);
   const [storedFiles, setStoredFiles] = useState<File[]>([]);
-  const [hojas, setHojas]             = useState<string[]>([]);
-  const [hojaActiva, setHojaActiva]   = useState<string>("");
+  const [hojas, setHojas]             = useState<string[]>((costosData?.hojas as string[]) ?? []);
+  const [hojaActiva, setHojaActiva]   = useState<string>((costosData?.hoja_activa as string) ?? "");
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState<string | null>(null);
   const [dragging, setDragging]       = useState(false);
   const [activeTab, setActiveTab]     = useState("agencia");
+  const [showUpload, setShowUpload]   = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (costosData) register(FILTER_CONFIGS, (costosData.raw_rows as Row[]) ?? []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function postFiles(files: File[], hoja?: string) {
     setLoading(true);
@@ -230,6 +236,7 @@ export default function CostosPage() {
       setHojas(json.hojas ?? []);
       setHojaActiva(json.hoja_activa ?? "");
       setActiveTab("agencia");
+      setShowUpload(false);
       register(FILTER_CONFIGS, (json.raw_rows as Row[]) ?? []);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error desconocido");
@@ -334,12 +341,43 @@ export default function CostosPage() {
           <h1 className="page-title">Costos de Liquidaciones</h1>
         </div>
         <button
-          onClick={() => { setData(null); setHojas([]); setHojaActiva(""); setStoredFiles([]); setError(null); reset(); }}
+          onClick={() => setShowUpload((v) => !v)}
           className="rounded-lg border border-white/[0.08] bg-[#1a1f2e] px-4 py-2 text-sm text-slate-400 transition hover:border-[#4f8ef7]/40 hover:text-[#4f8ef7]"
         >
-          Nueva carga
+          Actualizar datos
         </button>
       </div>
+
+      {showUpload && (
+        <div className="mb-6 rounded-xl border border-[#4f8ef7]/30 bg-[#1a1f2e] p-4">
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-medium text-slate-300">Cargar nuevos datos de costos</p>
+            <button onClick={() => { setShowUpload(false); setError(null); }} className="text-xs text-slate-500 hover:text-slate-300 transition">Cancelar</button>
+          </div>
+          <div
+            onClick={() => inputRef.current?.click()}
+            onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={handleDrop}
+            className={[
+              "relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-6 py-10 cursor-pointer transition-colors select-none",
+              dragging ? "border-[#4f8ef7] bg-[#4f8ef7]/8" : "border-white/[0.08] bg-[#161b28] hover:border-[#4f8ef7]/50 hover:bg-[#1a2240]",
+            ].join(" ")}
+          >
+            <svg className={`w-10 h-10 ${dragging ? "text-[#4f8ef7]" : "text-slate-400"}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0-3 3m3-3 3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.338-2.032A4.5 4.5 0 0 1 17.25 19.5H6.75Z" />
+            </svg>
+            <p className="text-sm text-slate-300 text-center">Arrastrá los archivos Excel aquí o hacé clic para seleccionar</p>
+            <p className="text-xs text-slate-500">Formatos: .xlsx .xls</p>
+            <input ref={inputRef} type="file" multiple accept=".xlsx,.xls" className="hidden" onChange={handleChange} />
+          </div>
+          {error && (
+            <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-700 bg-red-900/30 px-4 py-3 text-sm text-red-300">
+              <span>{error}</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Selector de hoja */}
       {hojas.length > 1 && (
