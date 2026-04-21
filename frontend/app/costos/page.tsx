@@ -133,6 +133,10 @@ function computeFromRows(rows: Row[]) {
     .map(([n, r]) => ({ nivel: n, total_costo: sumField(r, "TOTAL_COSTO"), sobrecosto: sumField(r, "SOBRECOSTO") }));
 
   // ── Tendencia ───────────────────────────────────────────────────────────
+  const MESES_NOMBRE: Record<number, string> = {
+    1:"Ene",2:"Feb",3:"Mar",4:"Abr",5:"May",6:"Jun",
+    7:"Jul",8:"Ago",9:"Sep",10:"Oct",11:"Nov",12:"Dic",
+  };
   const anoMap = groupBy(rows, "ANO_SALIDA");
   const sobAno = Object.entries(anoMap)
     .map(([ano, r]) => ({ ano: String(ano), sobrecosto: sumField(r, "SOBRECOSTO") }))
@@ -141,7 +145,31 @@ function computeFromRows(rows: Row[]) {
     .map(([ano, r]) => ({ ano: String(ano), liquidaciones: r.length }))
     .sort((a, b) => a.ano.localeCompare(b.ano));
 
-  return { kpis, agSob, agSobDesc, agCant, agProm, composicion, compPorAgencia, tipoData, tipoProm, top10motivo, nivCosto, nivCant, nivSob, nivProm, nivComp, sobAno, liqAno };
+  // Evolución mensual del sobrecosto (una traza por año)
+  const sobMensual = (() => {
+    const byAnoMes: Record<string, Record<number, number>> = {};
+    for (const r of rows) {
+      const ano = String(r.ANO_SALIDA ?? "");
+      const mes = Number(r.MES_SALIDA_N);
+      if (!ano || isNaN(mes) || mes < 1 || mes > 12) continue;
+      byAnoMes[ano] = byAnoMes[ano] ?? {};
+      byAnoMes[ano][mes] = (byAnoMes[ano][mes] ?? 0) + (Number(r.SOBRECOSTO) || 0);
+    }
+    return Object.entries(byAnoMes)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([ano, meses]) => {
+        const sorted = Object.keys(meses).map(Number).sort((a, b) => a - b);
+        return {
+          type: "scatter" as const,
+          mode: "lines+markers" as const,
+          name: ano,
+          x: sorted.map((m) => MESES_NOMBRE[m]),
+          y: sorted.map((m) => meses[m]),
+        };
+      });
+  })();
+
+  return { kpis, agSob, agSobDesc, agCant, agProm, composicion, compPorAgencia, tipoData, tipoProm, top10motivo, nivCosto, nivCant, nivSob, nivProm, nivComp, sobAno, liqAno, sobMensual };
 }
 
 function ChartCard({ title, children, fullWidth }: { title: string; children: React.ReactNode; fullWidth?: boolean }) {
@@ -293,7 +321,7 @@ export default function CostosPage() {
   // ── Dashboard ─────────────────────────────────────────────────────────────
   const rawRows: Row[] = (data!.raw_rows as Row[]) ?? [];
   const filteredRows   = applyFilters(rawRows, selected);
-  const { kpis, agSob, agSobDesc, agCant, agProm, composicion, compPorAgencia, tipoData, tipoProm, top10motivo, nivCosto, nivCant, nivSob, nivProm, nivComp, sobAno, liqAno } =
+  const { kpis, agSob, agSobDesc, agCant, agProm, composicion, compPorAgencia, tipoData, tipoProm, top10motivo, nivCosto, nivCant, nivSob, nivProm, nivComp, sobAno, liqAno, sobMensual } =
     computeFromRows(filteredRows);
   const tabla: AnyObj[] = (data!.tabla as AnyObj[]) ?? [];
 
@@ -615,22 +643,48 @@ export default function CostosPage() {
 
       {/* ── Tab: Tendencia ───────────────────────────────────────────────── */}
       {activeTab === "tendencia" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {sobAno.length > 0 && (
-            <ChartCard title="Sobrecosto por Año">
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {sobAno.length > 0 && (
+              <ChartCard title="⚠️ Sobrecosto Total por Año">
+                <PlotChart
+                  data={[{
+                    type: "bar",
+                    x: sobAno.map((r) => r.ano),
+                    y: sobAno.map((r) => r.sobrecosto),
+                    marker: { color: "#f87171" },
+                    text: sobAno.map((r) => fmtGs(r.sobrecosto)),
+                    textposition: "outside" as const,
+                  }]}
+                  layout={{ xaxis: { title: { text: "Año" } }, yaxis: { title: { text: "Sobrecosto" } }, margin: { t: 32, r: 16, b: 48, l: 80 } }}
+                  height={360}
+                />
+              </ChartCard>
+            )}
+            {liqAno.length > 0 && (
+              <ChartCard title="Cantidad de Liquidaciones por Año">
+                <PlotChart
+                  data={[{
+                    type: "bar",
+                    x: liqAno.map((r) => r.ano),
+                    y: liqAno.map((r) => r.liquidaciones),
+                    marker: { color: "#8b5cf6" },
+                    text: liqAno.map((r) => String(r.liquidaciones)),
+                    textposition: "outside" as const,
+                  }]}
+                  layout={{ xaxis: { title: { text: "Año" } }, yaxis: { title: { text: "Liquidaciones" } }, margin: { t: 32, r: 16, b: 48, l: 80 } }}
+                  height={360}
+                />
+              </ChartCard>
+            )}
+          </div>
+
+          {sobMensual.length > 0 && (
+            <ChartCard title="⚠️ Evolución Mensual del Sobrecosto" fullWidth>
               <PlotChart
-                data={[{ type: "bar", x: sobAno.map((r) => r.ano), y: sobAno.map((r) => r.sobrecosto), marker: { color: "#f59e0b" } }]}
-                layout={{ xaxis: { title: { text: "Año" } }, yaxis: { title: { text: "Sobrecosto" } }, margin: { t: 8, r: 16, b: 48, l: 80 } }}
-                height={360}
-              />
-            </ChartCard>
-          )}
-          {liqAno.length > 0 && (
-            <ChartCard title="Liquidaciones por Año">
-              <PlotChart
-                data={[{ type: "scatter", mode: "lines+markers", x: liqAno.map((r) => r.ano), y: liqAno.map((r) => r.liquidaciones), line: { color: "#06b6d4", width: 2 }, marker: { color: "#06b6d4", size: 8 } }]}
-                layout={{ xaxis: { title: { text: "Año" } }, yaxis: { title: { text: "Liquidaciones" } }, margin: { t: 8, r: 16, b: 48, l: 80 } }}
-                height={360}
+                data={sobMensual}
+                layout={{ xaxis: { title: { text: "Mes" } }, yaxis: { title: { text: "Sobrecosto" } }, margin: { t: 8, r: 120, b: 48, l: 80 } }}
+                height={380}
               />
             </ChartCard>
           )}

@@ -344,7 +344,7 @@ async def procesar_costos(
 
     # ── raw_rows: columnas necesarias para filtrado en frontend ───────────────
     raw_cols = [c for c in [
-        "AGENCIA", "NIVEL_AIC", "TIPO_SALIDA", "MOTIVO_SALIDA", "ANO_SALIDA",
+        "AGENCIA", "NIVEL_AIC", "TIPO_SALIDA", "MOTIVO_SALIDA", "ANO_SALIDA", "MES_SALIDA_N",
         "TOTAL_BRUTO", "NETO", "TOTAL_COSTO", "SOBRECOSTO", "APORTE_PATRONAL",
         "SALARIO_BASE", "VAC_CAUSADAS", "VAC_PROPORCIONALES", "INDEMNIZACION",
         "PREAVISO", "AGUINALDO", "GRATIFICACION", "COMISIONES", "HORAS_EXTRAS",
