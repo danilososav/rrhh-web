@@ -88,6 +88,8 @@ function computeFromRows(rows: Row[]) {
   const tipoData = Object.keys(tipoMap).length > 0
     ? { labels: Object.keys(tipoMap), values: Object.values(tipoMap).map((r) => sumField(r, "SOBRECOSTO")) }
     : null;
+  const tipoProm = Object.entries(tipoMap)
+    .map(([tipo, r]) => ({ tipo, prom: r.length ? sumField(r, "SOBRECOSTO") / r.length : 0 }));
 
   const motivoMap  = groupBy(rows, "MOTIVO_SALIDA");
   const top10motivo = Object.entries(motivoMap)
@@ -120,7 +122,7 @@ function computeFromRows(rows: Row[]) {
     .map(([ano, r]) => ({ ano: String(ano), liquidaciones: r.length }))
     .sort((a, b) => a.ano.localeCompare(b.ano));
 
-  return { kpis, agSob, agSobDesc, agCant, agProm, composicion, tipoData, top10motivo, nivCosto, nivCant, nivSob, nivProm, nivComp, sobAno, liqAno };
+  return { kpis, agSob, agSobDesc, agCant, agProm, composicion, tipoData, tipoProm, top10motivo, nivCosto, nivCant, nivSob, nivProm, nivComp, sobAno, liqAno };
 }
 
 function ChartCard({ title, children, fullWidth }: { title: string; children: React.ReactNode; fullWidth?: boolean }) {
@@ -272,7 +274,7 @@ export default function CostosPage() {
   // ── Dashboard ─────────────────────────────────────────────────────────────
   const rawRows: Row[] = (data!.raw_rows as Row[]) ?? [];
   const filteredRows   = applyFilters(rawRows, selected);
-  const { kpis, agSob, agSobDesc, agCant, agProm, composicion, tipoData, top10motivo, nivCosto, nivCant, nivSob, nivProm, nivComp, sobAno, liqAno } =
+  const { kpis, agSob, agSobDesc, agCant, agProm, composicion, tipoData, tipoProm, top10motivo, nivCosto, nivCant, nivSob, nivProm, nivComp, sobAno, liqAno } =
     computeFromRows(filteredRows);
   const tabla: AnyObj[] = (data!.tabla as AnyObj[]) ?? [];
 
@@ -539,53 +541,48 @@ export default function CostosPage() {
         <div className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {tipoData && (
-              <ChartCard title="Sobrecosto por Tipo de Salida">
+              <ChartCard title="⚠️ Sobrecosto por Tipo de Salida">
                 <PlotChart
                   data={[{ type: "pie", labels: tipoData.labels, values: tipoData.values, hole: 0.4, textinfo: "label+percent", textfont: { color: "#cbd5e1" } }]}
                   layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
-                  height={320}
+                  height={360}
                 />
               </ChartCard>
             )}
             {top10motivo.length > 0 && (
-              <ChartCard title="Top 10 Motivos por Sobrecosto">
+              <ChartCard title="⚠️ Top 10 Motivos por Sobrecosto">
                 <PlotChart
                   data={[{
                     type: "bar", orientation: "h",
                     x: top10motivo.map((r) => r.sobrecosto),
                     y: top10motivo.map((r) => r.motivo),
-                    marker: { color: "#f59e0b" },
+                    marker: {
+                      color: top10motivo.map((r) => r.sobrecosto),
+                      colorscale: [[0, "#ffc8c8"], [1, "#c00000"]] as [number, string][],
+                      showscale: false,
+                    },
                   }]}
-                  layout={{ margin: { t: 8, r: 16, b: 48, l: 200 } }}
-                  height={320}
+                  layout={{ xaxis: { title: { text: "Sobrecosto" } }, yaxis: { title: { text: "Motivo" } }, margin: { t: 8, r: 16, b: 48, l: 220 } }}
+                  height={360}
                 />
               </ChartCard>
             )}
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {nivCosto.length > 0 && (
-              <ChartCard title="Costo Total por Nivel AIC">
-                <PlotChart
-                  data={[{ type: "bar", x: nivCosto.map((r) => r.nivel), y: nivCosto.map((r) => r.total_costo), marker: { color: "#8b5cf6" } }]}
-                  layout={{ margin: { t: 8, r: 16, b: 48, l: 80 } }}
-                  height={300}
-                />
-              </ChartCard>
-            )}
-            {nivComp.length > 0 && (
-              <ChartCard title="Sobrecosto vs Costo Total por Nivel">
-                <PlotChart
-                  data={[
-                    { type: "bar", name: "Total Costo", x: nivComp.map((r) => r.nivel), y: nivComp.map((r) => r.total_costo), marker: { color: "#4f8ef7" } },
-                    { type: "bar", name: "Sobrecosto",  x: nivComp.map((r) => r.nivel), y: nivComp.map((r) => r.sobrecosto),  marker: { color: "#f43f5e" } },
-                  ]}
-                  layout={{ barmode: "group", margin: { t: 8, r: 16, b: 48, l: 80 } }}
-                  height={300}
-                />
-              </ChartCard>
-            )}
-          </div>
+          {tipoProm.length > 0 && (
+            <ChartCard title="⚠️ Sobrecosto Promedio por Tipo de Salida">
+              <PlotChart
+                data={[{
+                  type: "bar",
+                  x: tipoProm.map((r) => r.tipo),
+                  y: tipoProm.map((r) => r.prom),
+                  marker: { color: agColors(tipoProm.length) },
+                }]}
+                layout={{ xaxis: { title: { text: "Tipo de Salida" } }, yaxis: { title: { text: "SOBRECOSTO" } }, margin: { t: 8, r: 16, b: 60, l: 80 } }}
+                height={340}
+              />
+            </ChartCard>
+          )}
         </div>
       )}
 
