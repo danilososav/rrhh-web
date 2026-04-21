@@ -46,17 +46,31 @@ app.include_router(costos.router,         prefix="/api/costos",         tags=["c
 app.include_router(resumen.router,        prefix="/api/resumen",        tags=["resumen"],       dependencies=[Depends(verify_token)])
 
 
+def _cors_headers(request: Request) -> dict:
+    origin = request.headers.get("origin", "*")
+    return {
+        "Access-Control-Allow-Origin": origin,
+        "Access-Control-Allow-Credentials": "true",
+    }
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    """HTTPException con CORS headers para que el browser no los bloquee."""
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers=_cors_headers(request),
+    )
+
+
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
-    """
-    Captura cualquier excepción no controlada y devuelve un JSON limpio sin stacktrace.
-    HTTPException se re-lanza para que FastAPI la maneje normalmente.
-    """
-    if isinstance(exc, HTTPException):
-        return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+    """Excepción genérica con CORS headers."""
     return JSONResponse(
         status_code=500,
         content={"detail": "Error interno del servidor. Intentá de nuevo o contactá soporte."},
+        headers=_cors_headers(request),
     )
 
 
