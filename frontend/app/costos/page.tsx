@@ -45,6 +45,13 @@ function agColors(n: number) {
   return Array.from({ length: n }, (_, i) => AG_PALETTE[i % AG_PALETTE.length]);
 }
 
+// Color fijo por concepto (mismo orden que CONCEPTOS)
+const CONCEPT_COLORS = [
+  "#8b5cf6","#10b981","#06b6d4","#f59e0b","#ec4899",
+  "#84cc16","#f97316","#14b8a6","#3b82f6","#f43f5e",
+  "#a78bfa","#cbd5e1",
+];
+
 const TABS = [
   { id: "agencia",     label: "Por Agencia",          icon: "🏢" },
   { id: "composicion", label: "Composición de Costos", icon: "🌿" },
@@ -77,11 +84,23 @@ function computeFromRows(rows: Row[]) {
 
   // ── Composición ─────────────────────────────────────────────────────────
   const comp = CONCEPTOS
-    .map(([label, field]) => [label, sumField(rows, field)] as [string, number])
-    .filter(([, v]) => v > 0);
+    .map(([label, field], i) => ({ label, value: sumField(rows, field), color: CONCEPT_COLORS[i] }))
+    .filter((c) => c.value > 0)
+    .sort((a, b) => a.value - b.value); // ascending for horizontal bar
   const composicion = comp.length > 0
-    ? { labels: comp.map(([l]) => l), values: comp.map(([, v]) => v) }
+    ? { labels: comp.map((c) => c.label), values: comp.map((c) => c.value), colors: comp.map((c) => c.color) }
     : null;
+
+  const agencias = Object.keys(agMap).sort();
+  const compPorAgencia = CONCEPTOS
+    .map(([label, field], i) => ({
+      type: "bar" as const,
+      name: label,
+      x: agencias,
+      y: agencias.map((ag) => sumField(agMap[ag] ?? [], field)),
+      marker: { color: CONCEPT_COLORS[i] },
+    }))
+    .filter((trace) => trace.y.some((v) => v > 0));
 
   // ── Por Tipo / Motivo ───────────────────────────────────────────────────
   const tipoMap  = groupBy(rows, "TIPO_SALIDA");
@@ -122,7 +141,7 @@ function computeFromRows(rows: Row[]) {
     .map(([ano, r]) => ({ ano: String(ano), liquidaciones: r.length }))
     .sort((a, b) => a.ano.localeCompare(b.ano));
 
-  return { kpis, agSob, agSobDesc, agCant, agProm, composicion, tipoData, tipoProm, top10motivo, nivCosto, nivCant, nivSob, nivProm, nivComp, sobAno, liqAno };
+  return { kpis, agSob, agSobDesc, agCant, agProm, composicion, compPorAgencia, tipoData, tipoProm, top10motivo, nivCosto, nivCant, nivSob, nivProm, nivComp, sobAno, liqAno };
 }
 
 function ChartCard({ title, children, fullWidth }: { title: string; children: React.ReactNode; fullWidth?: boolean }) {
@@ -274,7 +293,7 @@ export default function CostosPage() {
   // ── Dashboard ─────────────────────────────────────────────────────────────
   const rawRows: Row[] = (data!.raw_rows as Row[]) ?? [];
   const filteredRows   = applyFilters(rawRows, selected);
-  const { kpis, agSob, agSobDesc, agCant, agProm, composicion, tipoData, tipoProm, top10motivo, nivCosto, nivCant, nivSob, nivProm, nivComp, sobAno, liqAno } =
+  const { kpis, agSob, agSobDesc, agCant, agProm, composicion, compPorAgencia, tipoData, tipoProm, top10motivo, nivCosto, nivCant, nivSob, nivProm, nivComp, sobAno, liqAno } =
     computeFromRows(filteredRows);
   const tabla: AnyObj[] = (data!.tabla as AnyObj[]) ?? [];
 
@@ -505,31 +524,39 @@ export default function CostosPage() {
 
       {/* ── Tab: Composición de Costos ────────────────────────────────────── */}
       {activeTab === "composicion" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-          {composicion && (
-            <ChartCard title="Composición Global de Costos">
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {composicion && (
+              <ChartCard title="Composición del Costo Total">
+                <PlotChart
+                  data={[{ type: "pie", labels: composicion.labels, values: composicion.values, hole: 0.4, textinfo: "label+percent", textfont: { color: "#cbd5e1" } }]}
+                  layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
+                  height={380}
+                />
+              </ChartCard>
+            )}
+            {composicion && (
+              <ChartCard title="Monto por Concepto">
+                <PlotChart
+                  data={[{
+                    type: "bar", orientation: "h",
+                    x: composicion.values,
+                    y: composicion.labels,
+                    marker: { color: composicion.colors },
+                  }]}
+                  layout={{ xaxis: { title: { text: "Monto" } }, yaxis: { title: { text: "Concepto" } }, margin: { t: 8, r: 16, b: 48, l: 160 } }}
+                  height={380}
+                />
+              </ChartCard>
+            )}
+          </div>
+
+          {compPorAgencia.length > 0 && (
+            <ChartCard title="Composición del Costo por Agencia" fullWidth>
               <PlotChart
-                data={[{ type: "pie", labels: composicion.labels, values: composicion.values, textinfo: "label+percent", textfont: { color: "#cbd5e1" } }]}
-                layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
-                height={380}
-              />
-            </ChartCard>
-          )}
-          {composicion && (
-            <ChartCard title="Distribución de Costos (barras)">
-              <PlotChart
-                data={[{
-                  type: "bar", orientation: "h",
-                  x: [...composicion.values].sort((a, b) => a - b),
-                  y: composicion.labels.slice().sort((a, b) => {
-                    const ia = composicion.labels.indexOf(a);
-                    const ib = composicion.labels.indexOf(b);
-                    return composicion.values[ia] - composicion.values[ib];
-                  }),
-                  marker: { color: "#4f8ef7" },
-                }]}
-                layout={{ margin: { t: 8, r: 16, b: 48, l: 150 } }}
-                height={380}
+                data={compPorAgencia}
+                layout={{ barmode: "stack", xaxis: { title: { text: "AGENCIA" } }, yaxis: { title: { text: "Monto" } }, margin: { t: 8, r: 200, b: 60, l: 80 }, legend: { x: 1.02, y: 1 } }}
+                height={420}
               />
             </ChartCard>
           )}
