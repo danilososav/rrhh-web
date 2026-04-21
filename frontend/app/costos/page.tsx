@@ -22,18 +22,35 @@ const FILTER_CONFIGS: FilterConfig[] = [
 ];
 
 const CONCEPTOS: [string, string][] = [
-  ["Salario Base",       "SALARIO_BASE"],
-  ["Vac. Causadas",      "VAC_CAUSADAS"],
-  ["Vac. Proporcionales","VAC_PROPORCIONALES"],
-  ["Indemnización",      "INDEMNIZACION"],
-  ["Preaviso",           "PREAVISO"],
-  ["Aguinaldo",          "AGUINALDO"],
-  ["Gratificación",      "GRATIFICACION"],
-  ["Comisiones",         "COMISIONES"],
-  ["Horas Extras",       "HORAS_EXTRAS"],
-  ["Bonif. Familiar",    "BONIF_FAMILIAR"],
-  ["IPS Total",          "IPS_TOTAL"],
-  ["Sobrecosto",         "SOBRECOSTO"],
+  ["Salario Base",        "SALARIO_BASE"],
+  ["Vac. Causadas",       "VAC_CAUSADAS"],
+  ["Vac. Proporcionales", "VAC_PROPORCIONALES"],
+  ["Indemnización",       "INDEMNIZACION"],
+  ["Preaviso",            "PREAVISO"],
+  ["Aguinaldo",           "AGUINALDO"],
+  ["Gratificación",       "GRATIFICACION"],
+  ["Comisiones",          "COMISIONES"],
+  ["Horas Extras",        "HORAS_EXTRAS"],
+  ["Bonif. Familiar",     "BONIF_FAMILIAR"],
+  ["IPS Total",           "IPS_TOTAL"],
+  ["Sobrecosto",          "SOBRECOSTO"],
+];
+
+// Paleta de colores por agencia (Plotly-compatible)
+const AG_PALETTE = [
+  "#06b6d4","#8b5cf6","#f59e0b","#10b981","#f43f5e",
+  "#4f8ef7","#ec4899","#84cc16","#ff7c3d","#6366f1",
+];
+function agColors(n: number) {
+  return Array.from({ length: n }, (_, i) => AG_PALETTE[i % AG_PALETTE.length]);
+}
+
+const TABS = [
+  { id: "agencia",     label: "Por Agencia",          icon: "🏢" },
+  { id: "composicion", label: "Composición de Costos", icon: "🌿" },
+  { id: "tipo",        label: "Por Tipo / Motivo",     icon: "📋" },
+  { id: "tendencia",   label: "Tendencia",             icon: "📈" },
+  { id: "detalle",     label: "Detalle",               icon: "📄" },
 ];
 
 function computeFromRows(rows: Row[]) {
@@ -46,34 +63,45 @@ function computeFromRows(rows: Row[]) {
     aporte_patronal_fmt: fmtGs(sumField(rows, "APORTE_PATRONAL")),
   };
 
-  const agMap = groupBy(rows, "AGENCIA");
-  const agSob = Object.entries(agMap)
+  // ── Por Agencia ─────────────────────────────────────────────────────────
+  const agMap   = groupBy(rows, "AGENCIA");
+  const agSob   = Object.entries(agMap)
     .map(([ag, r]) => ({ AGENCIA: ag, SOBRECOSTO: sumField(r, "SOBRECOSTO") }))
     .sort((a, b) => a.SOBRECOSTO - b.SOBRECOSTO);
-  const agCant = Object.entries(agMap)
+  const agCant  = Object.entries(agMap)
     .map(([ag, r]) => ({ AGENCIA: ag, cantidad: r.length }))
     .sort((a, b) => a.cantidad - b.cantidad);
+  const agProm  = Object.entries(agMap)
+    .map(([ag, r]) => ({ AGENCIA: ag, prom: r.length ? sumField(r, "SOBRECOSTO") / r.length : 0 }))
+    .sort((a, b) => b.prom - a.prom);
 
-  const tipoMap = groupBy(rows, "TIPO_SALIDA");
-  const tipoData =
-    Object.keys(tipoMap).length > 0
-      ? {
-          labels: Object.keys(tipoMap),
-          values: Object.values(tipoMap).map((r) => sumField(r, "SOBRECOSTO")),
-        }
-      : null;
-
-  const nivMap = groupBy(rows, "NIVEL_AIC");
-  const nivCosto = Object.entries(nivMap).map(([n, r]) => ({ nivel: n, total_costo: sumField(r, "TOTAL_COSTO") }));
-  const nivComp  = Object.entries(nivMap).map(([n, r]) => ({ nivel: n, total_costo: sumField(r, "TOTAL_COSTO"), sobrecosto: sumField(r, "SOBRECOSTO") }));
-
-  const comp: [string, number][] = CONCEPTOS
+  // ── Composición ─────────────────────────────────────────────────────────
+  const comp = CONCEPTOS
     .map(([label, field]) => [label, sumField(rows, field)] as [string, number])
     .filter(([, v]) => v > 0);
   const composicion = comp.length > 0
     ? { labels: comp.map(([l]) => l), values: comp.map(([, v]) => v) }
     : null;
 
+  // ── Por Tipo / Motivo ───────────────────────────────────────────────────
+  const tipoMap  = groupBy(rows, "TIPO_SALIDA");
+  const tipoData = Object.keys(tipoMap).length > 0
+    ? { labels: Object.keys(tipoMap), values: Object.values(tipoMap).map((r) => sumField(r, "SOBRECOSTO")) }
+    : null;
+
+  const motivoMap  = groupBy(rows, "MOTIVO_SALIDA");
+  const top10motivo = Object.entries(motivoMap)
+    .map(([motivo, r]) => ({ motivo, sobrecosto: sumField(r, "SOBRECOSTO") }))
+    .sort((a, b) => b.sobrecosto - a.sobrecosto)
+    .slice(0, 10);
+
+  const nivMap   = groupBy(rows, "NIVEL_AIC");
+  const nivCosto = Object.entries(nivMap)
+    .map(([n, r]) => ({ nivel: n, total_costo: sumField(r, "TOTAL_COSTO") }));
+  const nivComp  = Object.entries(nivMap)
+    .map(([n, r]) => ({ nivel: n, total_costo: sumField(r, "TOTAL_COSTO"), sobrecosto: sumField(r, "SOBRECOSTO") }));
+
+  // ── Tendencia ───────────────────────────────────────────────────────────
   const anoMap = groupBy(rows, "ANO_SALIDA");
   const sobAno = Object.entries(anoMap)
     .map(([ano, r]) => ({ ano: String(ano), sobrecosto: sumField(r, "SOBRECOSTO") }))
@@ -82,13 +110,13 @@ function computeFromRows(rows: Row[]) {
     .map(([ano, r]) => ({ ano: String(ano), liquidaciones: r.length }))
     .sort((a, b) => a.ano.localeCompare(b.ano));
 
-  return { kpis, agSob, agCant, tipoData, nivCosto, nivComp, composicion, sobAno, liqAno };
+  return { kpis, agSob, agCant, agProm, composicion, tipoData, top10motivo, nivCosto, nivComp, sobAno, liqAno };
 }
 
-function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
+function ChartCard({ title, children, fullWidth }: { title: string; children: React.ReactNode; fullWidth?: boolean }) {
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-5">
-      <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-slate-500">{title}</h3>
+    <div className={`rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-5 ${fullWidth ? "col-span-2" : ""}`}>
+      <h3 className="mb-3 text-sm font-semibold text-slate-300">{title}</h3>
       {children}
     </div>
   );
@@ -118,6 +146,7 @@ export default function CostosPage() {
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState<string | null>(null);
   const [dragging, setDragging]       = useState(false);
+  const [activeTab, setActiveTab]     = useState("agencia");
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function postFiles(files: File[], hoja?: string) {
@@ -141,6 +170,7 @@ export default function CostosPage() {
       setCostosData(json);
       setHojas(json.hojas ?? []);
       setHojaActiva(json.hoja_activa ?? "");
+      setActiveTab("agencia");
       register(FILTER_CONFIGS, (json.raw_rows as Row[]) ?? []);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error desconocido");
@@ -173,7 +203,7 @@ export default function CostosPage() {
     if (e.target.files?.length) handleFiles(e.target.files);
   }
 
-
+  // ── Sin datos ─────────────────────────────────────────────────────────────
   if (!data && !loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[72vh] gap-6">
@@ -216,6 +246,7 @@ export default function CostosPage() {
     );
   }
 
+  // ── Cargando ──────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[72vh] gap-4">
@@ -228,10 +259,10 @@ export default function CostosPage() {
     );
   }
 
-  // ── Dashboard ──────────────────────────────────────────────────────────────
+  // ── Dashboard ─────────────────────────────────────────────────────────────
   const rawRows: Row[] = (data!.raw_rows as Row[]) ?? [];
   const filteredRows   = applyFilters(rawRows, selected);
-  const { kpis, agSob, agCant, tipoData, nivCosto, nivComp, composicion, sobAno, liqAno } =
+  const { kpis, agSob, agCant, agProm, composicion, tipoData, top10motivo, nivCosto, nivComp, sobAno, liqAno } =
     computeFromRows(filteredRows);
   const tabla: AnyObj[] = (data!.tabla as AnyObj[]) ?? [];
 
@@ -270,58 +301,160 @@ export default function CostosPage() {
         </div>
       )}
 
-      <div>
-          {/* KPIs */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-            <KpiCard title="Liquidaciones"   value={kpis.total_liquidaciones} accent />
-            <KpiCard title="Sobrecosto"      value={kpis.sobrecosto_fmt} />
-            <KpiCard title="Costo Total"     value={kpis.total_costo_fmt} />
-            <KpiCard title="Total Bruto"     value={kpis.total_bruto_fmt} />
-            <KpiCard title="Neto"            value={kpis.total_neto_fmt} />
-            <KpiCard title="Aporte Patronal" value={kpis.aporte_patronal_fmt} />
-          </div>
+      {/* KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+        <KpiCard title="Liquidaciones"   value={kpis.total_liquidaciones} accent />
+        <KpiCard title="Sobrecosto"      value={kpis.sobrecosto_fmt} />
+        <KpiCard title="Costo Total"     value={kpis.total_costo_fmt} />
+        <KpiCard title="Total Bruto"     value={kpis.total_bruto_fmt} />
+        <KpiCard title="Neto"            value={kpis.total_neto_fmt} />
+        <KpiCard title="Aporte Patronal" value={kpis.aporte_patronal_fmt} />
+      </div>
 
-          {/* Charts */}
+      {/* Tabs */}
+      <div className="border-b border-white/[0.08] mb-6">
+        <div className="flex gap-1 overflow-x-auto">
+          {TABS.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={[
+                "flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-all",
+                activeTab === tab.id
+                  ? "border-[#4f8ef7] text-[#4f8ef7]"
+                  : "border-transparent text-slate-500 hover:text-slate-300",
+              ].join(" ")}
+            >
+              <span>{tab.icon}</span>
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* ── Tab: Por Agencia ─────────────────────────────────────────────── */}
+      {activeTab === "agencia" && (
+        <div className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {agSob.length > 0 && (
-              <ChartCard title="Sobrecosto por Agencia">
+              <ChartCard title="⚠️ Sobrecosto por Agencia (costo de desvinculaciones)">
                 <PlotChart
-                  data={[{ type: "bar", orientation: "h", x: agSob.map((r) => r.SOBRECOSTO), y: agSob.map((r) => r.AGENCIA), marker: { color: "#f43f5e" } }]}
-                  layout={{ margin: { t: 16, r: 16, b: 36, l: 110 } }}
-                  height={300}
+                  data={[{
+                    type: "bar", orientation: "h",
+                    x: agSob.map((r) => r.SOBRECOSTO),
+                    y: agSob.map((r) => r.AGENCIA),
+                    marker: {
+                      color: agSob.map((r) => r.SOBRECOSTO),
+                      colorscale: [["0", "#ffc8c8"], ["1", "#c00000"]],
+                      showscale: false,
+                    },
+                  }]}
+                  layout={{ xaxis: { title: "SOBRECOSTO" }, yaxis: { title: "AGENCIA" }, margin: { t: 8, r: 16, b: 48, l: 100 } }}
+                  height={340}
                 />
               </ChartCard>
             )}
             {agCant.length > 0 && (
-              <ChartCard title="Liquidaciones por Agencia">
+              <ChartCard title="Cantidad de Liquidaciones por Agencia">
                 <PlotChart
-                  data={[{ type: "bar", x: agCant.map((r) => r.AGENCIA), y: agCant.map((r) => r.cantidad), marker: { color: "#4f8ef7" } }]}
-                  height={300}
+                  data={[{
+                    type: "bar", orientation: "h",
+                    x: agCant.map((r) => r.cantidad),
+                    y: agCant.map((r) => r.AGENCIA),
+                    marker: { color: agColors(agCant.length) },
+                  }]}
+                  layout={{ xaxis: { title: "Cantidad" }, yaxis: { title: "AGENCIA" }, margin: { t: 8, r: 16, b: 48, l: 100 } }}
+                  height={340}
                 />
               </ChartCard>
             )}
-            {composicion && (
-              <ChartCard title="Composición Global de Costos">
-                <PlotChart
-                  data={[{ type: "pie", labels: composicion.labels, values: composicion.values, textinfo: "label+percent", textfont: { color: "#cbd5e1" } }]}
-                  layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
-                  height={320}
-                />
-              </ChartCard>
-            )}
+          </div>
+
+          {agProm.length > 0 && (
+            <ChartCard title="⚠️ Sobrecosto Promedio por Liquidación por Agencia">
+              <PlotChart
+                data={[{
+                  type: "bar",
+                  x: agProm.map((r) => r.AGENCIA),
+                  y: agProm.map((r) => r.prom),
+                  marker: { color: agColors(agProm.length) },
+                }]}
+                layout={{ xaxis: { title: "Agencia" }, yaxis: { title: "Sobrecosto Promedio" }, margin: { t: 8, r: 16, b: 60, l: 80 } }}
+                height={320}
+              />
+            </ChartCard>
+          )}
+        </div>
+      )}
+
+      {/* ── Tab: Composición de Costos ────────────────────────────────────── */}
+      {activeTab === "composicion" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {composicion && (
+            <ChartCard title="Composición Global de Costos">
+              <PlotChart
+                data={[{ type: "pie", labels: composicion.labels, values: composicion.values, textinfo: "label+percent", textfont: { color: "#cbd5e1" } }]}
+                layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
+                height={380}
+              />
+            </ChartCard>
+          )}
+          {composicion && (
+            <ChartCard title="Distribución de Costos (barras)">
+              <PlotChart
+                data={[{
+                  type: "bar", orientation: "h",
+                  x: [...composicion.values].sort((a, b) => a - b),
+                  y: composicion.labels.slice().sort((a, b) => {
+                    const ia = composicion.labels.indexOf(a);
+                    const ib = composicion.labels.indexOf(b);
+                    return composicion.values[ia] - composicion.values[ib];
+                  }),
+                  marker: { color: "#4f8ef7" },
+                }]}
+                layout={{ margin: { t: 8, r: 16, b: 48, l: 150 } }}
+                height={380}
+              />
+            </ChartCard>
+          )}
+        </div>
+      )}
+
+      {/* ── Tab: Por Tipo / Motivo ────────────────────────────────────────── */}
+      {activeTab === "tipo" && (
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {tipoData && (
               <ChartCard title="Sobrecosto por Tipo de Salida">
                 <PlotChart
                   data={[{ type: "pie", labels: tipoData.labels, values: tipoData.values, hole: 0.4, textinfo: "label+percent", textfont: { color: "#cbd5e1" } }]}
                   layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
-                  height={300}
+                  height={320}
                 />
               </ChartCard>
             )}
+            {top10motivo.length > 0 && (
+              <ChartCard title="Top 10 Motivos por Sobrecosto">
+                <PlotChart
+                  data={[{
+                    type: "bar", orientation: "h",
+                    x: top10motivo.map((r) => r.sobrecosto),
+                    y: top10motivo.map((r) => r.motivo),
+                    marker: { color: "#f59e0b" },
+                  }]}
+                  layout={{ margin: { t: 8, r: 16, b: 48, l: 200 } }}
+                  height={320}
+                />
+              </ChartCard>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {nivCosto.length > 0 && (
               <ChartCard title="Costo Total por Nivel AIC">
                 <PlotChart
                   data={[{ type: "bar", x: nivCosto.map((r) => r.nivel), y: nivCosto.map((r) => r.total_costo), marker: { color: "#8b5cf6" } }]}
+                  layout={{ margin: { t: 8, r: 16, b: 48, l: 80 } }}
                   height={300}
                 />
               </ChartCard>
@@ -333,31 +466,43 @@ export default function CostosPage() {
                     { type: "bar", name: "Total Costo", x: nivComp.map((r) => r.nivel), y: nivComp.map((r) => r.total_costo), marker: { color: "#4f8ef7" } },
                     { type: "bar", name: "Sobrecosto",  x: nivComp.map((r) => r.nivel), y: nivComp.map((r) => r.sobrecosto),  marker: { color: "#f43f5e" } },
                   ]}
-                  layout={{ barmode: "group" }}
-                  height={300}
-                />
-              </ChartCard>
-            )}
-            {sobAno.length > 0 && (
-              <ChartCard title="Sobrecosto por Año">
-                <PlotChart
-                  data={[{ type: "bar", x: sobAno.map((r) => r.ano), y: sobAno.map((r) => r.sobrecosto), marker: { color: "#f59e0b" } }]}
-                  height={300}
-                />
-              </ChartCard>
-            )}
-            {liqAno.length > 0 && (
-              <ChartCard title="Liquidaciones por Año">
-                <PlotChart
-                  data={[{ type: "scatter", mode: "lines+markers", x: liqAno.map((r) => r.ano), y: liqAno.map((r) => r.liquidaciones), line: { color: "#06b6d4", width: 2 }, marker: { color: "#06b6d4", size: 7 } }]}
+                  layout={{ barmode: "group", margin: { t: 8, r: 16, b: 48, l: 80 } }}
                   height={300}
                 />
               </ChartCard>
             )}
           </div>
+        </div>
+      )}
 
-          <DataTable rows={tabla} title="Detalle de Liquidaciones" />
-      </div>
+      {/* ── Tab: Tendencia ───────────────────────────────────────────────── */}
+      {activeTab === "tendencia" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          {sobAno.length > 0 && (
+            <ChartCard title="Sobrecosto por Año">
+              <PlotChart
+                data={[{ type: "bar", x: sobAno.map((r) => r.ano), y: sobAno.map((r) => r.sobrecosto), marker: { color: "#f59e0b" } }]}
+                layout={{ xaxis: { title: "Año" }, yaxis: { title: "Sobrecosto" }, margin: { t: 8, r: 16, b: 48, l: 80 } }}
+                height={360}
+              />
+            </ChartCard>
+          )}
+          {liqAno.length > 0 && (
+            <ChartCard title="Liquidaciones por Año">
+              <PlotChart
+                data={[{ type: "scatter", mode: "lines+markers", x: liqAno.map((r) => r.ano), y: liqAno.map((r) => r.liquidaciones), line: { color: "#06b6d4", width: 2 }, marker: { color: "#06b6d4", size: 8 } }]}
+                layout={{ xaxis: { title: "Año" }, yaxis: { title: "Liquidaciones" }, margin: { t: 8, r: 16, b: 48, l: 80 } }}
+                height={360}
+              />
+            </ChartCard>
+          )}
+        </div>
+      )}
+
+      {/* ── Tab: Detalle ─────────────────────────────────────────────────── */}
+      {activeTab === "detalle" && (
+        <DataTable rows={tabla} title="Detalle de Liquidaciones" />
+      )}
     </div>
   );
 }
