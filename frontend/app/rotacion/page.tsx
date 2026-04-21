@@ -38,15 +38,26 @@ function isSalida(r: Row) {
   return sit === "I" && tipo !== "" && tipo !== "NAN";
 }
 
+// Todas las salidas reales (para tasa anual), igual que Streamlit calcular_tasa_anual(dff)
+function isAnySalida(r: Row) {
+  return String(r.SITUACION ?? "").trim().toUpperCase() === "I";
+}
+
 function computeFromRows(allRows: Row[]) {
+  // salidas con tipo conocido → para KPIs de conteo, vol/invol, permanencia, gráficos
   const salidas  = allRows.filter(isSalida);
+  // todas las salidas (incluyendo sin tipo) → para tasa anual, igual a Streamlit
+  const todasSalidas = allRows.filter(isAnySalida);
+
   const hcEnero  = allRows.filter((r) => Number(r.MES_REPORTE) === 1).length;
   const empresas = new Set(allRows.map((r) => r.EMPRESA).filter(Boolean)).size;
   const vol      = salidas.filter((r) => String(r.TIPO_SALIDA ?? "").toUpperCase().includes("VOL")).length;
   const invol    = salidas.filter((r) => String(r.TIPO_SALIDA ?? "").toUpperCase().includes("INV")).length;
-  const permArr  = salidas.map((r) => Number(r.MESES_PERMANENCIA)).filter((v) => !isNaN(v) && v > 0);
+  // Streamlit usa .mean() sin filtrar v > 0
+  const permArr  = salidas.map((r) => Number(r.MESES_PERMANENCIA)).filter((v) => !isNaN(v));
   const permProm = permArr.length ? Math.round((permArr.reduce((a, b) => a + b, 0) / permArr.length) * 10) / 10 : null;
-  const tasa     = hcEnero > 0 ? Math.round(salidas.length / hcEnero * 1000) / 10 : null;
+  // Tasa: numerador = TODAS las salidas (como Streamlit), denominador = HC enero
+  const tasa     = hcEnero > 0 ? Math.round(todasSalidas.length / hcEnero * 1000) / 10 : null;
 
   const kpis = { tasa_anual: tasa, salidas_totales: salidas.length, empresas, voluntarias: vol, involuntarias: invol, permanencia_prom_meses: permProm };
 
