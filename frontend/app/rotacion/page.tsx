@@ -5,9 +5,9 @@ import FileUpload from "@/components/FileUpload";
 import KpiCard from "@/components/KpiCard";
 import PlotChart from "@/components/PlotChart";
 import DataTable from "@/components/DataTable";
-import FilterPanel, { FilterConfig } from "@/components/FilterPanel";
 import { useDashboard } from "@/context/DashboardContext";
-import { Row, groupBy, applyFilters } from "@/lib/filterUtils";
+import { useFilter } from "@/context/FilterContext";
+import { Row, groupBy, applyFilters, FilterConfig } from "@/lib/filterUtils";
 
 type AnyObj = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -124,13 +124,13 @@ function UploadIllustration() {
 
 export default function RotacionPage() {
   const { setRotacionData } = useDashboard();
-  const [data, setData]     = useState<AnyObj | null>(null);
-  const [selected, setSelected] = useState<Record<string, string[]>>({});
+  const { selected, register, reset } = useFilter();
+  const [data, setData] = useState<AnyObj | null>(null);
 
   function handleResult(result: AnyObj) {
     setData(result);
     setRotacionData(result);
-    setSelected({});
+    register(FILTER_CONFIGS, (result.raw_rows as Row[]) ?? []);
   }
 
   if (!data) {
@@ -186,7 +186,7 @@ export default function RotacionPage() {
           <h1 className="page-title">Rotación de Personal</h1>
         </div>
         <button
-          onClick={() => { setData(null); setSelected({}); }}
+          onClick={() => { setData(null); reset(); }}
           className="rounded-lg border border-white/[0.08] bg-[#1a1f2e] px-4 py-2 text-sm text-slate-400 transition hover:border-[#4f8ef7]/40 hover:text-[#4f8ef7]"
         >
           Nueva carga
@@ -202,17 +202,7 @@ export default function RotacionPage() {
         </div>
       )}
 
-      <div className="flex gap-5 items-start">
-        {rawRows.length > 0 && (
-          <FilterPanel
-            configs={FILTER_CONFIGS}
-            rows={rawRows}
-            selected={selected}
-            onChange={(field, values) => setSelected((prev) => ({ ...prev, [field]: values }))}
-          />
-        )}
-
-        <div className="flex-1 min-w-0">
+      <div>
           {/* KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
             <KpiCard title="Tasa Rotación Anual"  value={kpis.tasa_anual != null ? `${kpis.tasa_anual}%` : "—"} accent />
@@ -293,7 +283,6 @@ export default function RotacionPage() {
           </div>
 
           <DataTable rows={tablaRot} title="Motivos de Salida" />
-        </div>
       </div>
     </div>
   );

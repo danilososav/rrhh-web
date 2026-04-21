@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import LayoutShell from "@/components/LayoutShell";
 import { DashboardProvider } from "@/context/DashboardContext";
+import { FilterProvider } from "@/context/FilterContext";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -22,7 +23,9 @@ export default function RootLayout({
     <html lang="es" className={inter.variable}>
       <body className="bg-[#0f1117] text-slate-200 antialiased">
         <DashboardProvider>
-          <LayoutShell>{children}</LayoutShell>
+          <FilterProvider>
+            <LayoutShell>{children}</LayoutShell>
+          </FilterProvider>
         </DashboardProvider>
       </body>
     </html>

@@ -1,12 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { uniqueValues, Row } from "@/lib/filterUtils";
+import { uniqueValues, Row, FilterConfig } from "@/lib/filterUtils";
 
-export type FilterConfig = {
-  label: string;
-  field: string;
-};
+export type { FilterConfig };
 
 type Props = {
   configs: FilterConfig[];

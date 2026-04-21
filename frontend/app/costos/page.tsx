@@ -4,10 +4,10 @@ import { useState, useRef, DragEvent, ChangeEvent } from "react";
 import KpiCard from "@/components/KpiCard";
 import PlotChart from "@/components/PlotChart";
 import DataTable from "@/components/DataTable";
-import FilterPanel, { FilterConfig } from "@/components/FilterPanel";
 import { useDashboard } from "@/context/DashboardContext";
+import { useFilter } from "@/context/FilterContext";
 import { authHeaders } from "@/lib/auth";
-import { Row, sumField, groupBy, fmtGs, applyFilters } from "@/lib/filterUtils";
+import { Row, sumField, groupBy, fmtGs, applyFilters, FilterConfig } from "@/lib/filterUtils";
 
 type AnyObj = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -110,6 +110,7 @@ function UploadIllustration() {
 
 export default function CostosPage() {
   const { setCostosData } = useDashboard();
+  const { selected, register, reset } = useFilter();
   const [data, setData]               = useState<AnyObj | null>(null);
   const [storedFiles, setStoredFiles] = useState<File[]>([]);
   const [hojas, setHojas]             = useState<string[]>([]);
@@ -117,7 +118,6 @@ export default function CostosPage() {
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState<string | null>(null);
   const [dragging, setDragging]       = useState(false);
-  const [selected, setSelected]       = useState<Record<string, string[]>>({});
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function postFiles(files: File[], hoja?: string) {
@@ -141,7 +141,7 @@ export default function CostosPage() {
       setCostosData(json);
       setHojas(json.hojas ?? []);
       setHojaActiva(json.hoja_activa ?? "");
-      setSelected({});
+      register(FILTER_CONFIGS, (json.raw_rows as Row[]) ?? []);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
@@ -173,9 +173,6 @@ export default function CostosPage() {
     if (e.target.files?.length) handleFiles(e.target.files);
   }
 
-  function handleFilterChange(field: string, values: string[]) {
-    setSelected((prev) => ({ ...prev, [field]: values }));
-  }
 
   if (!data && !loading) {
     return (
@@ -247,7 +244,7 @@ export default function CostosPage() {
           <h1 className="page-title">Costos de Liquidaciones</h1>
         </div>
         <button
-          onClick={() => { setData(null); setHojas([]); setHojaActiva(""); setStoredFiles([]); setError(null); setSelected({}); }}
+          onClick={() => { setData(null); setHojas([]); setHojaActiva(""); setStoredFiles([]); setError(null); reset(); }}
           className="rounded-lg border border-white/[0.08] bg-[#1a1f2e] px-4 py-2 text-sm text-slate-400 transition hover:border-[#4f8ef7]/40 hover:text-[#4f8ef7]"
         >
           Nueva carga
@@ -273,18 +270,7 @@ export default function CostosPage() {
         </div>
       )}
 
-      {/* Layout: filtros + contenido */}
-      <div className="flex gap-5 items-start">
-        {rawRows.length > 0 && (
-          <FilterPanel
-            configs={FILTER_CONFIGS}
-            rows={rawRows}
-            selected={selected}
-            onChange={handleFilterChange}
-          />
-        )}
-
-        <div className="flex-1 min-w-0">
+      <div>
           {/* KPIs */}
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
             <KpiCard title="Liquidaciones"   value={kpis.total_liquidaciones} accent />
@@ -371,7 +357,6 @@ export default function CostosPage() {
           </div>
 
           <DataTable rows={tabla} title="Detalle de Liquidaciones" />
-        </div>
       </div>
     </div>
   );

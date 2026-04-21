@@ -5,6 +5,8 @@ import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { clearToken } from "@/lib/auth";
+import { useFilter } from "@/context/FilterContext";
+import { uniqueValues } from "@/lib/filterUtils";
 
 const NAV_ITEMS = [
   {
@@ -75,9 +77,114 @@ const NAV_ITEMS = [
   },
 ];
 
+function FilterGroups() {
+  const { configs, rows, selected, onChange } = useFilter();
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>({});
+
+  if (!configs.length || !rows.length) return null;
+
+  const hasAny = Object.values(selected).some((v) => v.length > 0);
+
+  return (
+    <div className="mt-2 border-t border-white/[0.06] pt-3 px-2.5">
+      {/* Header filtros */}
+      <div className="flex items-center justify-between mb-2.5 px-1">
+        <span className="text-[10px] font-semibold uppercase tracking-widest text-slate-500">
+          Filtros
+        </span>
+        {hasAny && (
+          <button
+            onClick={() => configs.forEach((c) => onChange(c.field, []))}
+            className="text-[10px] text-slate-600 hover:text-[#4f8ef7] transition"
+          >
+            Limpiar todo
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-2.5">
+        {configs.map((cfg) => {
+          const opts = uniqueValues(rows, cfg.field);
+          const sel  = selected[cfg.field] ?? [];
+          const open = !collapsed[cfg.field];
+
+          function toggle(val: string) {
+            onChange(cfg.field, sel.includes(val) ? sel.filter((v) => v !== val) : [...sel, val]);
+          }
+
+          return (
+            <div key={cfg.field}>
+              {/* Group header */}
+              <div className="flex items-center justify-between mb-1 px-1">
+                <span className="text-[10px] font-medium text-slate-500 uppercase tracking-wider">
+                  {cfg.label}
+                </span>
+                <div className="flex items-center gap-1">
+                  {sel.length > 0 && (
+                    <button
+                      onClick={() => onChange(cfg.field, [])}
+                      className="text-slate-600 hover:text-slate-400 transition"
+                    >
+                      <svg viewBox="0 0 12 12" fill="currentColor" className="w-2.5 h-2.5">
+                        <path d="M2.293 2.293a1 1 0 0 1 1.414 0L6 4.586l2.293-2.293a1 1 0 1 1 1.414 1.414L7.414 6l2.293 2.293a1 1 0 0 1-1.414 1.414L6 7.414l-2.293 2.293a1 1 0 0 1-1.414-1.414L4.586 6 2.293 3.707a1 1 0 0 1 0-1.414Z" />
+                      </svg>
+                    </button>
+                  )}
+                  <button
+                    onClick={() => setCollapsed((p) => ({ ...p, [cfg.field]: open }))}
+                    className="text-slate-600 hover:text-slate-400 transition"
+                  >
+                    <svg
+                      viewBox="0 0 12 12"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={1.8}
+                      className={`w-2.5 h-2.5 transition-transform ${open ? "" : "-rotate-90"}`}
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2 4l4 4 4-4" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+
+              {/* Chips */}
+              {open && (
+                <div className="flex flex-wrap gap-1 px-1">
+                  {opts.map((opt) => {
+                    const active = sel.includes(opt);
+                    return (
+                      <button
+                        key={opt}
+                        onClick={() => toggle(opt)}
+                        className={[
+                          "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium transition-all leading-tight",
+                          active
+                            ? "bg-[#4f8ef7]/15 text-[#4f8ef7] border border-[#4f8ef7]/35"
+                            : "bg-white/[0.03] text-slate-500 border border-white/[0.07] hover:text-slate-300 hover:border-white/[0.15]",
+                        ].join(" ")}
+                      >
+                        <span className="max-w-[120px] truncate">{opt}</span>
+                        {active && (
+                          <svg viewBox="0 0 10 10" fill="currentColor" className="w-2 h-2 shrink-0 opacity-70">
+                            <path d="M1.707 1.707a1 1 0 0 1 1.414 0L5 3.586l1.879-1.879a1 1 0 1 1 1.414 1.414L6.414 5l1.879 1.879a1 1 0 0 1-1.414 1.414L5 6.414 3.121 8.293a1 1 0 0 1-1.414-1.414L3.586 5 1.707 3.121a1 1 0 0 1 0-1.414Z" />
+                          </svg>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function Sidebar() {
   const pathname = usePathname();
-  const router = useRouter();
+  const router   = useRouter();
   const [imgError, setImgError] = useState(false);
 
   function handleLogout() {
@@ -86,7 +193,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside className="fixed left-0 top-0 h-screen w-56 flex flex-col bg-[#0d1117] border-r border-white/[0.06] z-40">
+    <aside className="fixed left-0 top-0 h-screen w-72 flex flex-col bg-[#0d1117] border-r border-white/[0.06] z-40">
       {/* Logo */}
       <div className="flex items-center justify-center px-4 py-5 border-b border-white/[0.06]">
         {!imgError ? (
@@ -100,17 +207,14 @@ export default function Sidebar() {
             onError={() => setImgError(true)}
           />
         ) : (
-          <span className="text-lg font-bold tracking-widest text-slate-200 uppercase">
-            Texo
-          </span>
+          <span className="text-lg font-bold tracking-widest text-slate-200 uppercase">Texo</span>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 overflow-y-auto px-2.5 py-4 space-y-0.5">
+      <nav className="px-2.5 py-4 space-y-0.5">
         {NAV_ITEMS.map(({ href, label, icon }) => {
-          const active =
-            href === "/" ? pathname === "/" : pathname.startsWith(href);
+          const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (
             <Link
               key={href}
@@ -128,6 +232,11 @@ export default function Sidebar() {
           );
         })}
       </nav>
+
+      {/* Filters (contextual, scrollable) */}
+      <div className="flex-1 overflow-y-auto">
+        <FilterGroups />
+      </div>
 
       {/* Footer */}
       <div className="px-3 py-3 border-t border-white/[0.06] space-y-2">

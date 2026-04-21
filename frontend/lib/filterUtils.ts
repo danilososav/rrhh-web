@@ -1,6 +1,11 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export type Row = Record<string, any>;
 
+export type FilterConfig = {
+  label: string;
+  field: string;
+};
+
 /** Sumar campo numérico en arreglo de filas */
 export function sumField(rows: Row[], field: string): number {
   return rows.reduce((acc, r) => acc + (Number(r[field]) || 0), 0);
