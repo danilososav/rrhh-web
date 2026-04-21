@@ -33,7 +33,9 @@ const TABS = [
 ];
 
 function isSalida(r: Row) {
-  return String(r.SITUACION ?? "").trim().toUpperCase() === "I";
+  const sit  = String(r.SITUACION ?? "").trim().toUpperCase();
+  const tipo = String(r.TIPO_SALIDA ?? "").trim().toUpperCase();
+  return sit === "I" && tipo !== "" && tipo !== "NAN";
 }
 
 function computeFromRows(allRows: Row[]) {
