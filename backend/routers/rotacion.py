@@ -282,6 +282,8 @@ async def procesar_rotacion(files: List[UploadFile] = File(...)):
         if motivos_u:
             mapa_cat = categorizar_motivos_ia(motivos_u)
             df_sal["MOTIVO_CATEGORIA"] = df_sal["MOTIVO_SALIDA"].map(mapa_cat).fillna("Otro")
+            # Propagar al df principal para que aparezca en raw_rows
+            df.loc[df_sal.index, "MOTIVO_CATEGORIA"] = df_sal["MOTIVO_CATEGORIA"]
 
         cat_counts = df_sal["MOTIVO_CATEGORIA"].value_counts().reset_index()
         cat_counts.columns = ["categoria", "cantidad"]
@@ -360,6 +362,20 @@ async def procesar_rotacion(files: List[UploadFile] = File(...)):
             emp_melt["pregunta"] = emp_melt["pregunta"].map(PREGUNTAS)
             entrevistas["por_empresa"] = _safe_records(emp_melt.dropna())
 
+    # ── raw_rows: columnas para filtrado en frontend ─────────────────────────
+    raw_cols = [c for c in [
+        "EMPRESA", "TIPO_SALIDA", "MOTIVO_SALIDA", "MOTIVO_CATEGORIA",
+        "ANO_REPORTE", "MES_REPORTE", "SITUACION", "MESES_PERMANENCIA",
+    ] if c in df.columns]
+    raw_rows = _safe_records(df[raw_cols].copy())
+
+    # Tabla = raw_rows de salidas con info de motivos
+    tabla_rot_cols = [c for c in [
+        "EMPRESA", "TIPO_SALIDA", "MOTIVO_SALIDA", "MOTIVO_CATEGORIA",
+        "ANO_REPORTE", "MES_REPORTE", "SITUACION", "MESES_PERMANENCIA",
+    ] if c in df_sal.columns]
+    tabla = _safe_records(df_sal[tabla_rot_cols].copy()) if not df_sal.empty else []
+
     # ── Respuesta ─────────────────────────────────────────────────────────────
     result = {
         "kpis":         kpis,
@@ -368,5 +384,7 @@ async def procesar_rotacion(files: List[UploadFile] = File(...)):
         "tendencia":    tendencia,
         "entrevistas":  entrevistas,
         "advertencias": advertencias,
+        "raw_rows":     raw_rows,
+        "tabla":        tabla,
     }
     return JSONResponse(content=jsonable_encoder(result))

@@ -342,6 +342,16 @@ async def procesar_costos(
 
     tabla = _safe_records(df[tabla_cols].copy())
 
+    # ── raw_rows: columnas necesarias para filtrado en frontend ───────────────
+    raw_cols = [c for c in [
+        "AGENCIA", "NIVEL_AIC", "TIPO_SALIDA", "MOTIVO_SALIDA", "ANO_SALIDA",
+        "TOTAL_BRUTO", "NETO", "TOTAL_COSTO", "SOBRECOSTO", "APORTE_PATRONAL",
+        "SALARIO_BASE", "VAC_CAUSADAS", "VAC_PROPORCIONALES", "INDEMNIZACION",
+        "PREAVISO", "AGUINALDO", "GRATIFICACION", "COMISIONES", "HORAS_EXTRAS",
+        "BONIF_FAMILIAR", "IPS_TOTAL",
+    ] if c in df.columns]
+    raw_rows = _safe_records(df[raw_cols].copy())
+
     # ── Respuesta ─────────────────────────────────────────────────────────────
     result = {
         "hojas":           todas_hojas,
@@ -353,5 +363,6 @@ async def procesar_costos(
         "composicion":     comp_global,
         "tendencia":       tendencia,
         "tabla":           tabla,
+        "raw_rows":        raw_rows,
     }
     return JSONResponse(content=jsonable_encoder(result))

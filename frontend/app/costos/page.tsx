@@ -4,20 +4,91 @@ import { useState, useRef, DragEvent, ChangeEvent } from "react";
 import KpiCard from "@/components/KpiCard";
 import PlotChart from "@/components/PlotChart";
 import DataTable from "@/components/DataTable";
+import FilterPanel, { FilterConfig } from "@/components/FilterPanel";
 import { useDashboard } from "@/context/DashboardContext";
 import { authHeaders } from "@/lib/auth";
+import { Row, sumField, groupBy, fmtGs, applyFilters } from "@/lib/filterUtils";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyObj = Record<string, any>;
+type AnyObj = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+const FILTER_CONFIGS: FilterConfig[] = [
+  { label: "Agencia",       field: "AGENCIA" },
+  { label: "Nivel AIC",     field: "NIVEL_AIC" },
+  { label: "Tipo Salida",   field: "TIPO_SALIDA" },
+  { label: "Motivo Salida", field: "MOTIVO_SALIDA" },
+  { label: "Año",           field: "ANO_SALIDA" },
+];
+
+const CONCEPTOS: [string, string][] = [
+  ["Salario Base",       "SALARIO_BASE"],
+  ["Vac. Causadas",      "VAC_CAUSADAS"],
+  ["Vac. Proporcionales","VAC_PROPORCIONALES"],
+  ["Indemnización",      "INDEMNIZACION"],
+  ["Preaviso",           "PREAVISO"],
+  ["Aguinaldo",          "AGUINALDO"],
+  ["Gratificación",      "GRATIFICACION"],
+  ["Comisiones",         "COMISIONES"],
+  ["Horas Extras",       "HORAS_EXTRAS"],
+  ["Bonif. Familiar",    "BONIF_FAMILIAR"],
+  ["IPS Total",          "IPS_TOTAL"],
+  ["Sobrecosto",         "SOBRECOSTO"],
+];
+
+function computeFromRows(rows: Row[]) {
+  const kpis = {
+    total_liquidaciones: rows.length,
+    sobrecosto_fmt:      fmtGs(sumField(rows, "SOBRECOSTO")),
+    total_costo_fmt:     fmtGs(sumField(rows, "TOTAL_COSTO")),
+    total_bruto_fmt:     fmtGs(sumField(rows, "TOTAL_BRUTO")),
+    total_neto_fmt:      fmtGs(sumField(rows, "NETO")),
+    aporte_patronal_fmt: fmtGs(sumField(rows, "APORTE_PATRONAL")),
+  };
+
+  const agMap = groupBy(rows, "AGENCIA");
+  const agSob = Object.entries(agMap)
+    .map(([ag, r]) => ({ AGENCIA: ag, SOBRECOSTO: sumField(r, "SOBRECOSTO") }))
+    .sort((a, b) => a.SOBRECOSTO - b.SOBRECOSTO);
+  const agCant = Object.entries(agMap)
+    .map(([ag, r]) => ({ AGENCIA: ag, cantidad: r.length }))
+    .sort((a, b) => a.cantidad - b.cantidad);
+
+  const tipoMap = groupBy(rows, "TIPO_SALIDA");
+  const tipoData =
+    Object.keys(tipoMap).length > 0
+      ? {
+          labels: Object.keys(tipoMap),
+          values: Object.values(tipoMap).map((r) => sumField(r, "SOBRECOSTO")),
+        }
+      : null;
+
+  const nivMap = groupBy(rows, "NIVEL_AIC");
+  const nivCosto = Object.entries(nivMap).map(([n, r]) => ({ nivel: n, total_costo: sumField(r, "TOTAL_COSTO") }));
+  const nivComp  = Object.entries(nivMap).map(([n, r]) => ({ nivel: n, total_costo: sumField(r, "TOTAL_COSTO"), sobrecosto: sumField(r, "SOBRECOSTO") }));
+
+  const comp: [string, number][] = CONCEPTOS
+    .map(([label, field]) => [label, sumField(rows, field)] as [string, number])
+    .filter(([, v]) => v > 0);
+  const composicion = comp.length > 0
+    ? { labels: comp.map(([l]) => l), values: comp.map(([, v]) => v) }
+    : null;
+
+  const anoMap = groupBy(rows, "ANO_SALIDA");
+  const sobAno = Object.entries(anoMap)
+    .map(([ano, r]) => ({ ano: String(ano), sobrecosto: sumField(r, "SOBRECOSTO") }))
+    .sort((a, b) => a.ano.localeCompare(b.ano));
+  const liqAno = Object.entries(anoMap)
+    .map(([ano, r]) => ({ ano: String(ano), liquidaciones: r.length }))
+    .sort((a, b) => a.ano.localeCompare(b.ano));
+
+  return { kpis, agSob, agCant, tipoData, nivCosto, nivComp, composicion, sobAno, liqAno };
+}
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-5">
-      <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-slate-500">
-        {title}
-      </h3>
+      <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-slate-500">{title}</h3>
       {children}
     </div>
   );
@@ -33,21 +104,20 @@ function UploadIllustration() {
       <ellipse cx="70" cy="36" rx="28" ry="8" fill="#4f8ef7" opacity="0.25" stroke="#4f8ef7" strokeWidth="1" strokeOpacity="0.4" />
       <text x="70" y="40" textAnchor="middle" fontSize="10" fill="#4f8ef7" opacity="0.7" fontWeight="bold">₲</text>
       <path d="M105 28V16M101 20l4-4 4 4" stroke="#4f8ef7" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" opacity="0.8" />
-      <path d="M22 38l8-14 8 14H22Z" fill="#f59e0b" opacity="0.2" stroke="#f59e0b" strokeWidth="1.2" strokeOpacity="0.5" strokeLinejoin="round" />
-      <text x="30" y="36" textAnchor="middle" fontSize="8" fill="#f59e0b" opacity="0.8">!</text>
     </svg>
   );
 }
 
 export default function CostosPage() {
   const { setCostosData } = useDashboard();
-  const [data, setData]             = useState<AnyObj | null>(null);
+  const [data, setData]               = useState<AnyObj | null>(null);
   const [storedFiles, setStoredFiles] = useState<File[]>([]);
-  const [hojas, setHojas]           = useState<string[]>([]);
-  const [hojaActiva, setHojaActiva] = useState<string>("");
-  const [loading, setLoading]       = useState(false);
-  const [error, setError]           = useState<string | null>(null);
-  const [dragging, setDragging]     = useState(false);
+  const [hojas, setHojas]             = useState<string[]>([]);
+  const [hojaActiva, setHojaActiva]   = useState<string>("");
+  const [loading, setLoading]         = useState(false);
+  const [error, setError]             = useState<string | null>(null);
+  const [dragging, setDragging]       = useState(false);
+  const [selected, setSelected]       = useState<Record<string, string[]>>({});
   const inputRef = useRef<HTMLInputElement>(null);
 
   async function postFiles(files: File[], hoja?: string) {
@@ -56,7 +126,6 @@ export default function CostosPage() {
     const form = new FormData();
     files.forEach((f) => form.append("files", f));
     if (hoja) form.append("hoja", hoja);
-
     try {
       const res = await fetch(`${API_URL}/api/costos`, {
         method: "POST",
@@ -72,6 +141,7 @@ export default function CostosPage() {
       setCostosData(json);
       setHojas(json.hojas ?? []);
       setHojaActiva(json.hoja_activa ?? "");
+      setSelected({});
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {
@@ -103,19 +173,19 @@ export default function CostosPage() {
     if (e.target.files?.length) handleFiles(e.target.files);
   }
 
-  // ── Estado: sin datos todavía ────────────────────────────────────────────
+  function handleFilterChange(field: string, values: string[]) {
+    setSelected((prev) => ({ ...prev, [field]: values }));
+  }
+
   if (!data && !loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[72vh] gap-6">
         <UploadIllustration />
         <div className="text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-[#4f8ef7] mb-2">
-            Módulo de Costos
-          </p>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-[#4f8ef7] mb-2">Módulo de Costos</p>
           <h1 className="page-title">Análisis de Costos de Liquidaciones</h1>
           <p className="mt-2 text-sm text-slate-400 max-w-sm">
-            Subí uno o más archivos Excel de liquidaciones para analizar
-            sobrecostos, composición de egresos y tendencias por agencia.
+            Subí uno o más archivos Excel de liquidaciones para analizar sobrecostos, composición de egresos y tendencias por agencia.
           </p>
         </div>
         <div className="w-full max-w-md">
@@ -126,17 +196,13 @@ export default function CostosPage() {
             onDrop={handleDrop}
             className={[
               "relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-6 py-10 cursor-pointer transition-colors select-none",
-              dragging
-                ? "border-[#4f8ef7] bg-[#4f8ef7]/8"
-                : "border-white/[0.08] bg-[#1a1f2e] hover:border-[#4f8ef7]/50 hover:bg-[#1a2240]",
+              dragging ? "border-[#4f8ef7] bg-[#4f8ef7]/8" : "border-white/[0.08] bg-[#1a1f2e] hover:border-[#4f8ef7]/50 hover:bg-[#1a2240]",
             ].join(" ")}
           >
             <svg className={`w-10 h-10 ${dragging ? "text-[#4f8ef7]" : "text-slate-400"}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0-3 3m3-3 3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.338-2.032A4.5 4.5 0 0 1 17.25 19.5H6.75Z" />
             </svg>
-            <p className="text-sm text-slate-300 text-center">
-              Arrastrá los archivos Excel aquí o hacé clic para seleccionar
-            </p>
+            <p className="text-sm text-slate-300 text-center">Arrastrá los archivos Excel aquí o hacé clic para seleccionar</p>
             <p className="text-xs text-slate-500">Formatos: .xlsx .xls</p>
             <input ref={inputRef} type="file" multiple accept=".xlsx,.xls" className="hidden" onChange={handleChange} />
           </div>
@@ -153,7 +219,6 @@ export default function CostosPage() {
     );
   }
 
-  // ── Estado: cargando (primera carga o cambio de hoja) ───────────────────
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[72vh] gap-4">
@@ -166,43 +231,32 @@ export default function CostosPage() {
     );
   }
 
-  // ── Dashboard ────────────────────────────────────────────────────────────
-  const kpis: AnyObj      = (data!.kpis            as AnyObj) ?? {};
-  const porAg: AnyObj     = (data!.por_agencia      as AnyObj) ?? {};
-  const porTipo: AnyObj   = (data!.por_tipo_salida  as AnyObj) ?? {};
-  const porNivel: AnyObj  = (data!.por_nivel        as AnyObj) ?? {};
-  const comp: AnyObj      = (data!.composicion      as AnyObj) ?? {};
-  const tendencia: AnyObj = (data!.tendencia        as AnyObj) ?? {};
-  const tabla: AnyObj[]   = (data!.tabla            as AnyObj[]) ?? [];
-
-  const agSob: AnyObj[]    = porAg.sobrecosto_total ?? [];
-  const agCant: AnyObj[]   = porAg.cantidad ?? [];
-  const tipoData           = porTipo.por_tipo;
-  const nivCosto: AnyObj[] = porNivel.costo_total ?? [];
-  const nivComp: AnyObj[]  = porNivel.comparativo ?? [];
-  const sobAno: AnyObj[]   = tendencia.sobrecosto_por_ano ?? [];
-  const liqAno: AnyObj[]   = tendencia.liquidaciones_por_ano ?? [];
+  // ── Dashboard ──────────────────────────────────────────────────────────────
+  const rawRows: Row[] = (data!.raw_rows as Row[]) ?? [];
+  const filteredRows   = applyFilters(rawRows, selected);
+  const { kpis, agSob, agCant, tipoData, nivCosto, nivComp, composicion, sobAno, liqAno } =
+    computeFromRows(filteredRows);
+  const tabla: AnyObj[] = (data!.tabla as AnyObj[]) ?? [];
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-7">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-[#4f8ef7] mb-1">
-            Módulo de Costos
-          </p>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-[#4f8ef7] mb-1">Módulo de Costos</p>
           <h1 className="page-title">Costos de Liquidaciones</h1>
         </div>
         <button
-          onClick={() => { setData(null); setHojas([]); setHojaActiva(""); setStoredFiles([]); setError(null); }}
+          onClick={() => { setData(null); setHojas([]); setHojaActiva(""); setStoredFiles([]); setError(null); setSelected({}); }}
           className="rounded-lg border border-white/[0.08] bg-[#1a1f2e] px-4 py-2 text-sm text-slate-400 transition hover:border-[#4f8ef7]/40 hover:text-[#4f8ef7]"
         >
           Nueva carga
         </button>
       </div>
 
-      {/* Selector de hoja — solo cuando hay más de una */}
+      {/* Selector de hoja */}
       {hojas.length > 1 && (
-        <div className="mb-6 flex flex-wrap items-center gap-2">
+        <div className="mb-5 flex flex-wrap items-center gap-2">
           <span className="text-xs text-slate-500 mr-1">Hoja:</span>
           {hojas.map((h) => (
             <button
@@ -210,9 +264,7 @@ export default function CostosPage() {
               onClick={() => handleHojaChange(h)}
               className={[
                 "rounded-md px-3 py-1 text-xs font-medium transition",
-                h === hojaActiva
-                  ? "bg-[#4f8ef7] text-white"
-                  : "border border-white/[0.08] bg-[#1a1f2e] text-slate-400 hover:border-[#4f8ef7]/40 hover:text-[#4f8ef7]",
+                h === hojaActiva ? "bg-[#4f8ef7] text-white" : "border border-white/[0.08] bg-[#1a1f2e] text-slate-400 hover:border-[#4f8ef7]/40 hover:text-[#4f8ef7]",
               ].join(" ")}
             >
               {h}
@@ -221,100 +273,106 @@ export default function CostosPage() {
         </div>
       )}
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
-        <KpiCard title="Liquidaciones" value={kpis.total_liquidaciones} accent />
-        <KpiCard title="Sobrecosto" value={kpis.sobrecosto_fmt ?? "—"} />
-        <KpiCard title="Costo Total" value={kpis.total_costo_fmt ?? "—"} />
-        <KpiCard title="Total Bruto" value={kpis.total_bruto_fmt ?? "—"} />
-        <KpiCard title="Neto" value={kpis.total_neto_fmt ?? "—"} />
-        <KpiCard title="Aporte Patronal" value={kpis.aporte_patronal_fmt ?? "—"} />
+      {/* Layout: filtros + contenido */}
+      <div className="flex gap-5 items-start">
+        {rawRows.length > 0 && (
+          <FilterPanel
+            configs={FILTER_CONFIGS}
+            rows={rawRows}
+            selected={selected}
+            onChange={handleFilterChange}
+          />
+        )}
+
+        <div className="flex-1 min-w-0">
+          {/* KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+            <KpiCard title="Liquidaciones"   value={kpis.total_liquidaciones} accent />
+            <KpiCard title="Sobrecosto"      value={kpis.sobrecosto_fmt} />
+            <KpiCard title="Costo Total"     value={kpis.total_costo_fmt} />
+            <KpiCard title="Total Bruto"     value={kpis.total_bruto_fmt} />
+            <KpiCard title="Neto"            value={kpis.total_neto_fmt} />
+            <KpiCard title="Aporte Patronal" value={kpis.aporte_patronal_fmt} />
+          </div>
+
+          {/* Charts */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            {agSob.length > 0 && (
+              <ChartCard title="Sobrecosto por Agencia">
+                <PlotChart
+                  data={[{ type: "bar", orientation: "h", x: agSob.map((r) => r.SOBRECOSTO), y: agSob.map((r) => r.AGENCIA), marker: { color: "#f43f5e" } }]}
+                  layout={{ margin: { t: 16, r: 16, b: 36, l: 110 } }}
+                  height={300}
+                />
+              </ChartCard>
+            )}
+            {agCant.length > 0 && (
+              <ChartCard title="Liquidaciones por Agencia">
+                <PlotChart
+                  data={[{ type: "bar", x: agCant.map((r) => r.AGENCIA), y: agCant.map((r) => r.cantidad), marker: { color: "#4f8ef7" } }]}
+                  height={300}
+                />
+              </ChartCard>
+            )}
+            {composicion && (
+              <ChartCard title="Composición Global de Costos">
+                <PlotChart
+                  data={[{ type: "pie", labels: composicion.labels, values: composicion.values, textinfo: "label+percent", textfont: { color: "#cbd5e1" } }]}
+                  layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
+                  height={320}
+                />
+              </ChartCard>
+            )}
+            {tipoData && (
+              <ChartCard title="Sobrecosto por Tipo de Salida">
+                <PlotChart
+                  data={[{ type: "pie", labels: tipoData.labels, values: tipoData.values, hole: 0.4, textinfo: "label+percent", textfont: { color: "#cbd5e1" } }]}
+                  layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
+                  height={300}
+                />
+              </ChartCard>
+            )}
+            {nivCosto.length > 0 && (
+              <ChartCard title="Costo Total por Nivel AIC">
+                <PlotChart
+                  data={[{ type: "bar", x: nivCosto.map((r) => r.nivel), y: nivCosto.map((r) => r.total_costo), marker: { color: "#8b5cf6" } }]}
+                  height={300}
+                />
+              </ChartCard>
+            )}
+            {nivComp.length > 0 && (
+              <ChartCard title="Sobrecosto vs Costo Total por Nivel">
+                <PlotChart
+                  data={[
+                    { type: "bar", name: "Total Costo", x: nivComp.map((r) => r.nivel), y: nivComp.map((r) => r.total_costo), marker: { color: "#4f8ef7" } },
+                    { type: "bar", name: "Sobrecosto",  x: nivComp.map((r) => r.nivel), y: nivComp.map((r) => r.sobrecosto),  marker: { color: "#f43f5e" } },
+                  ]}
+                  layout={{ barmode: "group" }}
+                  height={300}
+                />
+              </ChartCard>
+            )}
+            {sobAno.length > 0 && (
+              <ChartCard title="Sobrecosto por Año">
+                <PlotChart
+                  data={[{ type: "bar", x: sobAno.map((r) => r.ano), y: sobAno.map((r) => r.sobrecosto), marker: { color: "#f59e0b" } }]}
+                  height={300}
+                />
+              </ChartCard>
+            )}
+            {liqAno.length > 0 && (
+              <ChartCard title="Liquidaciones por Año">
+                <PlotChart
+                  data={[{ type: "scatter", mode: "lines+markers", x: liqAno.map((r) => r.ano), y: liqAno.map((r) => r.liquidaciones), line: { color: "#06b6d4", width: 2 }, marker: { color: "#06b6d4", size: 7 } }]}
+                  height={300}
+                />
+              </ChartCard>
+            )}
+          </div>
+
+          <DataTable rows={tabla} title="Detalle de Liquidaciones" />
+        </div>
       </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-        {agSob.length > 0 && (
-          <ChartCard title="Sobrecosto por Agencia">
-            <PlotChart
-              data={[{ type: "bar", orientation: "h", x: agSob.map((r) => Number(r.SOBRECOSTO ?? 0)), y: agSob.map((r) => r.AGENCIA), marker: { color: "#f43f5e" } }]}
-              layout={{ margin: { t: 16, r: 16, b: 36, l: 110 } }}
-              height={300}
-            />
-          </ChartCard>
-        )}
-
-        {agCant.length > 0 && (
-          <ChartCard title="Liquidaciones por Agencia">
-            <PlotChart
-              data={[{ type: "bar", x: agCant.map((r) => r.AGENCIA), y: agCant.map((r) => Number(r.cantidad ?? 0)), marker: { color: "#4f8ef7" } }]}
-              height={300}
-            />
-          </ChartCard>
-        )}
-
-        {comp.labels && (
-          <ChartCard title="Composición Global de Costos">
-            <PlotChart
-              data={[{ type: "pie", labels: comp.labels, values: comp.values, textinfo: "label+percent", textfont: { color: "#cbd5e1" } }]}
-              layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
-              height={320}
-            />
-          </ChartCard>
-        )}
-
-        {tipoData && (
-          <ChartCard title="Sobrecosto por Tipo de Salida">
-            <PlotChart
-              data={[{ type: "pie", labels: tipoData.labels, values: tipoData.values, hole: 0.4, textinfo: "label+percent", textfont: { color: "#cbd5e1" } }]}
-              layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
-              height={300}
-            />
-          </ChartCard>
-        )}
-
-        {nivCosto.length > 0 && (
-          <ChartCard title="Costo Total por Nivel AIC">
-            <PlotChart
-              data={[{ type: "bar", x: nivCosto.map((r) => r.nivel), y: nivCosto.map((r) => Number(r.total_costo ?? 0)), marker: { color: "#8b5cf6" } }]}
-              height={300}
-            />
-          </ChartCard>
-        )}
-
-        {nivComp.length > 0 && (
-          <ChartCard title="Sobrecosto vs Costo Total por Nivel">
-            <PlotChart
-              data={[
-                { type: "bar", name: "Total Costo", x: nivComp.map((r) => r.nivel), y: nivComp.map((r) => Number(r.total_costo ?? 0)), marker: { color: "#4f8ef7" } },
-                { type: "bar", name: "Sobrecosto",  x: nivComp.map((r) => r.nivel), y: nivComp.map((r) => Number(r.sobrecosto  ?? 0)), marker: { color: "#f43f5e" } },
-              ]}
-              layout={{ barmode: "group" }}
-              height={300}
-            />
-          </ChartCard>
-        )}
-
-        {sobAno.length > 0 && (
-          <ChartCard title="Sobrecosto por Año">
-            <PlotChart
-              data={[{ type: "bar", x: sobAno.map((r) => String(r.ano)), y: sobAno.map((r) => Number(r.sobrecosto ?? 0)), marker: { color: "#f59e0b" } }]}
-              height={300}
-            />
-          </ChartCard>
-        )}
-
-        {liqAno.length > 0 && (
-          <ChartCard title="Liquidaciones por Año">
-            <PlotChart
-              data={[{ type: "scatter", mode: "lines+markers", x: liqAno.map((r) => String(r.ano)), y: liqAno.map((r) => Number(r.liquidaciones ?? 0)), line: { color: "#06b6d4", width: 2 }, marker: { color: "#06b6d4", size: 7 } }]}
-              height={300}
-            />
-          </ChartCard>
-        )}
-      </div>
-
-      <DataTable rows={tabla} title="Detalle de Liquidaciones" />
     </div>
   );
 }

@@ -5,22 +5,116 @@ import FileUpload from "@/components/FileUpload";
 import KpiCard from "@/components/KpiCard";
 import PlotChart from "@/components/PlotChart";
 import DataTable from "@/components/DataTable";
+import FilterPanel, { FilterConfig } from "@/components/FilterPanel";
 import { useDashboard } from "@/context/DashboardContext";
+import { Row, sumField, groupBy, applyFilters } from "@/lib/filterUtils";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type AnyObj = Record<string, any>;
+type AnyObj = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+const FILTER_CONFIGS: FilterConfig[] = [
+  { label: "Empresa",    field: "EMPRESA" },
+  { label: "Nivel AIC",  field: "NIVEL_AIC" },
+  { label: "Género",     field: "SEXO" },
+  { label: "Generación", field: "GENERACION" },
+  { label: "Lider",      field: "LIDER" },
+];
 
 function fmt(n: number | null | undefined): string {
-  if (n === null || n === undefined) return "—";
+  if (n == null) return "—";
   return n.toLocaleString("es-PY", { maximumFractionDigits: 0 });
+}
+
+function computeFromRows(rows: Row[]) {
+  const total      = rows.length;
+  const empresas   = new Set(rows.map((r) => r.EMPRESA).filter(Boolean)).size;
+  const lideres    = rows.filter((r) => r.LIDER === "SI").length;
+  const mujeres    = rows.filter((r) => r.SEXO === "F").length;
+  const esParaguay = (r: Row) => String(r.NACIONALIDAD ?? "").toUpperCase().includes("PARAGUAY");
+  const extranjeros = rows.filter((r) => !esParaguay(r) && r.NACIONALIDAD).length;
+  const salRows    = rows.filter((r) => r.SALARIO != null);
+  const salProm    = salRows.length ? sumField(salRows, "SALARIO") / salRows.length : null;
+
+  const kpis = {
+    total,
+    empresas,
+    lideres,
+    lider_pct:       total ? Math.round(lideres / total * 1000) / 10 : 0,
+    pct_mujeres:     total ? Math.round(mujeres / total * 1000) / 10 : 0,
+    pct_extranjeros: total ? Math.round(extranjeros / total * 1000) / 10 : 0,
+    salario_promedio: salProm ? Math.round(salProm) : null,
+  };
+
+  // Género
+  const genero = {
+    labels: ["Mujeres", "Hombres"],
+    values: [mujeres, rows.filter((r) => r.SEXO === "M").length],
+    por_empresa: (() => {
+      const m = groupBy(rows, "EMPRESA");
+      return Object.entries(m).map(([emp, r]) => ({
+        EMPRESA: emp,
+        Mujeres: r.filter((x) => x.SEXO === "F").length,
+        Hombres: r.filter((x) => x.SEXO === "M").length,
+      }));
+    })(),
+  };
+
+  // Generaciones
+  const genDist = (() => {
+    const orden = ["Baby Boomers", "Generación X", "Millennials", "Generación Z", "Otra"];
+    const m = groupBy(rows, "GENERACION");
+    return orden.filter((g) => m[g]).map((g) => ({ Generacion: g, Cantidad: m[g].length }));
+  })();
+
+  // Liderazgo
+  const lidRows  = rows.filter((r) => r.LIDER === "SI");
+  const lidFem   = lidRows.filter((r) => r.SEXO === "F").length;
+  const lidMasc  = lidRows.filter((r) => r.SEXO === "M").length;
+  const lidEmp   = (() => {
+    const allEmp = groupBy(rows, "EMPRESA");
+    const lidByEmp = groupBy(lidRows, "EMPRESA");
+    return Object.entries(allEmp).map(([emp, r]) => ({
+      EMPRESA: emp,
+      pct_lideres: Math.round((lidByEmp[emp]?.length ?? 0) / r.length * 1000) / 10,
+    }));
+  })();
+
+  // Brecha salarial
+  const salEmp = (() => {
+    const m = groupBy(salRows, "EMPRESA");
+    return Object.entries(m).map(([emp, r]) => ({
+      empresa: emp,
+      promedio: Math.round(sumField(r, "SALARIO") / r.length),
+    }));
+  })();
+
+  const brechaNivel = (() => {
+    const m = groupBy(salRows, "NIVEL_AIC");
+    return Object.entries(m).map(([niv, r]) => {
+      const f = r.filter((x) => x.SEXO === "F");
+      const h = r.filter((x) => x.SEXO === "M");
+      return {
+        nivel:        niv,
+        prom_mujeres: f.length ? Math.round(sumField(f, "SALARIO") / f.length) : 0,
+        prom_hombres: h.length ? Math.round(sumField(h, "SALARIO") / h.length) : 0,
+      };
+    });
+  })();
+
+  // Nacionalidad
+  const nac = {
+    resumen: {
+      labels: ["Paraguayos", "Extranjeros"],
+      values: [rows.filter(esParaguay).length, extranjeros],
+    },
+  };
+
+  return { kpis, genero, genDist, lidFem, lidMasc, lidEmp, salEmp, brechaNivel, nac };
 }
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-5">
-      <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-slate-500">
-        {title}
-      </h3>
+      <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-slate-500">{title}</h3>
       {children}
     </div>
   );
@@ -46,11 +140,13 @@ function UploadIllustration() {
 
 export default function NominaPage() {
   const { setNominaData } = useDashboard();
-  const [data, setData] = useState<AnyObj | null>(null);
+  const [data, setData]     = useState<AnyObj | null>(null);
+  const [selected, setSelected] = useState<Record<string, string[]>>({});
 
   function handleResult(result: AnyObj) {
     setData(result);
     setNominaData(result);
+    setSelected({});
   }
 
   if (!data) {
@@ -58,13 +154,10 @@ export default function NominaPage() {
       <div className="flex flex-col items-center justify-center min-h-[72vh] gap-6">
         <UploadIllustration />
         <div className="text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-[#4f8ef7] mb-2">
-            Módulo de Nómina
-          </p>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-[#4f8ef7] mb-2">Módulo de Nómina</p>
           <h1 className="page-title">Análisis de Colaboradores</h1>
           <p className="mt-2 text-sm text-slate-400 max-w-sm">
-            Subí el Excel de nómina para analizar headcount, géneros,
-            generaciones y brecha salarial por empresa.
+            Subí el Excel de nómina para analizar headcount, géneros, generaciones y brecha salarial por empresa.
           </p>
         </div>
         <div className="w-full max-w-md">
@@ -74,143 +167,133 @@ export default function NominaPage() {
     );
   }
 
-  const kpis: AnyObj      = (data.kpis            as AnyObj) ?? {};
-  const genero: AnyObj    = (data.genero           as AnyObj) ?? {};
-  const liderazgo: AnyObj = (data.liderazgo        as AnyObj) ?? {};
-  const nac: AnyObj       = (data.nacionalidad     as AnyObj) ?? {};
-  const gens: AnyObj      = (data.generaciones     as AnyObj) ?? {};
-  const brecha: AnyObj    = (data.brecha_salarial  as AnyObj) ?? {};
-  const tabla: AnyObj[]   = (data.tabla            as AnyObj[]) ?? [];
-
-  const gpeRows: AnyObj[]     = genero.por_empresa ?? [];
-  const lidEmp: AnyObj[]      = liderazgo.pct_por_empresa ?? [];
-  const salEmp: AnyObj[]      = brecha.por_empresa ?? [];
-  const brechaNivel: AnyObj[] = brecha.por_nivel_sexo ?? [];
-  const genDist: AnyObj[]     = gens.distribucion ?? [];
+  const rawRows: Row[] = (data.tabla as Row[]) ?? [];
+  const filteredRows   = applyFilters(rawRows, selected);
+  const { kpis, genero, genDist, lidFem, lidMasc, lidEmp, salEmp, brechaNivel, nac } =
+    computeFromRows(filteredRows);
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-7">
+      <div className="flex items-center justify-between mb-5">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-[#4f8ef7] mb-1">
-            Módulo de Nómina
-          </p>
+          <p className="text-[11px] font-semibold uppercase tracking-widest text-[#4f8ef7] mb-1">Módulo de Nómina</p>
           <h1 className="page-title">Análisis de Colaboradores</h1>
         </div>
         <button
-          onClick={() => setData(null)}
+          onClick={() => { setData(null); setSelected({}); }}
           className="rounded-lg border border-white/[0.08] bg-[#1a1f2e] px-4 py-2 text-sm text-slate-400 transition hover:border-[#4f8ef7]/40 hover:text-[#4f8ef7]"
         >
           Nueva carga
         </button>
       </div>
 
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-8">
-        <KpiCard title="Colaboradores" value={fmt(kpis.total)} accent />
-        <KpiCard title="Empresas" value={fmt(kpis.empresas)} />
-        <KpiCard
-          title="Líderes"
-          value={kpis.lider_pct != null ? `${kpis.lider_pct}%` : "—"}
-          subtitle={`${fmt(kpis.lideres)} personas`}
-        />
-        <KpiCard title="Mujeres" value={kpis.pct_mujeres != null ? `${kpis.pct_mujeres}%` : "—"} />
-        <KpiCard title="Extranjeros" value={kpis.pct_extranjeros != null ? `${kpis.pct_extranjeros}%` : "—"} />
-        <KpiCard
-          title="Salario Prom."
-          value={kpis.salario_promedio != null ? `₲ ${fmt(kpis.salario_promedio)}` : "—"}
-        />
+      <div className="flex gap-5 items-start">
+        {rawRows.length > 0 && (
+          <FilterPanel
+            configs={FILTER_CONFIGS}
+            rows={rawRows}
+            selected={selected}
+            onChange={(field, values) => setSelected((prev) => ({ ...prev, [field]: values }))}
+          />
+        )}
+
+        <div className="flex-1 min-w-0">
+          {/* KPIs */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+            <KpiCard title="Colaboradores"  value={fmt(kpis.total)} accent />
+            <KpiCard title="Empresas"       value={fmt(kpis.empresas)} />
+            <KpiCard title="Líderes"        value={`${kpis.lider_pct}%`} subtitle={`${fmt(kpis.lideres)} personas`} />
+            <KpiCard title="Mujeres"        value={`${kpis.pct_mujeres}%`} />
+            <KpiCard title="Extranjeros"    value={`${kpis.pct_extranjeros}%`} />
+            <KpiCard title="Salario Prom."  value={kpis.salario_promedio != null ? `₲ ${fmt(kpis.salario_promedio)}` : "—"} />
+          </div>
+
+          {/* Charts */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <ChartCard title="Distribución por Género">
+              <PlotChart
+                data={[{ type: "pie", labels: genero.labels, values: genero.values, hole: 0.45, textinfo: "label+percent", textfont: { color: "#cbd5e1" } }]}
+                layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
+                height={280}
+              />
+            </ChartCard>
+
+            {genero.por_empresa.length > 0 && (
+              <ChartCard title="Género por Empresa">
+                <PlotChart
+                  data={[
+                    { type: "bar", name: "Mujeres", x: genero.por_empresa.map((r) => r.EMPRESA), y: genero.por_empresa.map((r) => r.Mujeres), marker: { color: "#8b5cf6" } },
+                    { type: "bar", name: "Hombres", x: genero.por_empresa.map((r) => r.EMPRESA), y: genero.por_empresa.map((r) => r.Hombres), marker: { color: "#4f8ef7" } },
+                  ]}
+                  layout={{ barmode: "group" }}
+                  height={280}
+                />
+              </ChartCard>
+            )}
+
+            {nac.resumen.values[1] >= 0 && (
+              <ChartCard title="Nacionalidad">
+                <PlotChart
+                  data={[{ type: "pie", labels: nac.resumen.labels, values: nac.resumen.values, hole: 0.45, textinfo: "label+percent", textfont: { color: "#cbd5e1" } }]}
+                  layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
+                  height={280}
+                />
+              </ChartCard>
+            )}
+
+            {genDist.length > 0 && (
+              <ChartCard title="Generaciones">
+                <PlotChart
+                  data={[{ type: "bar", x: genDist.map((r) => r.Generacion), y: genDist.map((r) => r.Cantidad), marker: { color: "#06b6d4" } }]}
+                  height={280}
+                />
+              </ChartCard>
+            )}
+
+            <ChartCard title="Líderes por Género">
+              <PlotChart
+                data={[{ type: "pie", labels: ["Mujeres", "Hombres"], values: [lidFem, lidMasc], hole: 0.45, textinfo: "label+percent", textfont: { color: "#cbd5e1" } }]}
+                layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
+                height={280}
+              />
+            </ChartCard>
+
+            {lidEmp.length > 0 && (
+              <ChartCard title="% Líderes por Empresa">
+                <PlotChart
+                  data={[{ type: "bar", x: lidEmp.map((r) => r.EMPRESA), y: lidEmp.map((r) => r.pct_lideres), marker: { color: "#f59e0b" } }]}
+                  layout={{ yaxis: { ticksuffix: "%" } }}
+                  height={280}
+                />
+              </ChartCard>
+            )}
+
+            {salEmp.length > 0 && (
+              <ChartCard title="Salario Promedio por Empresa">
+                <PlotChart
+                  data={[{ type: "bar", x: salEmp.map((r) => r.empresa), y: salEmp.map((r) => r.promedio), marker: { color: "#10b981" } }]}
+                  height={280}
+                />
+              </ChartCard>
+            )}
+
+            {brechaNivel.length > 0 && (
+              <ChartCard title="Brecha Salarial por Nivel">
+                <PlotChart
+                  data={[
+                    { type: "bar", name: "Mujeres", x: brechaNivel.map((r) => r.nivel), y: brechaNivel.map((r) => r.prom_mujeres), marker: { color: "#8b5cf6" } },
+                    { type: "bar", name: "Hombres", x: brechaNivel.map((r) => r.nivel), y: brechaNivel.map((r) => r.prom_hombres), marker: { color: "#4f8ef7" } },
+                  ]}
+                  layout={{ barmode: "group" }}
+                  height={280}
+                />
+              </ChartCard>
+            )}
+          </div>
+
+          <DataTable rows={rawRows} title="Detalle de Nómina" />
+        </div>
       </div>
-
-      {/* Charts */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-        {genero.labels && (
-          <ChartCard title="Distribución por Género">
-            <PlotChart
-              data={[{ type: "pie", labels: genero.labels, values: genero.values, hole: 0.45, textinfo: "label+percent", textfont: { color: "#cbd5e1" } }]}
-              layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
-              height={280}
-            />
-          </ChartCard>
-        )}
-
-        {gpeRows.length > 0 && (
-          <ChartCard title="Género por Empresa">
-            <PlotChart
-              data={[
-                { type: "bar", name: "Mujeres", x: gpeRows.map((r) => r.EMPRESA), y: gpeRows.map((r) => Number(r.Mujeres ?? 0)), marker: { color: "#8b5cf6" } },
-                { type: "bar", name: "Hombres",  x: gpeRows.map((r) => r.EMPRESA), y: gpeRows.map((r) => Number(r.Hombres  ?? 0)), marker: { color: "#4f8ef7" } },
-              ]}
-              layout={{ barmode: "group" }}
-              height={280}
-            />
-          </ChartCard>
-        )}
-
-        {nac.resumen && (
-          <ChartCard title="Nacionalidad">
-            <PlotChart
-              data={[{ type: "pie", labels: nac.resumen.labels, values: nac.resumen.values, hole: 0.45, textinfo: "label+percent", textfont: { color: "#cbd5e1" } }]}
-              layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
-              height={280}
-            />
-          </ChartCard>
-        )}
-
-        {genDist.length > 0 && (
-          <ChartCard title="Generaciones">
-            <PlotChart
-              data={[{ type: "bar", x: genDist.map((r) => r.Generacion), y: genDist.map((r) => Number(r.Cantidad ?? 0)), marker: { color: "#06b6d4" } }]}
-              height={280}
-            />
-          </ChartCard>
-        )}
-
-        {liderazgo.por_sexo && (
-          <ChartCard title="Líderes por Género">
-            <PlotChart
-              data={[{ type: "pie", labels: liderazgo.por_sexo.labels, values: liderazgo.por_sexo.values, hole: 0.45, textinfo: "label+percent", textfont: { color: "#cbd5e1" } }]}
-              layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
-              height={280}
-            />
-          </ChartCard>
-        )}
-
-        {lidEmp.length > 0 && (
-          <ChartCard title="% Líderes por Empresa">
-            <PlotChart
-              data={[{ type: "bar", x: lidEmp.map((r) => r.EMPRESA), y: lidEmp.map((r) => Number(r.pct_lideres ?? 0)), marker: { color: "#f59e0b" } }]}
-              layout={{ yaxis: { ticksuffix: "%" } }}
-              height={280}
-            />
-          </ChartCard>
-        )}
-
-        {salEmp.length > 0 && (
-          <ChartCard title="Salario Promedio por Empresa">
-            <PlotChart
-              data={[{ type: "bar", x: salEmp.map((r) => r.empresa), y: salEmp.map((r) => Number(r.promedio ?? 0)), marker: { color: "#10b981" } }]}
-              height={280}
-            />
-          </ChartCard>
-        )}
-
-        {brechaNivel.length > 0 && (
-          <ChartCard title="Brecha Salarial por Nivel">
-            <PlotChart
-              data={[
-                { type: "bar", name: "Mujeres", x: brechaNivel.map((r) => r.nivel), y: brechaNivel.map((r) => Number(r.prom_mujeres ?? 0)), marker: { color: "#8b5cf6" } },
-                { type: "bar", name: "Hombres",  x: brechaNivel.map((r) => r.nivel), y: brechaNivel.map((r) => Number(r.prom_hombres ?? 0)), marker: { color: "#4f8ef7" } },
-              ]}
-              layout={{ barmode: "group" }}
-              height={280}
-            />
-          </ChartCard>
-        )}
-      </div>
-
-      <DataTable rows={tabla} title="Detalle de Nómina" />
     </div>
   );
 }
