@@ -349,7 +349,7 @@ export default function CostosPage() {
                       showscale: false,
                     },
                   }]}
-                  layout={{ xaxis: { title: "SOBRECOSTO" }, yaxis: { title: "AGENCIA" }, margin: { t: 8, r: 16, b: 48, l: 100 } }}
+                  layout={{ xaxis: { title: { text: "SOBRECOSTO" } }, yaxis: { title: { text: "AGENCIA" } }, margin: { t: 8, r: 16, b: 48, l: 100 } }}
                   height={340}
                 />
               </ChartCard>
@@ -363,7 +363,7 @@ export default function CostosPage() {
                     y: agCant.map((r) => r.AGENCIA),
                     marker: { color: agColors(agCant.length) },
                   }]}
-                  layout={{ xaxis: { title: "Cantidad" }, yaxis: { title: "AGENCIA" }, margin: { t: 8, r: 16, b: 48, l: 100 } }}
+                  layout={{ xaxis: { title: { text: "Cantidad" } }, yaxis: { title: { text: "AGENCIA" } }, margin: { t: 8, r: 16, b: 48, l: 100 } }}
                   height={340}
                 />
               </ChartCard>
@@ -379,7 +379,7 @@ export default function CostosPage() {
                   y: agProm.map((r) => r.prom),
                   marker: { color: agColors(agProm.length) },
                 }]}
-                layout={{ xaxis: { title: "Agencia" }, yaxis: { title: "Sobrecosto Promedio" }, margin: { t: 8, r: 16, b: 60, l: 80 } }}
+                layout={{ xaxis: { title: { text: "Agencia" } }, yaxis: { title: { text: "Sobrecosto Promedio" } }, margin: { t: 8, r: 16, b: 60, l: 80 } }}
                 height={320}
               />
             </ChartCard>
@@ -482,7 +482,7 @@ export default function CostosPage() {
             <ChartCard title="Sobrecosto por Año">
               <PlotChart
                 data={[{ type: "bar", x: sobAno.map((r) => r.ano), y: sobAno.map((r) => r.sobrecosto), marker: { color: "#f59e0b" } }]}
-                layout={{ xaxis: { title: "Año" }, yaxis: { title: "Sobrecosto" }, margin: { t: 8, r: 16, b: 48, l: 80 } }}
+                layout={{ xaxis: { title: { text: "Año" } }, yaxis: { title: { text: "Sobrecosto" } }, margin: { t: 8, r: 16, b: 48, l: 80 } }}
                 height={360}
               />
             </ChartCard>
@@ -491,7 +491,7 @@ export default function CostosPage() {
             <ChartCard title="Liquidaciones por Año">
               <PlotChart
                 data={[{ type: "scatter", mode: "lines+markers", x: liqAno.map((r) => r.ano), y: liqAno.map((r) => r.liquidaciones), line: { color: "#06b6d4", width: 2 }, marker: { color: "#06b6d4", size: 8 } }]}
-                layout={{ xaxis: { title: "Año" }, yaxis: { title: "Liquidaciones" }, margin: { t: 8, r: 16, b: 48, l: 80 } }}
+                layout={{ xaxis: { title: { text: "Año" } }, yaxis: { title: { text: "Liquidaciones" } }, margin: { t: 8, r: 16, b: 48, l: 80 } }}
                 height={360}
               />
             </ChartCard>
