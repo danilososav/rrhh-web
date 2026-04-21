@@ -240,8 +240,8 @@ export default function RotacionPage() {
   }));
 
   // Traces stacked tipo salida por empresa
-  const tiposUnicos = [...new Set(tipoEmp.map((r) => r.tipo))];
-  const empresasUniq = [...new Set(tipoEmp.map((r) => r.empresa))];
+  const tiposUnicos = Array.from(new Set(tipoEmp.map((r) => r.tipo)));
+  const empresasUniq = Array.from(new Set(tipoEmp.map((r) => r.empresa)));
   const tipoEmpTraces = tiposUnicos.map((tipo, i) => ({
     type: "bar" as const, name: tipo,
     x: empresasUniq,
@@ -250,8 +250,8 @@ export default function RotacionPage() {
   }));
 
   // Traces stacked tipo salida por año
-  const tiposUnicosAno = [...new Set(tipoAno.map((r) => r.tipo))];
-  const anosUniq = [...new Set(tipoAno.map((r) => r.ano))].sort();
+  const tiposUnicosAno = Array.from(new Set(tipoAno.map((r) => r.tipo)));
+  const anosUniq = Array.from(new Set(tipoAno.map((r) => r.ano))).sort();
   const tipoAnoTraces = tiposUnicosAno.map((tipo, i) => ({
     type: "bar" as const, name: tipo,
     x: anosUniq,
@@ -556,7 +556,7 @@ export default function RotacionPage() {
                   <PlotChart
                     data={(() => {
                       const rows = entrevistas.por_empresa as AnyObj[];
-                      const emps = [...new Set(rows.map((r) => r.EMPRESA))];
+                      const emps = Array.from(new Set(rows.map((r) => r.EMPRESA)));
                       return emps.map((emp, i) => ({
                         type: "bar" as const, name: String(emp), orientation: "h" as const,
                         x: rows.filter((r) => r.EMPRESA === emp).map((r) => r.promedio),
