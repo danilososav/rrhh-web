@@ -345,7 +345,7 @@ export default function CostosPage() {
                     y: agSob.map((r) => r.AGENCIA),
                     marker: {
                       color: agSob.map((r) => r.SOBRECOSTO),
-                      colorscale: [["0", "#ffc8c8"], ["1", "#c00000"]],
+                      colorscale: [[0, "#ffc8c8"], [1, "#c00000"]] as [number, string][],
                       showscale: false,
                     },
                   }]}
