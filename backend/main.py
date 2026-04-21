@@ -1,8 +1,14 @@
+import logging
+import traceback
+
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import os
 from dotenv import load_dotenv
+
+logging.basicConfig(level=logging.ERROR)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -67,6 +73,7 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 @app.exception_handler(Exception)
 async def unhandled_exception_handler(request: Request, exc: Exception):
     """Excepción genérica con CORS headers."""
+    logger.error("Unhandled exception on %s %s\n%s", request.method, request.url, traceback.format_exc())
     return JSONResponse(
         status_code=500,
         content={"detail": "Error interno del servidor. Intentá de nuevo o contactá soporte."},
