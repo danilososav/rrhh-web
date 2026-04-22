@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import FileUpload from "@/components/FileUpload";
 import KpiCard from "@/components/KpiCard";
-import PlotChart from "@/components/PlotChart";
+import PlotChart, { COLOR_SEQ } from "@/components/PlotChart";
 import TabBar from "@/components/TabBar";
 import DataTable from "@/components/DataTable";
 import { useDashboard } from "@/context/DashboardContext";
@@ -33,7 +33,9 @@ const TABS = [
   { id: "detalle",      label: "Detalle" },
 ];
 
-const COLOR_SEQ = ["#7c5af6","#10b981","#f59e0b","#818cf8","#06b6d4","#ef4444","#d946ef","#fb923c","#84cc16","#6366f1"];
+function barColors(n: number) {
+  return Array.from({ length: n }, (_, i) => COLOR_SEQ[i % COLOR_SEQ.length]);
+}
 
 function isSalida(r: Row) {
   const sit  = String(r.SITUACION ?? "").trim().toUpperCase();
@@ -350,7 +352,7 @@ export default function RotacionPage() {
                 <PlotChart
                   data={[{ type: "bar", orientation: "h",
                     x: salEmp.map((r) => r.salidas), y: salEmp.map((r) => r.EMPRESA),
-                    marker: { color: "#7c5af6" } }]}
+                    marker: { color: barColors(salEmp.length) } }]}
                   layout={{ margin: { t: 16, r: 16, b: 36, l: 110 } }}
                   height={Math.max(280, salEmp.length * 28)}
                 />
@@ -398,7 +400,7 @@ export default function RotacionPage() {
                 <PlotChart
                   data={[{ type: "bar", orientation: "h",
                     x: topCargos.map((r) => r.salidas), y: topCargos.map((r) => r.cargo),
-                    marker: { color: "#7c5af6" } }]}
+                    marker: { color: barColors(topCargos.length) } }]}
                   layout={{ margin: { t: 16, r: 16, b: 36, l: 180 } }}
                   height={Math.max(280, topCargos.length * 24)}
                 />
@@ -423,7 +425,7 @@ export default function RotacionPage() {
                   <PlotChart
                     data={[{ type: "bar", orientation: "h",
                       x: topAreas.map((r) => r.salidas), y: topAreas.map((r) => r.area),
-                      marker: { color: "#06b6d4" } }]}
+                      marker: { color: barColors(topAreas.length) } }]}
                     layout={{ margin: { t: 16, r: 16, b: 36, l: 130 } }}
                     height={Math.max(260, topAreas.length * 26)}
                   />
@@ -434,7 +436,7 @@ export default function RotacionPage() {
                   <PlotChart
                     data={[{ type: "bar", orientation: "h",
                       x: topDept.map((r) => r.salidas), y: topDept.map((r) => r.dept),
-                      marker: { color: "#818cf8" } }]}
+                      marker: { color: barColors(topDept.length) } }]}
                     layout={{ margin: { t: 16, r: 16, b: 36, l: 160 } }}
                     height={Math.max(260, topDept.length * 26)}
                   />
@@ -470,7 +472,7 @@ export default function RotacionPage() {
               <ChartCard title="Total Salidas por Año">
                 <PlotChart
                   data={[{ type: "bar", x: porAno.map((r) => r.ano), y: porAno.map((r) => r.salidas),
-                    marker: { color: "#7c5af6" }, text: porAno.map((r) => String(r.salidas)),
+                    marker: { color: barColors(porAno.length) }, text: porAno.map((r) => String(r.salidas)),
                     textposition: "outside" as const }]}
                   layout={{ margin: { t: 30, r: 16, b: 50, l: 50 }, showlegend: false }}
                   height={280}

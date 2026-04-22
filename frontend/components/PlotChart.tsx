@@ -15,9 +15,12 @@ const Plot = dynamic<PlotParams>(
 
 /* Palette matches handoff design system */
 const COLOR_SEQ = [
-  "#7c5af6", "#818cf8", "#d946ef", "#10b981",
-  "#06b6d4", "#f59e0b", "#ef4444", "#fb923c",
+  "#7c5af6", "#10b981", "#06b6d4", "#f59e0b",
+  "#d946ef", "#818cf8", "#ef4444", "#fb923c",
+  "#84cc16", "#14b8a6",
 ];
+
+export { COLOR_SEQ };
 
 const DARK_BASE: Partial<Plotly.Layout> = {
   paper_bgcolor: "rgba(0,0,0,0)",

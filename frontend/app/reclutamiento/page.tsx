@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import FileUpload from "@/components/FileUpload";
 import KpiCard from "@/components/KpiCard";
-import PlotChart from "@/components/PlotChart";
+import PlotChart, { COLOR_SEQ } from "@/components/PlotChart";
 import TabBar from "@/components/TabBar";
 import DataTable from "@/components/DataTable";
 import { useDashboard } from "@/context/DashboardContext";
@@ -119,6 +119,10 @@ function computeFromRows(rows: Row[]) {
   return { kpis, agBusc, agDias, canal, top15, tasaResp, lineTraces, diasAno };
 }
 
+function barColors(n: number) {
+  return Array.from({ length: n }, (_, i) => COLOR_SEQ[i % COLOR_SEQ.length]);
+}
+
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="chart-card">
@@ -218,18 +222,18 @@ export default function ReclutamientoPage() {
           {agBusc.length > 0 && (
             <ChartCard title="Búsquedas por Agencia">
               <PlotChart
-                data={[{ type: "bar", orientation: "h", x: agBusc.map((r) => r.busquedas), y: agBusc.map((r) => r.AGENCIA), marker: { color: "#7c5af6" } }]}
-                layout={{ margin: { t: 16, r: 16, b: 36, l: 110 } }}
-                height={300}
+                data={[{ type: "bar", orientation: "h", x: agBusc.map((r) => r.busquedas), y: agBusc.map((r) => r.AGENCIA), marker: { color: barColors(agBusc.length) } }]}
+                layout={{ margin: { t: 16, r: 16, b: 36, l: 130 } }}
+                height={320}
               />
             </ChartCard>
           )}
           {tasaResp.length > 0 && (
             <ChartCard title="Tasa de Éxito por Responsable">
               <PlotChart
-                data={[{ type: "bar", x: tasaResp.map((r) => r.RESPONSABLE), y: tasaResp.map((r) => r.tasa_exito_pct), marker: { color: "#10b981" } }]}
+                data={[{ type: "bar", x: tasaResp.map((r) => r.RESPONSABLE), y: tasaResp.map((r) => r.tasa_exito_pct), marker: { color: barColors(tasaResp.length) } }]}
                 layout={{ yaxis: { ticksuffix: "%" } }}
-                height={300}
+                height={320}
               />
             </ChartCard>
           )}
@@ -271,9 +275,9 @@ export default function ReclutamientoPage() {
           {top15.length > 0 && (
             <ChartCard title="Top 15 Puestos más Solicitados">
               <PlotChart
-                data={[{ type: "bar", orientation: "h", x: top15.map((r) => r.busquedas), y: top15.map((r) => r.POSICION), marker: { color: "#06b6d4" } }]}
+                data={[{ type: "bar", orientation: "h", x: top15.map((r) => r.busquedas), y: top15.map((r) => r.POSICION), marker: { color: barColors(top15.length) } }]}
                 layout={{ margin: { t: 16, r: 16, b: 36, l: 200 } }}
-                height={380}
+                height={420}
               />
             </ChartCard>
           )}
@@ -286,7 +290,7 @@ export default function ReclutamientoPage() {
           {agDias.length > 0 && (
             <ChartCard title="Días Promedio de Cierre por Agencia">
               <PlotChart
-                data={[{ type: "bar", x: agDias.map((r) => r.AGENCIA), y: agDias.map((r) => r.dias_promedio), marker: { color: "#f59e0b" } }]}
+                data={[{ type: "bar", x: agDias.map((r) => r.AGENCIA), y: agDias.map((r) => r.dias_promedio), marker: { color: barColors(agDias.length) } }]}
                 layout={{ yaxis: { ticksuffix: "d" } }}
                 height={300}
               />
@@ -300,7 +304,7 @@ export default function ReclutamientoPage() {
           {diasAno.length > 0 && (
             <ChartCard title="Días Promedio de Cierre por Año">
               <PlotChart
-                data={[{ type: "bar", x: diasAno.map((r) => r.ANO), y: diasAno.map((r) => r.dias_promedio), marker: { color: "#818cf8" } }]}
+                data={[{ type: "bar", x: diasAno.map((r) => r.ANO), y: diasAno.map((r) => r.dias_promedio), marker: { color: barColors(diasAno.length) } }]}
                 layout={{ yaxis: { ticksuffix: "d" } }}
                 height={300}
               />

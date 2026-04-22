@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, DragEvent, ChangeEvent } from "react";
 import KpiCard from "@/components/KpiCard";
-import PlotChart from "@/components/PlotChart";
+import PlotChart, { COLOR_SEQ } from "@/components/PlotChart";
 import TabBar from "@/components/TabBar";
 import DataTable from "@/components/DataTable";
 import { useDashboard } from "@/context/DashboardContext";
@@ -37,13 +37,8 @@ const CONCEPTOS: [string, string][] = [
   ["Sobrecosto",          "SOBRECOSTO"],
 ];
 
-// Paleta de colores por agencia (Plotly-compatible)
-const AG_PALETTE = [
-  "#06b6d4","#8b5cf6","#f59e0b","#10b981","#f43f5e",
-  "#4f8ef7","#ec4899","#84cc16","#ff7c3d","#6366f1",
-];
 function agColors(n: number) {
-  return Array.from({ length: n }, (_, i) => AG_PALETTE[i % AG_PALETTE.length]);
+  return Array.from({ length: n }, (_, i) => COLOR_SEQ[i % COLOR_SEQ.length]);
 }
 
 // Color fijo por concepto (mismo orden que CONCEPTOS)

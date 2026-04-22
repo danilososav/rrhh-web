@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import FileUpload from "@/components/FileUpload";
 import KpiCard from "@/components/KpiCard";
-import PlotChart from "@/components/PlotChart";
+import PlotChart, { COLOR_SEQ } from "@/components/PlotChart";
 import TabBar from "@/components/TabBar";
 import DataTable from "@/components/DataTable";
 import { useDashboard } from "@/context/DashboardContext";
@@ -112,6 +112,10 @@ function computeFromRows(rows: Row[]) {
   };
 
   return { kpis, genero, genDist, lidFem, lidMasc, lidEmp, salEmp, brechaNivel, nac };
+}
+
+function barColors(n: number) {
+  return Array.from({ length: n }, (_, i) => COLOR_SEQ[i % COLOR_SEQ.length]);
 }
 
 function ChartCard({ title, children, span2 = false }: { title: string; children: React.ReactNode; span2?: boolean }) {
@@ -252,7 +256,7 @@ export default function NominaPage() {
           {genDist.length > 0 && (
             <ChartCard title="Distribución por Generaciones">
               <PlotChart
-                data={[{ type: "bar", x: genDist.map((r) => r.Generacion), y: genDist.map((r) => r.Cantidad), marker: { color: "#06b6d4" } }]}
+                data={[{ type: "bar", x: genDist.map((r) => r.Generacion), y: genDist.map((r) => r.Cantidad), marker: { color: barColors(genDist.length) } }]}
                 height={280}
               />
             </ChartCard>
@@ -280,7 +284,7 @@ export default function NominaPage() {
           {salEmp.length > 0 && (
             <ChartCard title="Salario Promedio por Empresa">
               <PlotChart
-                data={[{ type: "bar", x: salEmp.map((r) => r.empresa), y: salEmp.map((r) => r.promedio), marker: { color: "#10b981" } }]}
+                data={[{ type: "bar", x: salEmp.map((r) => r.empresa), y: salEmp.map((r) => r.promedio), marker: { color: barColors(salEmp.length) } }]}
                 height={280}
               />
             </ChartCard>
@@ -318,7 +322,7 @@ export default function NominaPage() {
           {lidEmp.length > 0 && (
             <ChartCard title="% Líderes por Empresa">
               <PlotChart
-                data={[{ type: "bar", x: lidEmp.map((r) => r.EMPRESA), y: lidEmp.map((r) => r.pct_lideres), marker: { color: "#f59e0b" } }]}
+                data={[{ type: "bar", x: lidEmp.map((r) => r.EMPRESA), y: lidEmp.map((r) => r.pct_lideres), marker: { color: barColors(lidEmp.length) } }]}
                 layout={{ yaxis: { ticksuffix: "%" } }}
                 height={280}
               />

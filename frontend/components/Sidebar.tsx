@@ -232,21 +232,27 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation */}
-      <nav className="px-3 space-y-0.5">
+      <nav className="space-y-0.5">
         {NAV_ITEMS.map(({ href, label, icon }) => {
           const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
           return (
             <Link
               key={href}
               href={href}
-              className="flex items-center gap-3 rounded-lg transition-all"
+              className="flex items-center gap-3 transition-all"
               style={{
                 padding: "10px 20px",
                 fontSize: 14,
-                fontWeight: 500,
+                fontWeight: active ? 600 : 500,
                 color: active ? "var(--accent)" : "var(--text2)",
-                background: active ? "var(--card)" : "transparent",
+                background: active ? "rgba(124,90,246,0.12)" : "transparent",
                 borderLeft: active ? "3px solid var(--accent)" : "3px solid transparent",
+              }}
+              onMouseEnter={e => {
+                if (!active) (e.currentTarget as HTMLAnchorElement).style.background = "rgba(255,255,255,0.04)";
+              }}
+              onMouseLeave={e => {
+                if (!active) (e.currentTarget as HTMLAnchorElement).style.background = "transparent";
               }}
             >
               <span style={{ color: active ? "var(--accent)" : "var(--text3)" }}>{icon}</span>
