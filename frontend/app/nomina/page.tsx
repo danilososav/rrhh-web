@@ -33,31 +33,27 @@ function fmt(n: number | null | undefined): string {
   return n.toLocaleString("es-PY", { maximumFractionDigits: 0 });
 }
 
-function computeFromRows(rows: Row[]) {
-  const total      = rows.length;
-  const empresas   = new Set(rows.map((r) => r.EMPRESA).filter(Boolean)).size;
-  const lideres    = rows.filter((r) => r.LIDER === "SI").length;
-  const mujeres    = rows.filter((r) => r.SEXO === "F").length;
-  const esParaguay = (r: Row) => String(r.NACIONALIDAD ?? "").toUpperCase().includes("PARAGUAY");
-  const extranjeros = rows.filter((r) => !esParaguay(r) && r.NACIONALIDAD).length;
-  const salRows    = rows.filter((r) => r.SALARIO != null);
-  const salProm    = salRows.length ? sumField(salRows, "SALARIO") / salRows.length : null;
+const AGENCIAS_NOMBRES = new Set(["BRICK", "NASTA", "LUPE", "OMD", "ROGER", "AMPLIFY"]);
+const CSC_NOMBRES      = new Set(["TEXO", "BPR", "ROW"]);
 
-  // Nuevos KPIs: agencias, tac_media, csc
-  const agencias   = rows.filter((r) => String(r.TIPO_EMPRESA ?? "").toUpperCase() === "AGENCIA").length;
-  const tacMedia   = rows.filter((r) => String(r.EMPRESA ?? "").toUpperCase() === "TAC MEDIA").length;
-  const csc        = rows.filter((r) => String(r.TIPO_EMPRESA ?? "").toUpperCase() === "CSC").length;
+function computeFromRows(rows: Row[]) {
+  const total    = rows.length;
+  const empresas = new Set(rows.map((r) => r.EMPRESA).filter(Boolean)).size;
+
+  const agencias = rows.filter((r) => AGENCIAS_NOMBRES.has(String(r.EMPRESA ?? "").toUpperCase().trim())).length;
+  const tacMedia = rows.filter((r) => String(r.EMPRESA ?? "").toUpperCase().trim() === "TAC MEDIA").length;
+  const csc      = rows.filter((r) => CSC_NOMBRES.has(String(r.EMPRESA ?? "").toUpperCase().trim())).length;
+
+  const mujeres     = rows.filter((r) => r.SEXO === "F").length;
+  const salRows     = rows.filter((r) => r.SALARIO != null);
+  const esParaguay  = (r: Row) => String(r.NACIONALIDAD ?? "").toUpperCase().includes("PARAGUAY");
+  const extranjeros = rows.filter((r) => !esParaguay(r) && r.NACIONALIDAD).length;
 
   const kpis = {
     total,
     empresas,
-    lideres,
-    lider_pct:       total ? Math.round(lideres / total * 1000) / 10 : 0,
-    pct_mujeres:     total ? Math.round(mujeres / total * 1000) / 10 : 0,
-    pct_extranjeros: total ? Math.round(extranjeros / total * 1000) / 10 : 0,
-    salario_promedio: salProm ? Math.round(salProm) : null,
     agencias,
-    tac_media:       tacMedia,
+    tac_media: tacMedia,
     csc,
   };
 
@@ -217,16 +213,12 @@ export default function NominaPage() {
   return (
     <div>
       {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
         <KpiCard title="Colaboradores"  value={fmt(kpis.total)}          accentColor="var(--accent)" />
         <KpiCard title="Empresas"       value={fmt(kpis.empresas)} />
         <KpiCard title="Agencias"       value={fmt(kpis.agencias)} />
         <KpiCard title="TAC Media"      value={fmt(kpis.tac_media)} />
         <KpiCard title="CSC"            value={fmt(kpis.csc)} />
-        <KpiCard title="Líderes"        value={`${kpis.lider_pct}%`}     subtitle={`${fmt(kpis.lideres)} personas`} />
-        <KpiCard title="Mujeres"        value={`${kpis.pct_mujeres}%`}   accentColor="var(--pink)" />
-        <KpiCard title="Extranjeros"    value={`${kpis.pct_extranjeros}%`} />
-        <KpiCard title="Salario Prom."  value={kpis.salario_promedio != null ? `₲ ${fmt(kpis.salario_promedio)}` : "—"} accentColor="var(--green)" />
       </div>
 
       {/* Tabs */}

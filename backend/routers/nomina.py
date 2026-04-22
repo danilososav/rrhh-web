@@ -223,17 +223,17 @@ async def procesar_nomina(file: UploadFile = File(...)):
     if "EMPRESA" in df.columns:
         por_empresa = {str(k): int(v) for k, v in df.groupby("EMPRESA").size().items()}
 
-    # Nuevos KPIs: agencias, tac_media, csc
+    AGENCIAS_NOMBRES = {"BRICK", "NASTA", "LUPE", "OMD", "ROGER", "AMPLIFY"}
+    CSC_NOMBRES      = {"TEXO", "BPR", "ROW"}
+
     agencias_n = 0
     tac_media_n = 0
     csc_n = 0
-    if "TIPO_EMPRESA" in df.columns:
-        tipo_emp = df["TIPO_EMPRESA"].str.upper()
-        agencias_n = int((tipo_emp == "AGENCIA").sum())
-        csc_n = int((tipo_emp == "CSC").sum())
     if "EMPRESA" in df.columns:
-        emp_upper = df["EMPRESA"].str.upper()
+        emp_upper = df["EMPRESA"].str.upper().str.strip()
+        agencias_n  = int(emp_upper.isin(AGENCIAS_NOMBRES).sum())
         tac_media_n = int((emp_upper == "TAC MEDIA").sum())
+        csc_n       = int(emp_upper.isin(CSC_NOMBRES).sum())
 
     kpis = {
         "total":             total,
