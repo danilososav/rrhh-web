@@ -43,6 +43,11 @@ function computeFromRows(rows: Row[]) {
   const salRows    = rows.filter((r) => r.SALARIO != null);
   const salProm    = salRows.length ? sumField(salRows, "SALARIO") / salRows.length : null;
 
+  // Nuevos KPIs: agencias, tac_media, csc
+  const agencias   = rows.filter((r) => String(r.TIPO_EMPRESA ?? "").toUpperCase() === "AGENCIA").length;
+  const tacMedia   = rows.filter((r) => String(r.EMPRESA ?? "").toUpperCase() === "TAC MEDIA").length;
+  const csc        = rows.filter((r) => String(r.TIPO_EMPRESA ?? "").toUpperCase() === "CSC").length;
+
   const kpis = {
     total,
     empresas,
@@ -51,6 +56,9 @@ function computeFromRows(rows: Row[]) {
     pct_mujeres:     total ? Math.round(mujeres / total * 1000) / 10 : 0,
     pct_extranjeros: total ? Math.round(extranjeros / total * 1000) / 10 : 0,
     salario_promedio: salProm ? Math.round(salProm) : null,
+    agencias,
+    tac_media:       tacMedia,
+    csc,
   };
 
   const genero = {
@@ -161,120 +169,6 @@ function MalePictogram({ size = 60, color = "#818cf8" }: { size?: number; color?
   );
 }
 
-// Big Stat Row Component
-function BigStatRow({
-  mujeres,
-  hombres,
-  total,
-}: {
-  mujeres: number;
-  hombres: number;
-  total: number;
-}) {
-  const pctMujeres = total ? Math.round((mujeres / total) * 1000) / 10 : 0;
-  const pctHombres = total ? Math.round((hombres / total) * 1000) / 10 : 0;
-  const PINK = "#d946ef";
-  const INDIGO = "#818cf8";
-
-  return (
-    <div
-      className="chart-card"
-      style={{
-        flexDirection: "row",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 48,
-        padding: "28px 32px",
-      }}
-    >
-      {/* Mujeres */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-        <FemalePictogram size={60} color={PINK} />
-        <div
-          style={{
-            fontSize: "52px",
-            fontWeight: 800,
-            color: PINK,
-            lineHeight: 1,
-            letterSpacing: "-2px",
-          }}
-        >
-          {mujeres}
-        </div>
-        <div
-          style={{
-            fontSize: "22px",
-            fontWeight: 700,
-            color: PINK,
-          }}
-        >
-          {pctMujeres}%
-        </div>
-        <div style={{ fontSize: 13, color: "var(--text2)", fontWeight: 500 }}>Mujeres</div>
-      </div>
-
-      {/* Divider */}
-      <div style={{ width: 1, height: 120, background: "var(--border)" }} />
-
-      {/* Total */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-        <div
-          style={{
-            fontSize: 14,
-            fontWeight: 600,
-            color: "var(--text2)",
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-          }}
-        >
-          Total
-        </div>
-        <div
-          style={{
-            fontSize: "64px",
-            fontWeight: 800,
-            color: "var(--text)",
-            lineHeight: 1,
-            letterSpacing: "-3px",
-          }}
-        >
-          {total}
-        </div>
-        <div style={{ fontSize: 12, color: "var(--text2)" }}>Colaboradores</div>
-      </div>
-
-      {/* Divider */}
-      <div style={{ width: 1, height: 120, background: "var(--border)" }} />
-
-      {/* Hombres */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
-        <MalePictogram size={60} color={INDIGO} />
-        <div
-          style={{
-            fontSize: "52px",
-            fontWeight: 800,
-            color: INDIGO,
-            lineHeight: 1,
-            letterSpacing: "-2px",
-          }}
-        >
-          {hombres}
-        </div>
-        <div
-          style={{
-            fontSize: "22px",
-            fontWeight: 700,
-            color: INDIGO,
-          }}
-        >
-          {pctHombres}%
-        </div>
-        <div style={{ fontSize: 13, color: "var(--text2)", fontWeight: 500 }}>Hombres</div>
-      </div>
-    </div>
-  );
-}
-
 export default function NominaPage() {
   const { nominaData, setNominaData } = useDashboard();
   const { selected, register } = useFilter();
@@ -326,6 +220,9 @@ export default function NominaPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
         <KpiCard title="Colaboradores"  value={fmt(kpis.total)}          accentColor="var(--accent)" />
         <KpiCard title="Empresas"       value={fmt(kpis.empresas)} />
+        <KpiCard title="Agencias"       value={fmt(kpis.agencias)} />
+        <KpiCard title="TAC Media"      value={fmt(kpis.tac_media)} />
+        <KpiCard title="CSC"            value={fmt(kpis.csc)} />
         <KpiCard title="Líderes"        value={`${kpis.lider_pct}%`}     subtitle={`${fmt(kpis.lideres)} personas`} />
         <KpiCard title="Mujeres"        value={`${kpis.pct_mujeres}%`}   accentColor="var(--pink)" />
         <KpiCard title="Extranjeros"    value={`${kpis.pct_extranjeros}%`} />
@@ -338,25 +235,32 @@ export default function NominaPage() {
       {/* Tab: Distribución */}
       {tab === "distribucion" && (
         <div className="tab-content" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-          {/* Big Stat Row */}
-          <BigStatRow
-            mujeres={genero.values[0] ?? 0}
-            hombres={genero.values[1] ?? 0}
-            total={kpis.total}
-          />
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <ChartCard title="DISTRIBUCIÓN POR GÉNERO">
-              <PlotChart
-                data={[{
-                  type: "pie", labels: genero.labels, values: genero.values,
-                  hole: 0.45, textinfo: "label+percent",
-                  textfont: { color: "#6b7a99" },
-                  marker: { colors: ["#d946ef", "#818cf8"] },
-                }]}
-                layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
-                height={280}
-              />
+              <div className="flex items-center gap-6">
+                <div className="w-52 h-52 flex-shrink-0">
+                  <PlotChart
+                    data={[{
+                      type: "pie", labels: genero.labels, values: genero.values,
+                      hole: 0.45, textinfo: "label+percent",
+                      textfont: { color: "#6b7a99" },
+                      marker: { colors: ["#d946ef", "#818cf8"] },
+                    }]}
+                    layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
+                    height={280}
+                  />
+                </div>
+                <div className="flex flex-col gap-5">
+                  <div>
+                    <div className="text-5xl font-black" style={{ color: "#d946ef", lineHeight: 1 }}>{genero.values[0] ?? 0}%</div>
+                    <div className="text-sm" style={{ color: "var(--text2)" }}>Mujeres · {genero.values[0] != null ? Math.round(genero.values[0] * kpis.total / 100) : "—"}</div>
+                  </div>
+                  <div>
+                    <div className="text-5xl font-black" style={{ color: "#818cf8", lineHeight: 1 }}>{genero.values[1] ?? 0}%</div>
+                    <div className="text-sm" style={{ color: "var(--text2)" }}>Hombres · {genero.values[1] != null ? Math.round(genero.values[1] * kpis.total / 100) : "—"}</div>
+                  </div>
+                </div>
+              </div>
             </ChartCard>
             {genero.por_empresa.length > 0 && (
               <ChartCard title="GÉNERO POR EMPRESA">

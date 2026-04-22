@@ -223,6 +223,18 @@ async def procesar_nomina(file: UploadFile = File(...)):
     if "EMPRESA" in df.columns:
         por_empresa = {str(k): int(v) for k, v in df.groupby("EMPRESA").size().items()}
 
+    # Nuevos KPIs: agencias, tac_media, csc
+    agencias_n = 0
+    tac_media_n = 0
+    csc_n = 0
+    if "TIPO_EMPRESA" in df.columns:
+        tipo_emp = df["TIPO_EMPRESA"].str.upper()
+        agencias_n = int((tipo_emp == "AGENCIA").sum())
+        csc_n = int((tipo_emp == "CSC").sum())
+    if "EMPRESA" in df.columns:
+        emp_upper = df["EMPRESA"].str.upper()
+        tac_media_n = int((emp_upper == "TAC MEDIA").sum())
+
     kpis = {
         "total":             total,
         "empresas":          empresas_u,
@@ -232,6 +244,9 @@ async def procesar_nomina(file: UploadFile = File(...)):
         "pct_extranjeros":   pct_ext,
         "salario_promedio":  round(sal_prom, 0) if sal_prom else None,
         "por_empresa":       por_empresa,
+        "agencias":          agencias_n,
+        "tac_media":         tac_media_n,
+        "csc":               csc_n,
     }
 
     # ══════════════════════════════════════════════════════════════════════════

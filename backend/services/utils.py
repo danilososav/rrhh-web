@@ -161,6 +161,7 @@ COL_MAP_NOMINA = {
     "FECHA_DE_NACIMIENTO": "FECHA_NACIMIENTO",
     "FECHA DE NACIMIENTO": "FECHA_NACIMIENTO",
     "NACIONALIDAD": "NACIONALIDAD",
+    "TIPO_EMPRESA": "TIPO_EMPRESA", "TIPO DE EMPRESA": "TIPO_EMPRESA",
 }
 
 # ─── Nómina ───────────────────────────────────────────────────────────────────
