@@ -168,14 +168,21 @@ function MalePictogram({ size = 60, color = "#818cf8" }: { size?: number; color?
 export default function NominaPage() {
   const { nominaData, setNominaData } = useDashboard();
   const { selected, register } = useFilter();
-  const [data, setData] = useState<AnyObj | null>(nominaData);
+  const [mounted, setMounted] = useState(false);
+  const [data, setData] = useState<AnyObj | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [tab, setTab] = useState("distribucion");
 
   useEffect(() => {
-    if (nominaData) register(FILTER_CONFIGS, (nominaData.tabla as Row[]) ?? []);
+    setMounted(true);
+    if (nominaData) {
+      setData(nominaData);
+      register(FILTER_CONFIGS, (nominaData.tabla as Row[]) ?? []);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (!mounted) return null;
 
   function handleRefresh() {
     setShowUpload(true);

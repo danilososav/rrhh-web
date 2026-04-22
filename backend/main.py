@@ -19,21 +19,18 @@ app = FastAPI(
 )
 
 # ─── CORS ──────────────────────────────────────────────────────────────────────
-# Orígenes exactos permitidos
-_exact_origins = [
+_allowed_origins = [
     "http://localhost:3000",
     "http://localhost:3001",
-    os.getenv("FRONTEND_URL", ""),   # dominio Vercel exacto, p. ej. https://rrhh-texo.vercel.app
+    "https://rrhh-web.vercel.app",
+    os.getenv("FRONTEND_URL", ""),
 ]
-_exact_origins = [o for o in _exact_origins if o]
-
-# Patrones de origen permitidos (cubre previews de Vercel como https://rrhh-texo-git-*.vercel.app)
-_origin_regex = r"https://.*\.vercel\.app"
+_allowed_origins = [o for o in _allowed_origins if o]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=_exact_origins,
-    allow_origin_regex=_origin_regex,
+    allow_origins=_allowed_origins,
+    allow_origin_regex=r"https://rrhh-web.*\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
