@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, DragEvent, ChangeEvent } from "react";
 import KpiCard from "@/components/KpiCard";
 import PlotChart from "@/components/PlotChart";
+import TabBar from "@/components/TabBar";
 import DataTable from "@/components/DataTable";
 import { useDashboard } from "@/context/DashboardContext";
 import { useFilter } from "@/context/FilterContext";
@@ -174,8 +175,8 @@ function computeFromRows(rows: Row[]) {
 
 function ChartCard({ title, children, fullWidth }: { title: string; children: React.ReactNode; fullWidth?: boolean }) {
   return (
-    <div className={`rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-5 ${fullWidth ? "col-span-2" : ""}`}>
-      <h3 className="mb-3 text-sm font-semibold text-slate-300">{title}</h3>
+    <div className={`chart-card${fullWidth ? " md:col-span-2" : ""}`}>
+      <h3 className="chart-title mb-4">{title}</h3>
       {children}
     </div>
   );
@@ -273,11 +274,10 @@ export default function CostosPage() {
   if (!data && !loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[72vh] gap-6">
-        <UploadIllustration />
         <div className="text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-[#4f8ef7] mb-2">Módulo de Costos</p>
+          <p className="label-xs mb-2" style={{ color: "var(--accent)" }}>Módulo de Costos</p>
           <h1 className="page-title">Análisis de Costos de Liquidaciones</h1>
-          <p className="mt-2 text-sm text-slate-400 max-w-sm">
+          <p className="mt-2 text-sm max-w-sm mx-auto" style={{ color: "var(--text2)" }}>
             Subí uno o más archivos Excel de liquidaciones para analizar sobrecostos, composición de egresos y tendencias por agencia.
           </p>
         </div>
@@ -287,20 +287,21 @@ export default function CostosPage() {
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={handleDrop}
-            className={[
-              "relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-6 py-10 cursor-pointer transition-colors select-none",
-              dragging ? "border-[#4f8ef7] bg-[#4f8ef7]/8" : "border-white/[0.08] bg-[#1a1f2e] hover:border-[#4f8ef7]/50 hover:bg-[#1a2240]",
-            ].join(" ")}
+            className="relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-6 py-10 cursor-pointer transition-colors select-none"
+            style={{
+              borderColor: dragging ? "var(--accent)" : "var(--border)",
+              background: dragging ? "rgba(124,90,246,0.08)" : "var(--card)",
+            }}
           >
-            <svg className={`w-10 h-10 ${dragging ? "text-[#4f8ef7]" : "text-slate-400"}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+            <svg className="w-10 h-10" style={{ color: dragging ? "var(--accent)" : "var(--text3)" }} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0-3 3m3-3 3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.338-2.032A4.5 4.5 0 0 1 17.25 19.5H6.75Z" />
             </svg>
-            <p className="text-sm text-slate-300 text-center">Arrastrá los archivos Excel aquí o hacé clic para seleccionar</p>
-            <p className="text-xs text-slate-500">Formatos: .xlsx .xls</p>
+            <p className="text-sm text-center" style={{ color: "var(--text)" }}>Arrastrá los archivos Excel aquí o hacé clic para seleccionar</p>
+            <p className="text-xs" style={{ color: "var(--text3)" }}>Formatos: .xlsx .xls</p>
             <input ref={inputRef} type="file" multiple accept=".xlsx,.xls" className="hidden" onChange={handleChange} />
           </div>
           {error && (
-            <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-700 bg-red-900/30 px-4 py-3 text-sm text-red-300">
+            <div className="mt-4 flex items-start gap-2 rounded-lg px-4 py-3 text-sm" style={{ border: "1px solid rgba(239,68,68,0.4)", background: "rgba(239,68,68,0.08)", color: "#ef4444" }}>
               <svg className="mt-0.5 w-4 h-4 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
               </svg>
@@ -316,11 +317,11 @@ export default function CostosPage() {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[72vh] gap-4">
-        <svg className="animate-spin w-8 h-8 text-[#4f8ef7]" fill="none" viewBox="0 0 24 24">
+        <svg className="animate-spin w-8 h-8" style={{ color: "var(--accent)" }} fill="none" viewBox="0 0 24 24">
           <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
           <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
         </svg>
-        <p className="text-sm text-slate-400">Procesando liquidaciones…</p>
+        <p className="text-sm" style={{ color: "var(--text2)" }}>Procesando liquidaciones…</p>
       </div>
     );
   }
@@ -335,44 +336,48 @@ export default function CostosPage() {
   return (
     <div>
       {/* Header */}
-      <div className="flex items-center justify-between mb-5">
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-[#4f8ef7] mb-1">Módulo de Costos</p>
+          <p className="label-xs mb-1" style={{ color: "var(--accent)" }}>Módulo de Costos</p>
           <h1 className="page-title">Costos de Liquidaciones</h1>
         </div>
         <button
           onClick={() => setShowUpload((v) => !v)}
-          className="rounded-lg border border-white/[0.08] bg-[#1a1f2e] px-4 py-2 text-sm text-slate-400 transition hover:border-[#4f8ef7]/40 hover:text-[#4f8ef7]"
+          className="rounded-lg px-4 py-2 text-sm font-medium transition-all"
+          style={{ background: "var(--card)", border: "1px solid var(--border)", color: "var(--text2)" }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--text2)"; }}
         >
           Actualizar datos
         </button>
       </div>
 
       {showUpload && (
-        <div className="mb-6 rounded-xl border border-[#4f8ef7]/30 bg-[#1a1f2e] p-4">
+        <div className="mb-6 rounded-xl p-4" style={{ border: "1px solid var(--accent)", background: "var(--card)" }}>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-medium text-slate-300">Cargar nuevos datos de costos</p>
-            <button onClick={() => { setShowUpload(false); setError(null); }} className="text-xs text-slate-500 hover:text-slate-300 transition">Cancelar</button>
+            <p className="text-sm font-medium" style={{ color: "var(--text)" }}>Cargar nuevos datos de costos</p>
+            <button onClick={() => { setShowUpload(false); setError(null); }} className="text-xs transition" style={{ color: "var(--text3)" }}>Cancelar</button>
           </div>
           <div
             onClick={() => inputRef.current?.click()}
             onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
             onDragLeave={() => setDragging(false)}
             onDrop={handleDrop}
-            className={[
-              "relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-6 py-10 cursor-pointer transition-colors select-none",
-              dragging ? "border-[#4f8ef7] bg-[#4f8ef7]/8" : "border-white/[0.08] bg-[#161b28] hover:border-[#4f8ef7]/50 hover:bg-[#1a2240]",
-            ].join(" ")}
+            className="relative flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed px-6 py-10 cursor-pointer transition-colors select-none"
+            style={{
+              borderColor: dragging ? "var(--accent)" : "var(--border)",
+              background: dragging ? "rgba(124,90,246,0.08)" : "var(--card2)",
+            }}
           >
-            <svg className={`w-10 h-10 ${dragging ? "text-[#4f8ef7]" : "text-slate-400"}`} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+            <svg className="w-10 h-10" style={{ color: dragging ? "var(--accent)" : "var(--text3)" }} fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 16.5V9.75m0 0-3 3m3-3 3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.338-2.032A4.5 4.5 0 0 1 17.25 19.5H6.75Z" />
             </svg>
-            <p className="text-sm text-slate-300 text-center">Arrastrá los archivos Excel aquí o hacé clic para seleccionar</p>
-            <p className="text-xs text-slate-500">Formatos: .xlsx .xls</p>
+            <p className="text-sm text-center" style={{ color: "var(--text)" }}>Arrastrá los archivos Excel aquí o hacé clic para seleccionar</p>
+            <p className="text-xs" style={{ color: "var(--text3)" }}>Formatos: .xlsx .xls</p>
             <input ref={inputRef} type="file" multiple accept=".xlsx,.xls" className="hidden" onChange={handleChange} />
           </div>
           {error && (
-            <div className="mt-4 flex items-start gap-2 rounded-lg border border-red-700 bg-red-900/30 px-4 py-3 text-sm text-red-300">
+            <div className="mt-4 flex items-start gap-2 rounded-lg px-4 py-3 text-sm" style={{ border: "1px solid rgba(239,68,68,0.4)", background: "rgba(239,68,68,0.08)", color: "#ef4444" }}>
               <span>{error}</span>
             </div>
           )}
@@ -382,15 +387,15 @@ export default function CostosPage() {
       {/* Selector de hoja */}
       {hojas.length > 1 && (
         <div className="mb-5 flex flex-wrap items-center gap-2">
-          <span className="text-xs text-slate-500 mr-1">Hoja:</span>
+          <span className="text-xs mr-1" style={{ color: "var(--text3)" }}>Hoja:</span>
           {hojas.map((h) => (
             <button
               key={h}
               onClick={() => handleHojaChange(h)}
-              className={[
-                "rounded-md px-3 py-1 text-xs font-medium transition",
-                h === hojaActiva ? "bg-[#4f8ef7] text-white" : "border border-white/[0.08] bg-[#1a1f2e] text-slate-400 hover:border-[#4f8ef7]/40 hover:text-[#4f8ef7]",
-              ].join(" ")}
+              className="rounded-full px-3 py-1 text-xs font-medium transition-all"
+              style={h === hojaActiva
+                ? { background: "var(--accent)", color: "#fff" }
+                : { border: "1px solid var(--border)", background: "var(--card)", color: "var(--text2)" }}
             >
               {h}
             </button>
@@ -400,34 +405,16 @@ export default function CostosPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-        <KpiCard title="Liquidaciones"   value={kpis.total_liquidaciones} accent />
-        <KpiCard title="Sobrecosto"      value={kpis.sobrecosto_fmt} />
+        <KpiCard title="Liquidaciones"   value={kpis.total_liquidaciones} accentColor="var(--accent)" />
+        <KpiCard title="Sobrecosto"      value={kpis.sobrecosto_fmt}      accentColor="var(--red)" />
         <KpiCard title="Costo Total"     value={kpis.total_costo_fmt} />
         <KpiCard title="Total Bruto"     value={kpis.total_bruto_fmt} />
-        <KpiCard title="Neto"            value={kpis.total_neto_fmt} />
+        <KpiCard title="Neto"            value={kpis.total_neto_fmt}      accentColor="var(--green)" />
         <KpiCard title="Aporte Patronal" value={kpis.aporte_patronal_fmt} />
       </div>
 
       {/* Tabs */}
-      <div className="border-b border-white/[0.08] mb-6">
-        <div className="flex gap-1 overflow-x-auto">
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={[
-                "flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium whitespace-nowrap border-b-2 transition-all",
-                activeTab === tab.id
-                  ? "border-[#4f8ef7] text-[#4f8ef7]"
-                  : "border-transparent text-slate-500 hover:text-slate-300",
-              ].join(" ")}
-            >
-              <span>{tab.icon}</span>
-              {tab.label}
-            </button>
-          ))}
-        </div>
-      </div>
+      <TabBar tabs={TABS.map((t) => ({ id: t.id, label: t.label }))} active={activeTab} onChange={setActiveTab} />
 
       {/* ── Tab: Por Agencia ─────────────────────────────────────────────── */}
       {activeTab === "agencia" && (
@@ -500,7 +487,7 @@ export default function CostosPage() {
           {/* Análisis por Nivel AIC */}
           {(nivCosto.length > 0 || nivCant.length > 0) && (
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-widest text-[#4f8ef7] mb-3 mt-2">🎯 Análisis por Nivel AIC</p>
+              <p className="label-xs mb-3 mt-2" style={{ color: "var(--accent)" }}>Análisis por Nivel AIC</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
               {nivCosto.length > 0 && (
                 <ChartCard title="Costo Total de Liquidaciones por Nivel AIC">

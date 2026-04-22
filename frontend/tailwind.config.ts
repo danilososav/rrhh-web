@@ -9,10 +9,17 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "var(--background)",
-        foreground: "var(--foreground)",
-        card: "#1a1f2e",
-        accent: "#4f8ef7",
+        background: "var(--bg)",
+        foreground: "var(--text)",
+        card:       "var(--card)",
+        card2:      "var(--card2)",
+        border:     "var(--border)",
+        accent:     "var(--accent)",
+        text2:      "var(--text2)",
+        text3:      "var(--text3)",
+      },
+      fontFamily: {
+        sans: ["DM Sans", "system-ui", "sans-serif"],
       },
     },
   },

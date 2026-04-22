@@ -8,29 +8,30 @@ const Plot = dynamic<PlotParams>(
   {
     ssr: false,
     loading: () => (
-      <div className="h-64 animate-pulse rounded-lg bg-slate-800" />
+      <div className="h-64 animate-pulse rounded-lg" style={{ background: "var(--card2)" }} />
     ),
   }
 );
 
+/* Palette matches handoff design system */
 const COLOR_SEQ = [
-  "#6366f1", "#8b5cf6", "#06b6d4", "#f59e0b",
-  "#10b981", "#f43f5e", "#84cc16", "#fb923c",
+  "#7c5af6", "#818cf8", "#d946ef", "#10b981",
+  "#06b6d4", "#f59e0b", "#ef4444", "#fb923c",
 ];
 
 const DARK_BASE: Partial<Plotly.Layout> = {
   paper_bgcolor: "rgba(0,0,0,0)",
-  plot_bgcolor: "rgba(0,0,0,0)",
-  font: { color: "#cbd5e1", size: 12 },
-  legend: { bgcolor: "rgba(0,0,0,0)", font: { color: "#94a3b8" } },
+  plot_bgcolor:  "rgba(0,0,0,0)",
+  font:   { color: "#6b7a99", size: 12, family: "DM Sans, system-ui, sans-serif" },
+  legend: { bgcolor: "rgba(0,0,0,0)", font: { color: "#6b7a99", size: 11 } },
   colorway: COLOR_SEQ,
 };
 
 const DARK_AXIS: Partial<Plotly.LayoutAxis> = {
-  gridcolor: "#334155",
-  linecolor: "#475569",
-  tickfont: { color: "#94a3b8" },
-  zerolinecolor: "#334155",
+  gridcolor:     "#1e2e47",
+  linecolor:     "#1e2e47",
+  tickfont:      { color: "#6b7a99", size: 11 },
+  zerolinecolor: "#1e2e47",
 };
 
 interface PlotChartProps extends Omit<PlotParams, "layout"> {
@@ -38,11 +39,11 @@ interface PlotChartProps extends Omit<PlotParams, "layout"> {
   height?: number;
 }
 
-export default function PlotChart({ data, layout, height = 320, ...rest }: PlotChartProps) {
+export default function PlotChart({ data, layout, height = 300, ...rest }: PlotChartProps) {
   const merged: Partial<Plotly.Layout> = {
     ...DARK_BASE,
     height,
-    margin: { t: 36, r: 16, b: 56, l: 70 },
+    margin: { t: 24, r: 16, b: 48, l: 64 },
     ...layout,
     xaxis: { ...DARK_AXIS, ...(layout?.xaxis as object) },
     yaxis: { ...DARK_AXIS, ...(layout?.yaxis as object) },

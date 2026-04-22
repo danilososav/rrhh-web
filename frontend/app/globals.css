@@ -2,52 +2,112 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Design tokens (dark mode default) ── */
 :root {
-  --background: #0f1117;
-  --foreground: #e2e8f0;
-  --card: #1a1f2e;
-  --accent: #4f8ef7;
-  --border: rgba(255, 255, 255, 0.06);
+  --bg:        #080d18;
+  --bg2:       #0e1525;
+  --card:      #131e30;
+  --card2:     #1a2840;
+  --border:    #1e2e47;
+  --text:      #e2e8f5;
+  --text2:     #6b7a99;
+  --text3:     #4a5568;
+  --accent:    #7c5af6;
+  --pink:      #d946ef;
+  --indigo:    #818cf8;
+  --green:     #10b981;
+  --red:       #ef4444;
+  --orange:    #f59e0b;
+  --cyan:      #06b6d4;
+
+  /* legacy aliases used by existing components */
+  --background: var(--bg);
+  --foreground:  var(--text);
 }
 
-html,
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: var(--font-inter), system-ui, sans-serif;
+/* ── Light mode ── */
+.light {
+  --bg:     #f0f4fa;
+  --bg2:    #e4ecf7;
+  --card:   #ffffff;
+  --card2:  #f8fafd;
+  --border: #dde6f5;
+  --text:   #0f172a;
+  --text2:  #475569;
+  --text3:  #94a3b8;
+  --background: var(--bg);
+  --foreground:  var(--text);
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 13px;
   -webkit-font-smoothing: antialiased;
+  transition: background 0.25s, color 0.25s;
 }
 
-/* Scrollbar */
+/* ── Scrollbar ── */
 ::-webkit-scrollbar { width: 5px; }
-::-webkit-scrollbar-track { background: #0f1117; }
-::-webkit-scrollbar-thumb { background: #2d3748; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #4a5568; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 
 @layer utilities {
   .text-balance { text-wrap: balance; }
 
-  /* Reusable card surface */
+  /* Card surface */
   .surface {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 0.75rem;
+    border-radius: 12px;
   }
 
-  /* Section label style (12px uppercase) */
+  /* Chart card */
+  .chart-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    transition: border-color 0.2s;
+  }
+  .chart-card:hover {
+    border-color: var(--accent);
+  }
+
+  /* Section label (10px uppercase) */
   .label-xs {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text2);
+  }
+
+  /* Chart title */
+  .chart-title {
     font-size: 11px;
     font-weight: 600;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: #64748b;
+    color: var(--text2);
   }
 
   /* Module page title */
   .page-title {
-    font-size: 1.5rem;
-    font-weight: 600;
-    color: #f1f5f9;
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
     line-height: 1.2;
+  }
+
+  /* KPI value */
+  .kpi-value {
+    font-size: 38px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--text);
+    line-height: 1;
   }
 }

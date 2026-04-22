@@ -1,54 +1,91 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+
 interface KpiCardProps {
   title: string;
   value: string | number | null | undefined;
   subtitle?: string;
-  /** Highlight this card with the accent colour */
   accent?: boolean;
-  /** Optional SVG icon node */
+  accentColor?: string;
   icon?: React.ReactNode;
 }
 
-export default function KpiCard({ title, value, subtitle, accent, icon }: KpiCardProps) {
+function parseValue(raw: string | number): { prefix: string; num: number; suffix: string } | null {
+  const str = String(raw).trim();
+  const match = str.match(/^([^\d-]*)(-?[\d,.]+)(.*)$/);
+  if (!match) return null;
+  const num = parseFloat(match[2].replace(/,/g, "").replace(/\./g, (_, i, s) => i === s.lastIndexOf(".") ? "." : ""));
+  if (isNaN(num)) return null;
+  return { prefix: match[1], num, suffix: match[3] };
+}
+
+function formatNum(n: number, original: string): string {
+  const decMatch = /[\d,.]+/.exec(original.trim())?.[0] ?? "";
+  const hasDec = decMatch.includes(".");
+  if (hasDec) {
+    const decimals = (decMatch.split(".")[1] ?? "").length;
+    return n.toFixed(decimals);
+  }
+  return Math.round(n).toLocaleString("es-PY");
+}
+
+export default function KpiCard({ title, value, subtitle, accent, accentColor, icon }: KpiCardProps) {
+  const color = accentColor ?? (accent ? "var(--accent)" : undefined);
+  const raw = value ?? "—";
+  const parsed = typeof raw === "string" || typeof raw === "number" ? parseValue(raw) : null;
+
+  const [display, setDisplay] = useState<string>(
+    parsed ? `${parsed.prefix}0${parsed.suffix}` : String(raw)
+  );
+  const rafRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!parsed || raw === "—") { setDisplay(String(raw)); return; }
+    const start = performance.now();
+    const duration = 900;
+    function tick(now: number) {
+      const t = Math.min((now - start) / duration, 1);
+      const ease = 1 - Math.pow(1 - t, 3);
+      setDisplay(`${parsed!.prefix}${formatNum(parsed!.num * ease, String(raw))}${parsed!.suffix}`);
+      if (t < 1) rafRef.current = requestAnimationFrame(tick);
+    }
+    rafRef.current = requestAnimationFrame(tick);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
+
   return (
     <div
-      className={[
-        "relative rounded-xl px-5 py-4 overflow-hidden",
-        accent
-          ? "bg-[#1a2240] border border-[#4f8ef7]/25"
-          : "bg-[#1a1f2e] border border-white/[0.06]",
-      ].join(" ")}
+      className="flex flex-col gap-2 p-5 rounded-xl transition-all duration-200 cursor-default"
+      style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+      onMouseEnter={e => {
+        const el = e.currentTarget as HTMLDivElement;
+        el.style.borderColor = color ?? "var(--accent)";
+        el.style.transform = "translateY(-2px)";
+        el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.2)";
+      }}
+      onMouseLeave={e => {
+        const el = e.currentTarget as HTMLDivElement;
+        el.style.borderColor = "var(--border)";
+        el.style.transform = "translateY(0)";
+        el.style.boxShadow = "none";
+      }}
     >
-      {/* Top accent line */}
-      {accent && (
-        <span
-          className="absolute inset-x-0 top-0 h-[2px] rounded-t-xl"
-          style={{ background: "linear-gradient(90deg, #4f8ef7 0%, #7fb3ff 100%)" }}
-        />
-      )}
-
       <div className="flex items-start justify-between gap-2">
-        <p
-          className="text-[11px] font-semibold uppercase tracking-widest"
-          style={{ color: "#64748b" }}
-        >
-          {title}
-        </p>
-        {icon && (
-          <span className="text-slate-600 mt-0.5 shrink-0">{icon}</span>
-        )}
+        <span className="label-xs">{title}</span>
+        {icon && <span style={{ color: "var(--text3)" }} className="mt-0.5 shrink-0">{icon}</span>}
       </div>
 
-      <p
-        className="mt-2 text-3xl font-bold tracking-tight leading-none"
-        style={{ color: accent ? "#93c5fd" : "#f1f5f9" }}
+      <span
+        className="kpi-value"
+        style={{ color: color ?? "var(--text)" }}
       >
-        {value ?? "—"}
-      </p>
+        {display}
+      </span>
 
       {subtitle && (
-        <p className="mt-1.5 text-[11px]" style={{ color: "#475569" }}>
-          {subtitle}
-        </p>
+        <span style={{ fontSize: 12, color: "var(--text2)" }}>{subtitle}</span>
       )}
     </div>
   );

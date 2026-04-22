@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import FileUpload from "@/components/FileUpload";
 import KpiCard from "@/components/KpiCard";
 import PlotChart from "@/components/PlotChart";
+import TabBar from "@/components/TabBar";
 import DataTable from "@/components/DataTable";
 import { useDashboard } from "@/context/DashboardContext";
 import { useFilter } from "@/context/FilterContext";
@@ -23,33 +24,40 @@ const MESES: Record<number, string> = {
   7: "Jul", 8: "Ago", 9: "Sep", 10: "Oct", 11: "Nov", 12: "Dic",
 };
 
+const TABS = [
+  { id: "general",   label: "General" },
+  { id: "fuentes",   label: "Fuentes / Canal" },
+  { id: "vacantes",  label: "Vacantes" },
+  { id: "tiempos",   label: "Tiempos" },
+  { id: "detalle",   label: "Detalle" },
+];
+
 function isCerrada(r: Row) {
   return String(r.SITUACION ?? "").toUpperCase().includes("CERR") ||
          String(r.STATUS ?? "").toUpperCase().includes("CERR");
 }
 
 function computeFromRows(rows: Row[]) {
-  const total     = rows.length;
-  const cerradas  = rows.filter(isCerrada).length;
-  const abiertas  = rows.filter((r) => String(r.SITUACION ?? "").toUpperCase().includes("ABIERT") || String(r.STATUS ?? "").toUpperCase().includes("ABIERT")).length;
+  const total      = rows.length;
+  const cerradas   = rows.filter(isCerrada).length;
+  const abiertas   = rows.filter((r) => String(r.SITUACION ?? "").toUpperCase().includes("ABIERT") || String(r.STATUS ?? "").toUpperCase().includes("ABIERT")).length;
   const canceladas = rows.filter((r) => String(r.SITUACION ?? "").toUpperCase().includes("CANCEL") || String(r.STATUS ?? "").toUpperCase().includes("CANCEL")).length;
-  const pausadas  = rows.filter((r) => String(r.SITUACION ?? "").toUpperCase().includes("PAUS") || String(r.STATUS ?? "").toUpperCase().includes("PAUS")).length;
-  const diasRows  = rows.filter((r) => r.DIAS_CIERRE != null && Number(r.DIAS_CIERRE) > 0);
-  const diasProm  = diasRows.length ? Math.round(sumField(diasRows, "DIAS_CIERRE") / diasRows.length) : null;
+  const pausadas   = rows.filter((r) => String(r.SITUACION ?? "").toUpperCase().includes("PAUS") || String(r.STATUS ?? "").toUpperCase().includes("PAUS")).length;
+  const diasRows   = rows.filter((r) => r.DIAS_CIERRE != null && Number(r.DIAS_CIERRE) > 0);
+  const diasProm   = diasRows.length ? Math.round(sumField(diasRows, "DIAS_CIERRE") / diasRows.length) : null;
   const candidatos = rows.reduce((a, r) => a + (Number(r.N_CANDIDATOS) || 0), 0);
 
   const kpis = {
     total_busquedas: total,
     abiertas,
     cerradas,
-    cerradas_pct:   total ? Math.round(cerradas / total * 1000) / 10 : 0,
+    cerradas_pct:     total ? Math.round(cerradas / total * 1000) / 10 : 0,
     canceladas,
     pausadas,
-    dias_promedio:  diasProm,
+    dias_promedio:    diasProm,
     total_candidatos: candidatos,
   };
 
-  // Por agencia
   const agMap   = groupBy(rows, "AGENCIA");
   const agBusc  = Object.entries(agMap)
     .map(([ag, r]) => ({ AGENCIA: ag, busquedas: r.length }))
@@ -61,40 +69,30 @@ function computeFromRows(rows: Row[]) {
     })
     .filter((r) => r.dias_promedio > 0);
 
-  // Canal de ingreso
   const canalMap = groupBy(rows, "TIPO_INGRESO");
   const canal = Object.keys(canalMap).length > 0
     ? { labels: Object.keys(canalMap), values: Object.values(canalMap).map((r) => r.length) }
     : null;
 
-  // Top 15 posiciones
-  const posMap  = groupBy(rows, "POSICION");
-  const top15   = Object.entries(posMap)
+  const posMap = groupBy(rows, "POSICION");
+  const top15  = Object.entries(posMap)
     .map(([pos, r]) => ({ POSICION: pos, busquedas: r.length }))
     .sort((a, b) => b.busquedas - a.busquedas)
     .slice(0, 15);
 
-  // Tasa éxito por responsable
   const respMap  = groupBy(rows, "RESPONSABLE");
   const tasaResp = Object.entries(respMap)
     .map(([resp, r]) => {
       const cerr = r.filter(isCerrada).length;
-      return {
-        RESPONSABLE:    resp,
-        total:          r.length,
-        cerradas:       cerr,
-        tasa_exito_pct: Math.round(cerr / r.length * 1000) / 10,
-      };
+      return { RESPONSABLE: resp, total: r.length, cerradas: cerr, tasa_exito_pct: Math.round(cerr / r.length * 1000) / 10 };
     })
     .filter((r) => r.total >= 2)
     .sort((a, b) => b.tasa_exito_pct - a.tasa_exito_pct);
 
-  // Tendencia mensual
   const byAnoMes: Record<string, Record<string, number>> = {};
   for (const r of rows) {
     if (!r.ANO) continue;
     const ano = String(r.ANO);
-    // Try to extract month from RECEPCION date
     const mes = r.MES ?? (r.RECEPCION ? new Date(r.RECEPCION).getMonth() + 1 : null);
     if (!mes) continue;
     byAnoMes[ano] = byAnoMes[ano] ?? {};
@@ -109,7 +107,6 @@ function computeFromRows(rows: Row[]) {
     y: Object.keys(meses).sort((a, b) => Number(a) - Number(b)).map((m) => meses[m]),
   }));
 
-  // Días promedio por año
   const anoMap  = groupBy(rows, "ANO");
   const diasAno = Object.entries(anoMap)
     .map(([ano, r]) => {
@@ -124,33 +121,19 @@ function computeFromRows(rows: Row[]) {
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl border border-white/[0.06] bg-[#1a1f2e] p-5">
-      <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-widest text-slate-500">{title}</h3>
+    <div className="chart-card">
+      <h3 className="chart-title mb-4">{title}</h3>
       {children}
     </div>
-  );
-}
-
-function UploadIllustration() {
-  return (
-    <svg width="140" height="100" viewBox="0 0 140 100" fill="none">
-      <path d="M20 20h100l-40 40v30l-20-10V60L20 20Z" fill="#1a1f2e" stroke="#2d3748" strokeWidth="1.5" strokeLinejoin="round" />
-      <path d="M34 34h72l-32 32v16l-8-4V66L34 34Z" fill="#4f8ef7" opacity="0.25" />
-      <circle cx="50" cy="12" r="5" fill="#2d3748" />
-      <circle cx="70" cy="12" r="5" fill="#4f8ef7" opacity="0.6" />
-      <circle cx="90" cy="12" r="5" fill="#2d3748" />
-      <circle cx="60" cy="12" r="5" fill="#2d3748" />
-      <circle cx="80" cy="12" r="5" fill="#2d3748" />
-      <path d="M70 72l2 5h5l-4 3 1.5 5L70 82l-4.5 3 1.5-5-4-3h5Z" fill="#4f8ef7" opacity="0.8" />
-    </svg>
   );
 }
 
 export default function ReclutamientoPage() {
   const { reclutamientoData, setReclutamientoData } = useDashboard();
   const { selected, register } = useFilter();
-  const [data, setData] = useState<AnyObj | null>(reclutamientoData);
+  const [data, setData]     = useState<AnyObj | null>(reclutamientoData);
   const [showUpload, setShowUpload] = useState(false);
+  const [tab, setTab]       = useState("general");
 
   useEffect(() => {
     if (reclutamientoData) register(FILTER_CONFIGS, (reclutamientoData.tabla as Row[]) ?? []);
@@ -167,11 +150,10 @@ export default function ReclutamientoPage() {
   if (!data) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[72vh] gap-6">
-        <UploadIllustration />
         <div className="text-center">
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-[#4f8ef7] mb-2">Módulo de Reclutamiento</p>
+          <p className="label-xs mb-2" style={{ color: "var(--accent)" }}>Módulo de Reclutamiento</p>
           <h1 className="page-title">Análisis de Búsquedas de Personal</h1>
-          <p className="mt-2 text-sm text-slate-400 max-w-sm">
+          <p className="mt-2 text-sm max-w-sm mx-auto" style={{ color: "var(--text2)" }}>
             Subí uno o más archivos Excel con el historial de búsquedas. Incluye tiempos de cierre, canales y eficiencia por responsable.
           </p>
         </div>
@@ -189,112 +171,148 @@ export default function ReclutamientoPage() {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-5">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
         <div>
-          <p className="text-[11px] font-semibold uppercase tracking-widest text-[#4f8ef7] mb-1">Módulo de Reclutamiento</p>
+          <p className="label-xs mb-1" style={{ color: "var(--accent)" }}>Módulo de Reclutamiento</p>
           <h1 className="page-title">Búsquedas de Personal</h1>
         </div>
         <button
           onClick={() => setShowUpload((v) => !v)}
-          className="rounded-lg border border-white/[0.08] bg-[#1a1f2e] px-4 py-2 text-sm text-slate-400 transition hover:border-[#4f8ef7]/40 hover:text-[#4f8ef7]"
+          className="rounded-lg px-4 py-2 text-sm font-medium transition-all"
+          style={{ background: "var(--card)", border: "1px solid var(--border)", color: "var(--text2)" }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--text2)"; }}
         >
           Actualizar datos
         </button>
       </div>
 
       {showUpload && (
-        <div className="mb-6 rounded-xl border border-[#4f8ef7]/30 bg-[#1a1f2e] p-4">
+        <div className="mb-6 rounded-xl p-4" style={{ border: "1px solid var(--accent)", background: "var(--card)" }}>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-medium text-slate-300">Cargar nuevos datos de reclutamiento</p>
-            <button onClick={() => setShowUpload(false)} className="text-xs text-slate-500 hover:text-slate-300 transition">Cancelar</button>
+            <p className="text-sm font-medium" style={{ color: "var(--text)" }}>Cargar nuevos datos de reclutamiento</p>
+            <button onClick={() => setShowUpload(false)} className="text-xs transition" style={{ color: "var(--text3)" }}>Cancelar</button>
           </div>
           <FileUpload endpoint="/api/reclutamiento" fieldName="files" multiple onResult={handleResult} />
         </div>
       )}
 
-      <div>
-          {/* KPIs */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
-            <KpiCard title="Total Búsquedas" value={kpis.total_busquedas} accent />
-            <KpiCard title="Abiertas"        value={kpis.abiertas} />
-            <KpiCard title="Cerradas"        value={kpis.cerradas_pct != null ? `${kpis.cerradas_pct}%` : "—"} subtitle={`${kpis.cerradas ?? 0} búsquedas`} />
-            <KpiCard title="Canceladas"      value={kpis.canceladas} />
-            <KpiCard title="Pausadas"        value={kpis.pausadas} />
-            <KpiCard title="Días Promedio"   value={kpis.dias_promedio != null ? `${kpis.dias_promedio}d` : "—"} />
-            <KpiCard title="Candidatos"      value={kpis.total_candidatos} />
-          </div>
-
-          {/* Charts */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {agBusc.length > 0 && (
-              <ChartCard title="Búsquedas por Agencia">
-                <PlotChart
-                  data={[{ type: "bar", orientation: "h", x: agBusc.map((r) => r.busquedas), y: agBusc.map((r) => r.AGENCIA), marker: { color: "#4f8ef7" } }]}
-                  layout={{ margin: { t: 16, r: 16, b: 36, l: 110 } }}
-                  height={300}
-                />
-              </ChartCard>
-            )}
-
-            {agDias.length > 0 && (
-              <ChartCard title="Días Promedio de Cierre por Agencia">
-                <PlotChart
-                  data={[{ type: "bar", x: agDias.map((r) => r.AGENCIA), y: agDias.map((r) => r.dias_promedio), marker: { color: "#f59e0b" } }]}
-                  layout={{ yaxis: { ticksuffix: "d" } }}
-                  height={300}
-                />
-              </ChartCard>
-            )}
-
-            {canal && (
-              <ChartCard title="Canal de Ingreso">
-                <PlotChart
-                  data={[{ type: "pie", labels: canal.labels, values: canal.values, hole: 0.4, textinfo: "label+percent", textfont: { color: "#cbd5e1" } }]}
-                  layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
-                  height={300}
-                />
-              </ChartCard>
-            )}
-
-            {top15.length > 0 && (
-              <ChartCard title="Top 15 Puestos más Solicitados">
-                <PlotChart
-                  data={[{ type: "bar", orientation: "h", x: top15.map((r) => r.busquedas), y: top15.map((r) => r.POSICION), marker: { color: "#06b6d4" } }]}
-                  layout={{ margin: { t: 16, r: 16, b: 36, l: 200 } }}
-                  height={380}
-                />
-              </ChartCard>
-            )}
-
-            {tasaResp.length > 0 && (
-              <ChartCard title="Tasa de Éxito por Responsable">
-                <PlotChart
-                  data={[{ type: "bar", x: tasaResp.map((r) => r.RESPONSABLE), y: tasaResp.map((r) => r.tasa_exito_pct), marker: { color: "#10b981" } }]}
-                  layout={{ yaxis: { ticksuffix: "%" } }}
-                  height={300}
-                />
-              </ChartCard>
-            )}
-
-            {lineTraces.length > 0 && (
-              <ChartCard title="Tendencia de Búsquedas Mensual">
-                <PlotChart data={lineTraces} height={300} />
-              </ChartCard>
-            )}
-
-            {diasAno.length > 0 && (
-              <ChartCard title="Días Promedio de Cierre por Año">
-                <PlotChart
-                  data={[{ type: "bar", x: diasAno.map((r) => r.ANO), y: diasAno.map((r) => r.dias_promedio), marker: { color: "#8b5cf6" } }]}
-                  layout={{ yaxis: { ticksuffix: "d" } }}
-                  height={300}
-                />
-              </ChartCard>
-            )}
-          </div>
-
-          <DataTable rows={rawRows} title="Detalle de Búsquedas" />
+      {/* KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
+        <KpiCard title="Total Búsquedas" value={kpis.total_busquedas} accentColor="var(--accent)" />
+        <KpiCard title="Abiertas"        value={kpis.abiertas} accentColor="var(--cyan)" />
+        <KpiCard title="Cerradas"        value={kpis.cerradas_pct != null ? `${kpis.cerradas_pct}%` : "—"} subtitle={`${kpis.cerradas ?? 0} búsquedas`} accentColor="var(--green)" />
+        <KpiCard title="Canceladas"      value={kpis.canceladas} accentColor="var(--red)" />
+        <KpiCard title="Pausadas"        value={kpis.pausadas} accentColor="var(--orange)" />
+        <KpiCard title="Días Promedio"   value={kpis.dias_promedio != null ? `${kpis.dias_promedio}d` : "—"} />
+        <KpiCard title="Candidatos"      value={kpis.total_candidatos} />
       </div>
+
+      {/* Tabs */}
+      <TabBar tabs={TABS} active={tab} onChange={setTab} />
+
+      {/* ── Tab: General ── */}
+      {tab === "general" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {agBusc.length > 0 && (
+            <ChartCard title="Búsquedas por Agencia">
+              <PlotChart
+                data={[{ type: "bar", orientation: "h", x: agBusc.map((r) => r.busquedas), y: agBusc.map((r) => r.AGENCIA), marker: { color: "#7c5af6" } }]}
+                layout={{ margin: { t: 16, r: 16, b: 36, l: 110 } }}
+                height={300}
+              />
+            </ChartCard>
+          )}
+          {tasaResp.length > 0 && (
+            <ChartCard title="Tasa de Éxito por Responsable">
+              <PlotChart
+                data={[{ type: "bar", x: tasaResp.map((r) => r.RESPONSABLE), y: tasaResp.map((r) => r.tasa_exito_pct), marker: { color: "#10b981" } }]}
+                layout={{ yaxis: { ticksuffix: "%" } }}
+                height={300}
+              />
+            </ChartCard>
+          )}
+        </div>
+      )}
+
+      {/* ── Tab: Fuentes / Canal ── */}
+      {tab === "fuentes" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {canal && (
+            <ChartCard title="Canal de Ingreso">
+              <PlotChart
+                data={[{ type: "pie", labels: canal.labels, values: canal.values, hole: 0.4,
+                  textinfo: "label+percent", textfont: { color: "#6b7a99" },
+                  marker: { colors: ["#7c5af6","#818cf8","#d946ef","#06b6d4","#10b981","#f59e0b"] } }]}
+                layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
+                height={300}
+              />
+            </ChartCard>
+          )}
+          {agBusc.length > 0 && (
+            <ChartCard title="Distribución de Búsquedas por Agencia">
+              <PlotChart
+                data={[{ type: "pie",
+                  labels: agBusc.map((r) => r.AGENCIA),
+                  values: agBusc.map((r) => r.busquedas),
+                  hole: 0.4, textinfo: "label+percent", textfont: { color: "#6b7a99" } }]}
+                layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
+                height={300}
+              />
+            </ChartCard>
+          )}
+        </div>
+      )}
+
+      {/* ── Tab: Vacantes ── */}
+      {tab === "vacantes" && (
+        <div className="space-y-4">
+          {top15.length > 0 && (
+            <ChartCard title="Top 15 Puestos más Solicitados">
+              <PlotChart
+                data={[{ type: "bar", orientation: "h", x: top15.map((r) => r.busquedas), y: top15.map((r) => r.POSICION), marker: { color: "#06b6d4" } }]}
+                layout={{ margin: { t: 16, r: 16, b: 36, l: 200 } }}
+                height={380}
+              />
+            </ChartCard>
+          )}
+        </div>
+      )}
+
+      {/* ── Tab: Tiempos ── */}
+      {tab === "tiempos" && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {agDias.length > 0 && (
+            <ChartCard title="Días Promedio de Cierre por Agencia">
+              <PlotChart
+                data={[{ type: "bar", x: agDias.map((r) => r.AGENCIA), y: agDias.map((r) => r.dias_promedio), marker: { color: "#f59e0b" } }]}
+                layout={{ yaxis: { ticksuffix: "d" } }}
+                height={300}
+              />
+            </ChartCard>
+          )}
+          {lineTraces.length > 0 && (
+            <ChartCard title="Tendencia de Búsquedas Mensual">
+              <PlotChart data={lineTraces} height={300} />
+            </ChartCard>
+          )}
+          {diasAno.length > 0 && (
+            <ChartCard title="Días Promedio de Cierre por Año">
+              <PlotChart
+                data={[{ type: "bar", x: diasAno.map((r) => r.ANO), y: diasAno.map((r) => r.dias_promedio), marker: { color: "#818cf8" } }]}
+                layout={{ yaxis: { ticksuffix: "d" } }}
+                height={300}
+              />
+            </ChartCard>
+          )}
+        </div>
+      )}
+
+      {/* ── Tab: Detalle ── */}
+      {tab === "detalle" && (
+        <DataTable rows={rawRows} title="Detalle de Búsquedas" />
+      )}
     </div>
   );
 }

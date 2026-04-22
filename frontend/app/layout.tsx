@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import LayoutShell from "@/components/LayoutShell";
 import { DashboardProvider } from "@/context/DashboardContext";
 import { FilterProvider } from "@/context/FilterContext";
 
-const inter = Inter({
+const dmSans = DM_Sans({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["300", "400", "500", "600", "700", "800"],
   display: "swap",
 });
 
@@ -20,8 +20,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es" className={inter.variable}>
-      <body className="bg-[#0f1117] text-slate-200 antialiased">
+    <html lang="es">
+      <body className={`${dmSans.className} antialiased`} style={{ background: "var(--bg)", color: "var(--text)" }}>
         <DashboardProvider>
           <FilterProvider>
             <LayoutShell>{children}</LayoutShell>
