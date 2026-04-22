@@ -321,11 +321,7 @@ export default function NominaPage() {
     computeFromRows(filteredRows);
 
   return (
-    <div className="content">
-      {/* Header ya renderizado por Topbar, mostrar solo upload toggle */}
-      {/* KPIs */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-
+    <div>
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
         <KpiCard title="Colaboradores"  value={fmt(kpis.total)}          accentColor="var(--accent)" />
