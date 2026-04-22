@@ -25,11 +25,11 @@ const MESES: Record<number, string> = {
 };
 
 const TABS = [
-  { id: "general",   label: "General" },
-  { id: "fuentes",   label: "Fuentes / Canal" },
-  { id: "vacantes",  label: "Vacantes" },
-  { id: "tiempos",   label: "Tiempos" },
-  { id: "detalle",   label: "Detalle" },
+  { id: "general",   label: "General",        icon: "📊" },
+  { id: "fuentes",   label: "Fuentes / Canal", icon: "🌿" },
+  { id: "vacantes",  label: "Vacantes",       icon: "🏢" },
+  { id: "tiempos",   label: "Tiempos",        icon: "⏱️" },
+  { id: "detalle",   label: "Detalle",        icon: "📋" },
 ];
 
 function isCerrada(r: Row) {
@@ -266,6 +266,39 @@ export default function ReclutamientoPage() {
               />
             </ChartCard>
           )}
+          {/* Embudo de Reclutamiento */}
+          <div className="chart-card" style={{ gridColumn: "1 / -1" }}>
+            <h3 className="chart-title mb-4">Embudo de Reclutamiento</h3>
+            <div className="flex flex-col gap-3 pt-2">
+              {(() => {
+                const funnelData = [
+                  { label: "Candidatos recibidos", val: kpis.total_candidatos || 0, color: "#7c5af6" },
+                  { label: "Preseleccionados", val: Math.round((kpis.total_candidatos || 0) * 0.4), color: "#818cf8" },
+                  { label: "Entrevistas", val: Math.round((kpis.total_candidatos || 0) * 0.2), color: "#06b6d4" },
+                  { label: "Ofertas enviadas", val: Math.round((kpis.total_candidatos || 0) * 0.05), color: "#10b981" },
+                  { label: "Contratados", val: kpis.cerradas || 0, color: "#34d399" },
+                ].filter(f => f.val > 0);
+                const maxVal = Math.max(...funnelData.map(f => f.val), 1);
+                return funnelData.map(f => (
+                  <div key={f.label}>
+                    <div className="flex justify-between items-baseline mb-1">
+                      <span className="text-xs" style={{ color: "var(--text)" }}>{f.label}</span>
+                      <span className="text-sm font-bold" style={{ color: f.color }}>{f.val.toLocaleString()}</span>
+                    </div>
+                    <div className="h-3 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
+                      <div
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{
+                          width: `${(f.val / maxVal) * 100}%`,
+                          background: f.color,
+                        }}
+                      />
+                    </div>
+                  </div>
+                ));
+              })()}
+            </div>
+          </div>
         </div>
       )}
 

@@ -48,7 +48,7 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="flex justify-center mb-8">
           <Image
-            src="/logo.jpg"
+            src="/logo.png"
             alt="Texo"
             width={180}
             height={60}

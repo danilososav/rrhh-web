@@ -25,12 +25,12 @@ const MESES_NOMBRE: Record<number, string> = {
 };
 
 const TABS = [
-  { id: "general",      label: "Rotación General" },
-  { id: "empresa",      label: "Por Empresa" },
-  { id: "cargo",        label: "Por Cargo / Área" },
-  { id: "tendencia",    label: "Tendencia" },
-  { id: "entrevistas",  label: "Entrevistas de Salida" },
-  { id: "detalle",      label: "Detalle" },
+  { id: "general",      label: "Rotación General",     icon: "🔄" },
+  { id: "empresa",      label: "Por Empresa",          icon: "🏢" },
+  { id: "cargo",        label: "Por Cargo / Área",     icon: "📋" },
+  { id: "tendencia",    label: "Tendencia",            icon: "📈" },
+  { id: "entrevistas",  label: "Entrevistas de Salida", icon: "💬" },
+  { id: "detalle",      label: "Detalle",              icon: "📄" },
 ];
 
 function barColors(n: number) {

@@ -7,6 +7,7 @@ import PlotChart, { COLOR_SEQ } from "@/components/PlotChart";
 import TabBar from "@/components/TabBar";
 import DataTable from "@/components/DataTable";
 import { useDashboard } from "@/context/DashboardContext";
+import LayoutShell from "@/components/LayoutShell";
 import { useFilter } from "@/context/FilterContext";
 import { Row, sumField, groupBy, applyFilters, FilterConfig } from "@/lib/filterUtils";
 
@@ -21,10 +22,10 @@ const FILTER_CONFIGS: FilterConfig[] = [
 ];
 
 const TABS = [
-  { id: "distribucion", label: "Distribución" },
-  { id: "demografia",   label: "Demografía" },
-  { id: "salarios",     label: "Salarios" },
-  { id: "liderazgo",    label: "Liderazgo" },
+  { id: "distribucion", label: "Distribución", icon: "👥" },
+  { id: "demografia",   label: "Demografía",   icon: "🌍" },
+  { id: "salarios",     label: "Salarios",     icon: "💰" },
+  { id: "liderazgo",    label: "Liderazgo",    icon: "🏆" },
 ];
 
 function fmt(n: number | null | undefined): string {
@@ -127,6 +128,153 @@ function ChartCard({ title, children, span2 = false }: { title: string; children
   );
 }
 
+// Pictograma SVG Mujer
+function FemalePictogram({ size = 60, color = "#d946ef" }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size * 1.5} viewBox="0 0 60 90" fill="none">
+      {/* Cabeza */}
+      <circle cx="30" cy="13" r="11" fill={color} />
+      {/* Vestido */}
+      <path d="M14 32 L22 28 L30 30 L38 28 L46 32 L40 72 L20 72 Z" fill={color} opacity="0.9" />
+      {/* Brazos */}
+      <line x1="14" y1="32" x2="6" y2="50" stroke={color} strokeWidth="5" strokeLinecap="round" />
+      <line x1="46" y1="32" x2="54" y2="50" stroke={color} strokeWidth="5" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+// Pictograma SVG Hombre
+function MalePictogram({ size = 60, color = "#818cf8" }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size * 1.5} viewBox="0 0 60 90" fill="none">
+      {/* Cabeza */}
+      <circle cx="30" cy="13" r="11" fill={color} />
+      {/* Torso */}
+      <rect x="16" y="27" width="28" height="26" rx="4" fill={color} opacity="0.9" />
+      {/* Brazos */}
+      <line x1="16" y1="30" x2="6" y2="50" stroke={color} strokeWidth="5" strokeLinecap="round" />
+      <line x1="44" y1="30" x2="54" y2="50" stroke={color} strokeWidth="5" strokeLinecap="round" />
+      {/* Piernas */}
+      <rect x="16" y="53" width="12" height="26" rx="4" fill={color} opacity="0.9" />
+      <rect x="32" y="53" width="12" height="26" rx="4" fill={color} opacity="0.9" />
+    </svg>
+  );
+}
+
+// Big Stat Row Component
+function BigStatRow({
+  mujeres,
+  hombres,
+  total,
+}: {
+  mujeres: number;
+  hombres: number;
+  total: number;
+}) {
+  const pctMujeres = total ? Math.round((mujeres / total) * 1000) / 10 : 0;
+  const pctHombres = total ? Math.round((hombres / total) * 1000) / 10 : 0;
+  const PINK = "#d946ef";
+  const INDIGO = "#818cf8";
+
+  return (
+    <div
+      className="chart-card"
+      style={{
+        flexDirection: "row",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 48,
+        padding: "28px 32px",
+      }}
+    >
+      {/* Mujeres */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+        <FemalePictogram size={60} color={PINK} />
+        <div
+          style={{
+            fontSize: "52px",
+            fontWeight: 800,
+            color: PINK,
+            lineHeight: 1,
+            letterSpacing: "-2px",
+          }}
+        >
+          {mujeres}
+        </div>
+        <div
+          style={{
+            fontSize: "22px",
+            fontWeight: 700,
+            color: PINK,
+          }}
+        >
+          {pctMujeres}%
+        </div>
+        <div style={{ fontSize: 13, color: "var(--text2)", fontWeight: 500 }}>Mujeres</div>
+      </div>
+
+      {/* Divider */}
+      <div style={{ width: 1, height: 120, background: "var(--border)" }} />
+
+      {/* Total */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+        <div
+          style={{
+            fontSize: 14,
+            fontWeight: 600,
+            color: "var(--text2)",
+            letterSpacing: "0.2em",
+            textTransform: "uppercase",
+          }}
+        >
+          Total
+        </div>
+        <div
+          style={{
+            fontSize: "64px",
+            fontWeight: 800,
+            color: "var(--text)",
+            lineHeight: 1,
+            letterSpacing: "-3px",
+          }}
+        >
+          {total}
+        </div>
+        <div style={{ fontSize: 12, color: "var(--text2)" }}>Colaboradores</div>
+      </div>
+
+      {/* Divider */}
+      <div style={{ width: 1, height: 120, background: "var(--border)" }} />
+
+      {/* Hombres */}
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+        <MalePictogram size={60} color={INDIGO} />
+        <div
+          style={{
+            fontSize: "52px",
+            fontWeight: 800,
+            color: INDIGO,
+            lineHeight: 1,
+            letterSpacing: "-2px",
+          }}
+        >
+          {hombres}
+        </div>
+        <div
+          style={{
+            fontSize: "22px",
+            fontWeight: 700,
+            color: INDIGO,
+          }}
+        >
+          {pctHombres}%
+        </div>
+        <div style={{ fontSize: 13, color: "var(--text2)", fontWeight: 500 }}>Hombres</div>
+      </div>
+    </div>
+  );
+}
+
 export default function NominaPage() {
   const { nominaData, setNominaData } = useDashboard();
   const { selected, register } = useFilter();
@@ -138,6 +286,10 @@ export default function NominaPage() {
     if (nominaData) register(FILTER_CONFIGS, (nominaData.tabla as Row[]) ?? []);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  function handleRefresh() {
+    setShowUpload(true);
+  }
 
   function handleResult(result: AnyObj) {
     setData(result);
@@ -169,43 +321,10 @@ export default function NominaPage() {
     computeFromRows(filteredRows);
 
   return (
-    <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <p className="label-xs mb-1" style={{ color: "var(--accent)" }}>Módulo de Nómina</p>
-          <h1 className="page-title">Análisis de Colaboradores</h1>
-        </div>
-        <button
-          onClick={() => setShowUpload((v) => !v)}
-          className="rounded-lg px-4 py-2 text-sm font-medium transition-all"
-          style={{
-            background: "var(--card)",
-            border: "1px solid var(--border)",
-            color: "var(--text2)",
-          }}
-          onMouseEnter={e => {
-            (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent)";
-            (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)";
-          }}
-          onMouseLeave={e => {
-            (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)";
-            (e.currentTarget as HTMLButtonElement).style.color = "var(--text2)";
-          }}
-        >
-          Actualizar datos
-        </button>
-      </div>
-
-      {showUpload && (
-        <div className="mb-6 rounded-xl p-4" style={{ border: "1px solid var(--accent)", background: "var(--card)" }}>
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-medium" style={{ color: "var(--text)" }}>Cargar nuevos datos de nómina</p>
-            <button onClick={() => setShowUpload(false)} className="text-xs transition" style={{ color: "var(--text3)" }}>Cancelar</button>
-          </div>
-          <FileUpload endpoint="/api/nomina" fieldName="file" multiple={false} onResult={handleResult} />
-        </div>
-      )}
+    <div className="content">
+      {/* Header ya renderizado por Topbar, mostrar solo upload toggle */}
+      {/* KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
@@ -222,31 +341,40 @@ export default function NominaPage() {
 
       {/* Tab: Distribución */}
       {tab === "distribucion" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <ChartCard title="Distribución por Género">
-            <PlotChart
-              data={[{
-                type: "pie", labels: genero.labels, values: genero.values,
-                hole: 0.45, textinfo: "label+percent",
-                textfont: { color: "#6b7a99" },
-                marker: { colors: ["#d946ef", "#818cf8"] },
-              }]}
-              layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
-              height={280}
-            />
-          </ChartCard>
-          {genero.por_empresa.length > 0 && (
-            <ChartCard title="Género por Empresa">
+        <div className="tab-content" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+          {/* Big Stat Row */}
+          <BigStatRow
+            mujeres={genero.values[0] ?? 0}
+            hombres={genero.values[1] ?? 0}
+            total={kpis.total}
+          />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ChartCard title="DISTRIBUCIÓN POR GÉNERO">
               <PlotChart
-                data={[
-                  { type: "bar", name: "Mujeres", x: genero.por_empresa.map((r) => r.EMPRESA), y: genero.por_empresa.map((r) => r.Mujeres), marker: { color: "#d946ef" } },
-                  { type: "bar", name: "Hombres", x: genero.por_empresa.map((r) => r.EMPRESA), y: genero.por_empresa.map((r) => r.Hombres), marker: { color: "#818cf8" } },
-                ]}
-                layout={{ barmode: "group" }}
+                data={[{
+                  type: "pie", labels: genero.labels, values: genero.values,
+                  hole: 0.45, textinfo: "label+percent",
+                  textfont: { color: "#6b7a99" },
+                  marker: { colors: ["#d946ef", "#818cf8"] },
+                }]}
+                layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
                 height={280}
               />
             </ChartCard>
-          )}
+            {genero.por_empresa.length > 0 && (
+              <ChartCard title="GÉNERO POR EMPRESA">
+                <PlotChart
+                  data={[
+                    { type: "bar", name: "Mujeres", x: genero.por_empresa.map((r) => r.EMPRESA), y: genero.por_empresa.map((r) => r.Mujeres), marker: { color: "#d946ef" } },
+                    { type: "bar", name: "Hombres", x: genero.por_empresa.map((r) => r.EMPRESA), y: genero.por_empresa.map((r) => r.Hombres), marker: { color: "#818cf8" } },
+                  ]}
+                  layout={{ barmode: "group" }}
+                  height={280}
+                />
+              </ChartCard>
+            )}
+          </div>
         </div>
       )}
 

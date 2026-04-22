@@ -3,6 +3,7 @@
 interface Tab {
   id: string;
   label: string;
+  icon?: string;
 }
 
 interface TabBarProps {
@@ -40,6 +41,7 @@ export default function TabBar({ tabs, active, onChange }: TabBarProps) {
               if (!isActive) (e.currentTarget as HTMLButtonElement).style.color = "var(--text2)";
             }}
           >
+            {tab.icon && <span className="mr-1.5">{tab.icon}</span>}
             {tab.label}
           </button>
         );

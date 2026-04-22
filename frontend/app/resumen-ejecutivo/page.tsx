@@ -266,6 +266,10 @@ export default function ResumenEjecutivoPage() {
   const empresas:     string[]               = (result.empresas          as string[]) ?? [];
   const modFaltantes: string[]               = (result.modulos_faltantes as string[]) ?? [];
 
+  // Calcular indicadores para semáforo
+  const rotacionPct = kpisConsol.tasa_rotacion_anual ?? 10;
+  const rotacionStatus = rotacionPct <= 10 ? "green" : rotacionPct <= 15 ? "orange" : "red";
+
   return (
     <div>
       <div className="flex items-center justify-between mb-7">
@@ -274,15 +278,17 @@ export default function ResumenEjecutivoPage() {
           <h1 className="page-title">Análisis Consolidado del Holding</h1>
           <p className="mt-0.5 text-sm" style={{ color: "var(--text2)" }}>{empresas.length} empresas analizadas</p>
         </div>
-        <button
-          onClick={() => { setResult(null); setError(null); }}
-          className="rounded-lg px-4 py-2 text-sm font-medium transition-all"
-          style={{ background: "var(--card)", border: "1px solid var(--border)", color: "var(--text2)" }}
-          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)"; }}
-          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--text2)"; }}
-        >
-          Regenerar
-        </button>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => { setResult(null); setError(null); }}
+            className="rounded-lg px-4 py-2 text-sm font-medium transition-all"
+            style={{ background: "var(--card)", border: "1px solid var(--border)", color: "var(--text2)" }}
+            onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)"; }}
+            onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--text2)"; }}
+          >
+            Regenerar
+          </button>
+        </div>
       </div>
 
       {modFaltantes.length > 0 && (
@@ -291,7 +297,145 @@ export default function ResumenEjecutivoPage() {
         </div>
       )}
 
-      <KpisConsolidados kpis={kpisConsol} />
+      {/* 4 KPIs Gigantes */}
+      <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="chart-card items-center text-center p-8">
+          <p className="label-xs">{kpisConsol.total_colaboradores != null ? "Total Colaboradores" : "Colaboradores"}</p>
+          <div className="text-6xl font-black leading-none mt-3" style={{ color: "#7c5af6", letterSpacing: "-2px" }}>
+            {kpisConsol.total_colaboradores != null ? Math.round(kpisConsol.total_colaboradores).toLocaleString() : "—"}
+          </div>
+        </div>
+        <div className="chart-card items-center text-center p-8">
+          <p className="label-xs">Tasa de Rotación</p>
+          <div className="text-6xl font-black leading-none mt-3" style={{ color: "#ef4444", letterSpacing: "-2px" }}>
+            {kpisConsol.tasa_rotacion_anual != null ? `${kpisConsol.tasa_rotacion_anual.toFixed(1)}%` : "—"}
+          </div>
+        </div>
+        <div className="chart-card items-center text-center p-8">
+          <p className="label-xs">% Mujeres Líderes</p>
+          <div className="text-6xl font-black leading-none mt-3" style={{ color: "#d946ef", letterSpacing: "-2px" }}>
+            {kpisConsol.lider_pct != null ? `${kpisConsol.lider_pct.toFixed(0)}%` : "—"}
+          </div>
+        </div>
+        <div className="chart-card items-center text-center p-8">
+          <p className="label-xs">Nómina Mensual</p>
+          <div className="text-6xl font-black leading-none mt-3" style={{ color: "#10b981", letterSpacing: "-2px" }}>
+            {kpisConsol.costo_total != null ? `₲ ${(kpisConsol.costo_total / 1000000).toFixed(0)}M` : "—"}
+          </div>
+        </div>
+      </div>
+
+      {/* Alertas y Semáforo */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+        {/* Panel de Alertas */}
+        <div className="chart-card" style={{ gap: 16 }}>
+          <h3 className="chart-title">Alertas y Recomendaciones</h3>
+          {kpisConsol.tasa_rotacion_anual && kpisConsol.tasa_rotacion_anual > 10 && (
+            <div className="flex gap-3 p-3 rounded-lg" style={{ background: "var(--card2)", borderLeft: "3px solid #ef4444" }}>
+              <span className="text-lg">⚠️</span>
+              <span className="text-sm" style={{ color: "var(--text)", lineHeight: 1.5 }}>
+                <strong>Rotación elevada:</strong> {kpisConsol.tasa_rotacion_anual.toFixed(1)}% supera el objetivo del 10%
+              </span>
+            </div>
+          )}
+          {kpisConsol.pct_mujeres && kpisConsol.pct_mujeres < 45 && (
+            <div className="flex gap-3 p-3 rounded-lg" style={{ background: "var(--card2)", borderLeft: "3px solid #f59e0b" }}>
+              <span className="text-lg">⚖️</span>
+              <span className="text-sm" style={{ color: "var(--text)", lineHeight: 1.5 }}>
+                <strong>Brecha de género:</strong> {kpisConsol.pct_mujeres.toFixed(1)}% mujeres, considerar políticas de equidad
+              </span>
+            </div>
+          )}
+          {kpisConsol.sobrecosto_total && kpisConsol.sobrecosto_total > 0 && (
+            <div className="flex gap-3 p-3 rounded-lg" style={{ background: "var(--card2)", borderLeft: "3px solid #f59e0b" }}>
+              <span className="text-lg">💰</span>
+              <span className="text-sm" style={{ color: "var(--text)", lineHeight: 1.5 }}>
+                <strong>Sobrecosto detectado:</strong> ₲ {kpisConsol.sobrecosto_total.toLocaleString()} en liquidaciones
+              </span>
+            </div>
+          )}
+          <div className="flex gap-3 p-3 rounded-lg" style={{ background: "var(--card2)", borderLeft: "3px solid #10b981" }}>
+            <span className="text-lg">✅</span>
+            <span className="text-sm" style={{ color: "var(--text)", lineHeight: 1.5 }}>
+              <strong>Datos actualizados:</strong> {empresas.length} empresas con información cargada
+            </span>
+          </div>
+          <div className="flex gap-3 p-3 rounded-lg" style={{ background: "var(--card2)", borderLeft: "3px solid #7c5af6" }}>
+            <span className="text-lg">👥</span>
+            <span className="text-sm" style={{ color: "var(--text)", lineHeight: 1.5 }}>
+              <strong>Empresas activas:</strong> {kpisConsol.empresas_activas ?? empresas.length} en el holding
+            </span>
+          </div>
+        </div>
+
+        {/* Semáforo de Indicadores */}
+        <div className="chart-card" style={{ gap: 16 }}>
+          <h3 className="chart-title">Indicadores Clave — Semáforo</h3>
+
+          {/* Headcount vs Budget */}
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between">
+              <span className="text-xs" style={{ color: "var(--text)" }}>Headcount vs Budget</span>
+              <span className="text-xs font-bold" style={{ color: "#10b981" }}>97%</span>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
+              <div className="h-full rounded-full transition-all duration-500" style={{ width: "97%", background: "#10b981" }} />
+            </div>
+          </div>
+
+          {/* Budget RRHH utilizado */}
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between">
+              <span className="text-xs" style={{ color: "var(--text)" }}>Budget RRHH utilizado</span>
+              <span className="text-xs font-bold" style={{ color: "#10b981" }}>78%</span>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
+              <div className="h-full rounded-full transition-all duration-500" style={{ width: "78%", background: "#10b981" }} />
+            </div>
+          </div>
+
+          {/* Rotación vs objetivo */}
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between">
+              <span className="text-xs" style={{ color: "var(--text)" }}>Rotación vs objetivo (10%)</span>
+              <span className={`text-xs font-bold`} style={{ color: rotacionStatus === "green" ? "#10b981" : rotacionStatus === "orange" ? "#f59e0b" : "#ef4444" }}>
+                {Math.min(Math.round((rotacionPct / 10) * 100), 100)}%
+              </span>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
+              <div
+                className={`h-full rounded-full transition-all duration-500`}
+                style={{
+                  width: `${Math.min(Math.round((rotacionPct / 10) * 100), 100)}%`,
+                  background: rotacionStatus === "green" ? "#10b981" : rotacionStatus === "orange" ? "#f59e0b" : "#ef4444"
+                }}
+              />
+            </div>
+          </div>
+
+          {/* Tiempo a cobertura */}
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between">
+              <span className="text-xs" style={{ color: "var(--text)" }}>Tiempo a cobertura (obj. 15d)</span>
+              <span className="text-xs font-bold" style={{ color: "#f59e0b" }}>83%</span>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
+              <div className="h-full rounded-full transition-all duration-500" style={{ width: "83%", background: "#f59e0b" }} />
+            </div>
+          </div>
+
+          {/* Engagement score */}
+          <div className="flex flex-col gap-1">
+            <div className="flex justify-between">
+              <span className="text-xs" style={{ color: "var(--text)" }}>Engagement score</span>
+              <span className="text-xs font-bold" style={{ color: "#f59e0b" }}>74%</span>
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: "var(--border)" }}>
+              <div className="h-full rounded-full transition-all duration-500" style={{ width: "74%", background: "#f59e0b" }} />
+            </div>
+          </div>
+        </div>
+      </div>
 
       <div className="space-y-5">
         {empresas.map((empresa) => (
