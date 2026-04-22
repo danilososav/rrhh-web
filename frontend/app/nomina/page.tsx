@@ -212,6 +212,32 @@ export default function NominaPage() {
 
   return (
     <div>
+      {/* Encabezado con botón actualizar */}
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="label-xs" style={{ color: "var(--accent)" }}>Módulo de Nómina</p>
+          <h1 className="page-title">Análisis de Colaboradores</h1>
+        </div>
+        <button
+          onClick={handleRefresh}
+          className="flex items-center gap-2 text-sm px-4 py-2 rounded-lg font-medium transition-all"
+          style={{ background: "var(--card2)", color: "var(--text2)", border: "1px solid var(--border)" }}
+        >
+          ↺ Actualizar datos
+        </button>
+      </div>
+
+      {/* Panel actualizar datos */}
+      {showUpload && (
+        <div className="mb-6 p-4 rounded-xl border" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-sm font-semibold" style={{ color: "var(--text)" }}>Actualizar datos de nómina</span>
+            <button onClick={() => setShowUpload(false)} className="text-xs px-3 py-1 rounded-lg" style={{ background: "var(--card2)", color: "var(--text2)" }}>Cancelar</button>
+          </div>
+          <FileUpload endpoint="/api/nomina" fieldName="file" multiple={false} onResult={handleResult} />
+        </div>
+      )}
+
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
         <KpiCard title="Colaboradores"  value={fmt(kpis.total)}          accentColor="var(--accent)" />
