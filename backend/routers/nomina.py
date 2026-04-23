@@ -102,7 +102,7 @@ def normalizar_nomina(df_raw: pd.DataFrame) -> pd.DataFrame:
 
     for col in ["EMPRESA", "SITUACION", "NOMBRE", "CARGO", "AREA",
                 "DEPARTAMENTO", "SECCION", "NIVEL_AIC", "NACIONALIDAD",
-                "MOTIVO_SALIDA", "TIPO_PAGO"]:
+                "MOTIVO_SALIDA", "TIPO_PAGO", "TIPO_EMPRESA"]:
         if col in df.columns:
             df[col] = df[col].astype(str).str.strip().str.upper().replace("NAN", np.nan)
 
@@ -223,17 +223,14 @@ async def procesar_nomina(file: UploadFile = File(...)):
     if "EMPRESA" in df.columns:
         por_empresa = {str(k): int(v) for k, v in df.groupby("EMPRESA").size().items()}
 
-    AGENCIAS_NOMBRES = {"BRICK", "NASTA", "LUPE", "OMD", "ROGER", "AMPLIFY"}
-    CSC_NOMBRES      = {"TEXO", "BPR", "ROW"}
-
     agencias_n = 0
     tac_media_n = 0
     csc_n = 0
-    if "EMPRESA" in df.columns:
-        emp_upper = df["EMPRESA"].str.upper().str.strip()
-        agencias_n  = int(emp_upper.isin(AGENCIAS_NOMBRES).sum())
-        tac_media_n = int((emp_upper == "TAC MEDIA").sum())
-        csc_n       = int(emp_upper.isin(CSC_NOMBRES).sum())
+    if "TIPO_EMPRESA" in df.columns:
+        tipo = df["TIPO_EMPRESA"].str.upper().str.strip()
+        agencias_n  = int((tipo == "AGENCIA").sum())
+        tac_media_n = int((tipo == "TAC MEDIA").sum())
+        csc_n       = int((tipo == "CSC").sum())
 
     kpis = {
         "total":             total,
@@ -389,7 +386,7 @@ async def procesar_nomina(file: UploadFile = File(...)):
     # TABLA DETALLE
     # ══════════════════════════════════════════════════════════════════════════
     tabla_cols = [c for c in [
-        "EMPRESA", "NOMBRE", "CEDULA", "CARGO", "AREA", "DEPARTAMENTO", "SECCION",
+        "EMPRESA", "TIPO_EMPRESA", "NOMBRE", "CEDULA", "CARGO", "AREA", "DEPARTAMENTO", "SECCION",
         "NIVEL_AIC", "LIDER", "SEXO", "GENERACION", "EDAD", "NACIONALIDAD",
         "SALARIO", "FECHA_INGRESO", "ANTIGUEDAD_ANOS", "SITUACION",
     ] if c in df.columns]
