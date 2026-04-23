@@ -171,7 +171,7 @@ function computeFromRows(allRows: Row[]) {
     return rows;
   })();
 
-  const TAC_SET      = new Set(["AMPLIFY","BPR"]);
+  const TAC_SET      = new Set(["AMPLIFY","BPR","TAC MEDIA"]);
   const CSC_SET      = new Set(["TEXO"]);
 
   const retencion = (() => {
