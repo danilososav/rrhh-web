@@ -114,13 +114,21 @@ function computeFromRows(rows: Row[]) {
     },
   };
 
+  const extPorNac = (() => {
+    const extRows = rows.filter((r) => !esParaguay(r) && r.NACIONALIDAD);
+    const m = groupBy(extRows, "NACIONALIDAD");
+    return Object.entries(m)
+      .map(([nac, r]) => ({ nac: String(nac).toUpperCase(), count: r.length }))
+      .sort((a, b) => b.count - a.count);
+  })();
+
   const ANILLOS = ["ANILLO 1", "ANILLO 2", "ANILLO 3"];
   const anillosGenero = ANILLOS.map((anillo) => {
     const r = rows.filter((x) => String(x.SECCION ?? "").toUpperCase().trim() === anillo);
     return { anillo, mujeres: r.filter((x) => x.SEXO === "F").length, hombres: r.filter((x) => x.SEXO === "M").length };
   });
 
-  return { kpis, genero, genDist, lidFem, lidMasc, lidEmp, salEmp, brechaNivel, nac, anillosGenero };
+  return { kpis, genero, genDist, lidFem, lidMasc, lidEmp, salEmp, brechaNivel, nac, anillosGenero, extPorNac };
 }
 
 function barColors(n: number) {
@@ -225,7 +233,7 @@ export default function NominaPage() {
 
   const rawRows: Row[]  = (data.tabla as Row[]) ?? [];
   const filteredRows    = applyFilters(rawRows, selected);
-  const { kpis, genero, genDist, lidFem, lidMasc, lidEmp, salEmp, brechaNivel, nac, anillosGenero } =
+  const { kpis, genero, genDist, lidFem, lidMasc, lidEmp, salEmp, brechaNivel, nac, anillosGenero, extPorNac } =
     computeFromRows(filteredRows);
 
   return (
@@ -391,6 +399,21 @@ export default function NominaPage() {
                   marker: { colors: ["#7c5af6", "#10b981"] },
                 }]}
                 layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
+                height={280}
+              />
+            </ChartCard>
+          )}
+          {extPorNac.length > 0 && (
+            <ChartCard title="Colaboradores Extranjeros por Nacionalidad">
+              <PlotChart
+                data={[{
+                  type: "bar",
+                  x: extPorNac.map((r) => r.nac),
+                  y: extPorNac.map((r) => r.count),
+                  marker: { color: barColors(extPorNac.length) },
+                  text: extPorNac.map((r) => String(r.count)),
+                  textposition: "outside",
+                }]}
                 height={280}
               />
             </ChartCard>
