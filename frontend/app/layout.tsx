@@ -20,8 +20,8 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es">
-      <body className={`${dmSans.className} antialiased`} style={{ background: "var(--bg)", color: "var(--text)" }}>
+    <html lang="es" suppressHydrationWarning>
+      <body className={`${dmSans.className} antialiased`} style={{ background: "var(--bg)", color: "var(--text)" }} suppressHydrationWarning>
         <DashboardProvider>
           <FilterProvider>
             <LayoutShell>{children}</LayoutShell>

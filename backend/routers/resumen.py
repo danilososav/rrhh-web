@@ -84,9 +84,10 @@ Sin markdown, sin bullets, solo texto ejecutivo."""
 # ══════════════════════════════════════════════════════════════════════════════
 
 class ResumenRequest(BaseModel):
-    nomina:        dict[str, Any] | None = None   # output de POST /api/nomina
-    rotacion:      dict[str, Any] | None = None   # output de POST /api/rotacion
-    liquidaciones: dict[str, Any] | None = None   # output de POST /api/costos
+    nomina:         dict[str, Any] | None = None   # output de POST /api/nomina
+    rotacion:       dict[str, Any] | None = None   # output de POST /api/rotacion
+    liquidaciones:  dict[str, Any] | None = None   # output de POST /api/costos
+    reclutamiento:  dict[str, Any] | None = None   # output de POST /api/reclutamiento
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -198,9 +199,10 @@ async def procesar_resumen(payload: ResumenRequest):
 
     modulos_faltantes = [
         m for m, d in [
-            ("nómina",        payload.nomina),
-            ("rotación",      payload.rotacion),
-            ("liquidaciones", payload.liquidaciones),
+            ("nómina",         payload.nomina),
+            ("rotación",       payload.rotacion),
+            ("liquidaciones",  payload.liquidaciones),
+            ("reclutamiento",  payload.reclutamiento),
         ] if d is None
     ]
 

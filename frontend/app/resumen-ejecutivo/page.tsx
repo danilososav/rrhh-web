@@ -133,7 +133,13 @@ export default function ResumenEjecutivoPage() {
       }
       setResult(await res.json());
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Error desconocido");
+      const msg = err instanceof Error ? err.message : "Error desconocido";
+      const isCors = msg.toLowerCase().includes("failed to fetch") || msg.toLowerCase().includes("networkerror");
+      setError(
+        isCors
+          ? "No se pudo conectar con el servidor. El servidor puede estar iniciando (Render free tier demora ~30 s). Esperá un momento y volvé a intentar."
+          : msg
+      );
     } finally {
       setLoading(false);
     }
