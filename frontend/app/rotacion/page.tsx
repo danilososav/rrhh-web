@@ -603,33 +603,49 @@ export default function RotacionPage() {
                 }}
                 height={420}
               />
-              {motivoEmpTraces.length > 0 && (
-                <>
-                  <h4 className="text-xs font-semibold mt-6 mb-2" style={{ color: "var(--text2)" }}>MOTIVO DE SALIDA POR EMPRESA (%)</h4>
-                  <PlotChart
-                    data={motivoEmpTraces as AnyObj[]}
-                    layout={{
-                      barmode: "stack",
-                      barnorm: "percent",
-                      yaxis: { ticksuffix: "%", showgrid: false },
-                      margin: { t: 10, r: 16, b: 80, l: 110 },
-                      legend: { orientation: "h", y: -0.28 },
-                    }}
-                    height={220}
-                  />
-                </>
-              )}
+              {motivoEmpTraces.length > 0 && (() => {
+                const totalesMotivoEmp = empresasMotivo.map((emp) =>
+                  motivoEmp.filter((r) => r.empresa === emp).reduce((s, r) => s + r.n, 0)
+                );
+                const hMotivo = Math.max(220, empresasMotivo.length * 36);
+                return (
+                  <>
+                    <h4 className="text-xs font-semibold mt-6 mb-2" style={{ color: "var(--text2)" }}>MOTIVO DE SALIDA POR EMPRESA (%)</h4>
+                    <PlotChart
+                      data={motivoEmpTraces.map((t) => ({ ...t, orientation: "h", x: t.y, y: t.x })) as AnyObj[]}
+                      layout={{
+                        barmode: "stack",
+                        barnorm: "percent",
+                        xaxis: { ticksuffix: "%", showgrid: false, range: [0, 115] },
+                        margin: { t: 10, r: 60, b: 60, l: 110 },
+                        legend: { orientation: "h", y: -0.22 },
+                        annotations: empresasMotivo.map((emp, i) => ({
+                          x: 102, y: emp,
+                          text: `<b>${totalesMotivoEmp[i]}</b>`,
+                          xref: "x", yref: "y",
+                          showarrow: false,
+                          font: { size: 11, color: "#cbd5e1" },
+                          xanchor: "left",
+                        })),
+                      }}
+                      height={hMotivo}
+                    />
+                  </>
+                );
+              })()}
             </ChartCard>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {salEmp.length > 0 && (
               <ChartCard title="Total Salidas por Empresa">
                 <PlotChart
-                  data={[{ type: "bar", orientation: "h",
-                    x: salEmp.map((r) => r.salidas), y: salEmp.map((r) => r.EMPRESA),
+                  data={[{ type: "bar",
+                    x: salEmp.map((r) => r.EMPRESA), y: salEmp.map((r) => r.salidas),
+                    text: salEmp.map((r) => String(r.salidas)),
+                    textposition: "outside" as const,
                     marker: { color: barColors(salEmp.length) } }]}
-                  layout={{ margin: { t: 16, r: 16, b: 36, l: 110 } }}
-                  height={Math.max(280, salEmp.length * 28)}
+                  layout={{ margin: { t: 30, r: 16, b: 80, l: 40 } }}
+                  height={Math.max(280, 240)}
                 />
               </ChartCard>
             )}
