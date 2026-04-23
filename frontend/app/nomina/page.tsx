@@ -314,6 +314,18 @@ export default function NominaPage() {
                 />
               </ChartCard>
             )}
+            <ChartCard title="Líderes por Género">
+              <PlotChart
+                data={[{
+                  type: "pie", labels: ["Mujeres", "Hombres"], values: [lidFem, lidMasc],
+                  hole: 0.45, textinfo: "label+percent",
+                  textfont: { color: "#6b7a99" },
+                  marker: { colors: ["#d946ef", "#818cf8"] },
+                }]}
+                layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
+                height={280}
+              />
+            </ChartCard>
           </div>
         </div>
       )}
@@ -375,18 +387,6 @@ export default function NominaPage() {
       {/* Tab: Liderazgo */}
       {tab === "liderazgo" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <ChartCard title="Líderes por Género">
-            <PlotChart
-              data={[{
-                type: "pie", labels: ["Mujeres", "Hombres"], values: [lidFem, lidMasc],
-                hole: 0.45, textinfo: "label+percent",
-                textfont: { color: "#6b7a99" },
-                marker: { colors: ["#d946ef", "#818cf8"] },
-              }]}
-              layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
-              height={280}
-            />
-          </ChartCard>
           {lidEmp.length > 0 && (
             <ChartCard title="% Líderes por Empresa">
               <PlotChart
