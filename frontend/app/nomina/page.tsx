@@ -523,9 +523,22 @@ export default function NominaPage() {
         </div>
       )}
 
-      <div className="mt-6">
-        <DataTable rows={rawRows} title="Detalle de Nómina" />
-      </div>
+      {(() => {
+        const TAB_COLS: Record<string, string[]> = {
+          distribucion: ["EMPRESA", "TIPO_EMPRESA", "NOMBRE", "SEXO", "LIDER", "SECCION", "NIVEL_AIC"],
+          demografia:   ["EMPRESA", "NOMBRE", "GENERACION", "EDAD", "FECHA_NACIMIENTO", "NACIONALIDAD"],
+          brecha:       ["EMPRESA", "TIPO_EMPRESA", "NOMBRE", "GENERACION", "ANTIGUEDAD_ANOS", "FECHA_INGRESO"],
+        };
+        const cols = TAB_COLS[tab] ?? Object.keys(rawRows[0] ?? {});
+        const tableRows = rawRows.map((r) =>
+          Object.fromEntries(cols.filter((c) => c in r).map((c) => [c, r[c]]))
+        );
+        return (
+          <div className="mt-6">
+            <DataTable rows={tableRows} title="Detalle de Nómina" />
+          </div>
+        );
+      })()}
     </div>
   );
 }
