@@ -471,35 +471,6 @@ export default function NominaPage() {
               />
             </ChartCard>
           )}
-          {salEmp.length > 0 && (
-            <ChartCard title="Salario Promedio por Empresa">
-              <PlotChart
-                data={[{ type: "bar", x: salEmp.map((r) => r.empresa), y: salEmp.map((r) => r.promedio), marker: { color: barColors(salEmp.length) } }]}
-                height={280}
-              />
-            </ChartCard>
-          )}
-          {brechaNivel.length > 0 && (
-            <ChartCard title="Brecha Salarial por Nivel">
-              <PlotChart
-                data={[
-                  { type: "bar", name: "Mujeres", x: brechaNivel.map((r) => r.nivel), y: brechaNivel.map((r) => r.prom_mujeres), marker: { color: "#d946ef" } },
-                  { type: "bar", name: "Hombres", x: brechaNivel.map((r) => r.nivel), y: brechaNivel.map((r) => r.prom_hombres), marker: { color: "#818cf8" } },
-                ]}
-                layout={{ barmode: "group" }}
-                height={280}
-              />
-            </ChartCard>
-          )}
-          {lidEmp.length > 0 && (
-            <ChartCard title="% Líderes por Empresa">
-              <PlotChart
-                data={[{ type: "bar", x: lidEmp.map((r) => r.EMPRESA), y: lidEmp.map((r) => r.pct_lideres), marker: { color: barColors(lidEmp.length) } }]}
-                layout={{ yaxis: { ticksuffix: "%" } }}
-                height={280}
-              />
-            </ChartCard>
-          )}
         </div>
       )}
 
