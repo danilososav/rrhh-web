@@ -33,16 +33,14 @@ function fmt(n: number | null | undefined): string {
   return n.toLocaleString("es-PY", { maximumFractionDigits: 0 });
 }
 
-const AGENCIAS_NOMBRES = new Set(["BRICK", "NASTA", "LUPE", "OMD", "ROGER", "AMPLIFY"]);
-const CSC_NOMBRES      = new Set(["TEXO", "BPR", "ROW"]);
-
 function computeFromRows(rows: Row[]) {
   const total    = rows.length;
   const empresas = new Set(rows.map((r) => r.EMPRESA).filter(Boolean)).size;
 
-  const agencias = rows.filter((r) => AGENCIAS_NOMBRES.has(String(r.EMPRESA ?? "").toUpperCase().trim())).length;
-  const tacMedia = rows.filter((r) => String(r.EMPRESA ?? "").toUpperCase().trim() === "TAC MEDIA").length;
-  const csc      = rows.filter((r) => CSC_NOMBRES.has(String(r.EMPRESA ?? "").toUpperCase().trim())).length;
+  const tipoNorm = (r: Row) => String(r.TIPO_EMPRESA ?? "").toLowerCase().trim();
+  const agencias = rows.filter((r) => tipoNorm(r) === "agencia").length;
+  const tacMedia = rows.filter((r) => tipoNorm(r) === "tac media").length;
+  const csc      = rows.filter((r) => tipoNorm(r) === "csc").length;
 
   const mujeres     = rows.filter((r) => r.SEXO === "F").length;
   const salRows     = rows.filter((r) => r.SALARIO != null);
