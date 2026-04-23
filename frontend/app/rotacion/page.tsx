@@ -67,7 +67,7 @@ function computeFromRows(allRows: Row[]) {
 
   const motOrig = (() => {
     const m = groupBy(salidas.filter((r) => r.MOTIVO_SALIDA && String(r.MOTIVO_SALIDA).toUpperCase() !== "NAN"), "MOTIVO_SALIDA");
-    return Object.entries(m).map(([motivo, r]) => ({ motivo, cantidad: r.length })).sort((a, b) => b.cantidad - a.cantidad).slice(0, 10);
+    return Object.entries(m).map(([motivo, r]) => ({ motivo, cantidad: r.length })).sort((a, b) => b.cantidad - a.cantidad).slice(0, 5);
   })();
 
   const tasaMensual = (() => {
@@ -323,7 +323,7 @@ export default function RotacionPage() {
               </ChartCard>
             )}
             {motOrig.length > 0 && (
-              <ChartCard title="Top 10 Motivos de Salida">
+              <ChartCard title="Top 5 Motivos de Salida">
                 <PlotChart
                   data={[{ type: "bar", orientation: "h",
                     x: motOrig.map((r) => r.cantidad),
@@ -335,11 +335,6 @@ export default function RotacionPage() {
               </ChartCard>
             )}
           </div>
-          {lineTraces.length > 0 && (
-            <ChartCard title="Tasa de Rotación Mensual (%)">
-              <PlotChart data={lineTraces} height={280} />
-            </ChartCard>
-          )}
         </div>
       )}
 
