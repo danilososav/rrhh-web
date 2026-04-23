@@ -130,35 +130,22 @@ function ChartCard({ title, children, span2 = false }: { title: string; children
   );
 }
 
-// Pictograma SVG Mujer
-function FemalePictogram({ size = 60, color = "#d946ef" }: { size?: number; color?: string }) {
+function FemalePictogram({ size = 80, color = "#d946ef" }: { size?: number; color?: string }) {
   return (
-    <svg width={size} height={size * 1.5} viewBox="0 0 60 90" fill="none">
-      {/* Cabeza */}
-      <circle cx="30" cy="13" r="11" fill={color} />
-      {/* Vestido */}
-      <path d="M14 32 L22 28 L30 30 L38 28 L46 32 L40 72 L20 72 Z" fill={color} opacity="0.9" />
-      {/* Brazos */}
-      <line x1="14" y1="32" x2="6" y2="50" stroke={color} strokeWidth="5" strokeLinecap="round" />
-      <line x1="46" y1="32" x2="54" y2="50" stroke={color} strokeWidth="5" strokeLinecap="round" />
+    <svg width={size} height={size} viewBox="0 0 48 48" fill={color}>
+      <circle cx="24" cy="9" r="7" />
+      <path d="M12 44 L18.5 24 Q24 19 29.5 24 L36 44 Z" />
     </svg>
   );
 }
 
-// Pictograma SVG Hombre
-function MalePictogram({ size = 60, color = "#818cf8" }: { size?: number; color?: string }) {
+function MalePictogram({ size = 80, color = "#818cf8" }: { size?: number; color?: string }) {
   return (
-    <svg width={size} height={size * 1.5} viewBox="0 0 60 90" fill="none">
-      {/* Cabeza */}
-      <circle cx="30" cy="13" r="11" fill={color} />
-      {/* Torso */}
-      <rect x="16" y="27" width="28" height="26" rx="4" fill={color} opacity="0.9" />
-      {/* Brazos */}
-      <line x1="16" y1="30" x2="6" y2="50" stroke={color} strokeWidth="5" strokeLinecap="round" />
-      <line x1="44" y1="30" x2="54" y2="50" stroke={color} strokeWidth="5" strokeLinecap="round" />
-      {/* Piernas */}
-      <rect x="16" y="53" width="12" height="26" rx="4" fill={color} opacity="0.9" />
-      <rect x="32" y="53" width="12" height="26" rx="4" fill={color} opacity="0.9" />
+    <svg width={size} height={size} viewBox="0 0 48 48" fill={color}>
+      <circle cx="24" cy="9" r="7" />
+      <rect x="14" y="19" width="20" height="14" rx="3" />
+      <rect x="14" y="34" width="8" height="12" rx="2" />
+      <rect x="26" y="34" width="8" height="12" rx="2" />
     </svg>
   );
 }
@@ -260,44 +247,40 @@ export default function NominaPage() {
         <div className="tab-content" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <ChartCard title="DISTRIBUCIÓN POR GÉNERO">
-              <div className="flex items-center gap-4">
-                <div className="w-52 h-52 flex-shrink-0">
-                  <PlotChart
-                    data={[{
-                      type: "pie", labels: genero.labels, values: genero.values,
-                      hole: 0.45, textinfo: "percent",
-                      textfont: { color: "#fff", size: 13 },
-                      marker: { colors: ["#d946ef", "#818cf8"] },
-                    }]}
-                    layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
-                    height={280}
-                  />
-                </div>
-                <div className="flex flex-col gap-6">
-                  <div className="flex items-center gap-3">
-                    <FemalePictogram size={44} color="#d946ef" />
-                    <div>
-                      <div className="text-4xl font-black" style={{ color: "#d946ef", lineHeight: 1 }}>
-                        {kpis.total > 0 ? Math.round((genero.values[0] ?? 0) / kpis.total * 100) : 0}%
+              {(() => {
+                const pctF = kpis.total > 0 ? Math.round((genero.values[0] ?? 0) / kpis.total * 100) : 0;
+                const pctM = kpis.total > 0 ? Math.round((genero.values[1] ?? 0) / kpis.total * 100) : 0;
+                return (
+                  <div className="flex flex-col gap-5">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="flex flex-col items-center gap-2 py-5 px-3 rounded-2xl"
+                        style={{ background: "rgba(217,70,239,0.08)", border: "1px solid rgba(217,70,239,0.18)" }}>
+                        <FemalePictogram size={72} color="#d946ef" />
+                        <div className="text-5xl font-black leading-none" style={{ color: "#d946ef" }}>{pctF}%</div>
+                        <div className="text-base font-semibold" style={{ color: "var(--text2)" }}>Mujeres</div>
+                        <div className="text-3xl font-bold" style={{ color: "#fff" }}>{genero.values[0] ?? 0}</div>
                       </div>
-                      <div className="text-sm mt-0.5" style={{ color: "var(--text2)" }}>
-                        Mujeres · {genero.values[0] ?? 0}
+                      <div className="flex flex-col items-center gap-2 py-5 px-3 rounded-2xl"
+                        style={{ background: "rgba(129,140,248,0.08)", border: "1px solid rgba(129,140,248,0.18)" }}>
+                        <MalePictogram size={72} color="#818cf8" />
+                        <div className="text-5xl font-black leading-none" style={{ color: "#818cf8" }}>{pctM}%</div>
+                        <div className="text-base font-semibold" style={{ color: "var(--text2)" }}>Hombres</div>
+                        <div className="text-3xl font-bold" style={{ color: "#fff" }}>{genero.values[1] ?? 0}</div>
+                      </div>
+                    </div>
+                    <div>
+                      <div className="flex rounded-full overflow-hidden h-2.5">
+                        <div style={{ width: `${pctF}%`, background: "linear-gradient(90deg,#c026d3,#d946ef)" }} />
+                        <div style={{ flex: 1, background: "linear-gradient(90deg,#818cf8,#6366f1)" }} />
+                      </div>
+                      <div className="flex justify-between text-xs mt-1.5" style={{ color: "var(--text2)" }}>
+                        <span>Mujeres {pctF}%</span>
+                        <span>Hombres {pctM}%</span>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <MalePictogram size={44} color="#818cf8" />
-                    <div>
-                      <div className="text-4xl font-black" style={{ color: "#818cf8", lineHeight: 1 }}>
-                        {kpis.total > 0 ? Math.round((genero.values[1] ?? 0) / kpis.total * 100) : 0}%
-                      </div>
-                      <div className="text-sm mt-0.5" style={{ color: "var(--text2)" }}>
-                        Hombres · {genero.values[1] ?? 0}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                );
+              })()}
             </ChartCard>
             {genero.por_empresa.length > 0 && (
               <ChartCard title="GÉNERO POR EMPRESA">
