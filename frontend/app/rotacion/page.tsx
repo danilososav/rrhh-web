@@ -492,79 +492,6 @@ export default function RotacionPage() {
             )}
           </div>
 
-          {/* Retención del Talento */}
-          {retencion.length > 0 && (
-            <div className="chart-card">
-              <h3 className="chart-title mb-4">Retención del Talento</h3>
-              <div className="flex gap-8">
-                {/* KPIs laterales */}
-                <div className="flex flex-col justify-center gap-6 min-w-[140px]">
-                  {retKpis.agencias != null && (
-                    <div>
-                      <div className="text-4xl font-black" style={{ color: "#f97316" }}>{retKpis.agencias}%</div>
-                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>Agencias</span></div>
-                    </div>
-                  )}
-                  {retKpis.tac != null && (
-                    <div>
-                      <div className="text-4xl font-black" style={{ color: "#3b82f6" }}>{retKpis.tac}%</div>
-                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>TAC Media</span></div>
-                    </div>
-                  )}
-                  {retKpis.csc != null && (
-                    <div>
-                      <div className="text-4xl font-black" style={{ color: "#10b981" }}>{retKpis.csc}%</div>
-                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>CSC</span></div>
-                    </div>
-                  )}
-                </div>
-                {/* Gráfico combinado */}
-                <div className="flex-1 min-w-0">
-                  <PlotChart
-                    data={[
-                      {
-                        type: "bar", name: "Activos",
-                        x: retencion.map((r) => r.empresa),
-                        y: retencion.map((r) => r.activos),
-                        marker: { color: retencion.map((r) =>
-                          r.grupo === "csc"   ? "#10b981"
-                          : r.grupo === "tac" ? "#3b82f6"
-                          : "#f97316"
-                        )},
-                        text: retencion.map((r) => String(r.activos)),
-                        textposition: "outside",
-                      },
-                      {
-                        type: "bar", name: "Egresos",
-                        x: retencion.map((r) => r.empresa),
-                        y: retencion.map((r) => r.egresos),
-                        marker: { color: "#9ca3af" },
-                        text: retencion.map((r) => String(r.egresos)),
-                        textposition: "outside",
-                      },
-                      {
-                        type: "scatter", mode: "text+lines+markers", name: "% Retención",
-                        x: retencion.map((r) => r.empresa),
-                        y: retencion.map((r) => r.pct),
-                        yaxis: "y2",
-                        line: { color: "#3b82f6", width: 2 },
-                        marker: { color: "#3b82f6", size: 7 },
-                        text: retencion.map((r) => `${r.pct}%`),
-                        textposition: "top center",
-                      },
-                    ]}
-                    layout={{
-                      barmode: "group",
-                      yaxis2: { overlaying: "y", side: "right", ticksuffix: "%", showgrid: false },
-                      margin: { t: 30, r: 60, b: 60, l: 40 },
-                    }}
-                    height={380}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Incremento / Disminución de Nómina */}
           {incDecHC.data.length > 0 && (
             <div className="chart-card">
@@ -618,6 +545,19 @@ export default function RotacionPage() {
       {/* ── Tab: Por Empresa ── */}
       {activeTab === "empresa" && (
         <div className="space-y-4">
+          {salEmp.length > 0 && (
+            <ChartCard title="Total Salidas por Empresa">
+              <PlotChart
+                data={[{ type: "bar",
+                  x: salEmp.map((r) => r.EMPRESA), y: salEmp.map((r) => r.salidas),
+                  text: salEmp.map((r) => String(r.salidas)),
+                  textposition: "outside" as const,
+                  marker: { color: barColors(salEmp.length) } }]}
+                layout={{ margin: { t: 30, r: 16, b: 80, l: 40 } }}
+                height={280}
+              />
+            </ChartCard>
+          )}
           {rotTalento.length > 0 && (
             <ChartCard title="ROTACIÓN DEL TALENTO">
               <PlotChart
@@ -694,21 +634,56 @@ export default function RotacionPage() {
               })()}
             </ChartCard>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {salEmp.length > 0 && (
-              <ChartCard title="Total Salidas por Empresa">
-                <PlotChart
-                  data={[{ type: "bar",
-                    x: salEmp.map((r) => r.EMPRESA), y: salEmp.map((r) => r.salidas),
-                    text: salEmp.map((r) => String(r.salidas)),
-                    textposition: "outside" as const,
-                    marker: { color: barColors(salEmp.length) } }]}
-                  layout={{ margin: { t: 30, r: 16, b: 80, l: 40 } }}
-                  height={Math.max(280, 240)}
-                />
-              </ChartCard>
-            )}
-          </div>
+          {/* Retención del Talento */}
+          {retencion.length > 0 && (
+            <div className="chart-card">
+              <h3 className="chart-title mb-4">Retención del Talento</h3>
+              <div className="flex gap-8">
+                <div className="flex flex-col justify-center gap-6 min-w-[140px]">
+                  {retKpis.agencias != null && (
+                    <div>
+                      <div className="text-4xl font-black" style={{ color: "#f97316" }}>{retKpis.agencias}%</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>Agencias</span></div>
+                    </div>
+                  )}
+                  {retKpis.tac != null && (
+                    <div>
+                      <div className="text-4xl font-black" style={{ color: "#3b82f6" }}>{retKpis.tac}%</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>TAC Media</span></div>
+                    </div>
+                  )}
+                  {retKpis.csc != null && (
+                    <div>
+                      <div className="text-4xl font-black" style={{ color: "#10b981" }}>{retKpis.csc}%</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>CSC</span></div>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <PlotChart
+                    data={[
+                      { type: "bar", name: "Activos",
+                        x: retencion.map((r) => r.empresa), y: retencion.map((r) => r.activos),
+                        marker: { color: retencion.map((r) => r.grupo === "csc" ? "#10b981" : r.grupo === "tac" ? "#3b82f6" : "#f97316") },
+                        text: retencion.map((r) => String(r.activos)), textposition: "outside" },
+                      { type: "bar", name: "Egresos",
+                        x: retencion.map((r) => r.empresa), y: retencion.map((r) => r.egresos),
+                        marker: { color: "#9ca3af" },
+                        text: retencion.map((r) => String(r.egresos)), textposition: "outside" },
+                      { type: "scatter", mode: "text+lines+markers", name: "% Retención",
+                        x: retencion.map((r) => r.empresa), y: retencion.map((r) => r.pct),
+                        yaxis: "y2", line: { color: "#3b82f6", width: 2 }, marker: { color: "#3b82f6", size: 7 },
+                        text: retencion.map((r) => `${r.pct}%`), textposition: "top center" },
+                    ]}
+                    layout={{ barmode: "group",
+                      yaxis2: { overlaying: "y", side: "right", ticksuffix: "%", showgrid: false },
+                      margin: { t: 30, r: 60, b: 60, l: 40 } }}
+                    height={380}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           {permEmp.length > 0 && (
             <ChartCard title="Permanencia Promedio por Empresa (meses)">
