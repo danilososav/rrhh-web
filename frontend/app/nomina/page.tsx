@@ -115,8 +115,8 @@ function computeFromRows(rows: Row[]) {
   };
 
   const extPorNac = (() => {
-    const extRows = rows.filter((r) => !esParaguay(r) && r.NACIONALIDAD);
-    const m = groupBy(extRows, "NACIONALIDAD");
+    const nacRows = rows.filter((r) => r.NACIONALIDAD);
+    const m = groupBy(nacRows, "NACIONALIDAD");
     return Object.entries(m)
       .map(([nac, r]) => ({ nac: String(nac).toUpperCase(), count: r.length }))
       .sort((a, b) => b.count - a.count);
