@@ -396,19 +396,19 @@ export default function CostosPage() {
         <div className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {agSob.length > 0 && (
-              <ChartCard title="⚠️ Costos por Agencia">
+              <ChartCard title="Costos por Agencia">
                 <PlotChart
                   data={[{
-                    type: "bar", orientation: "h",
-                    x: agSob.map((r) => r.SOBRECOSTO),
-                    y: agSob.map((r) => r.AGENCIA),
+                    type: "bar",
+                    x: agSob.map((r) => r.AGENCIA),
+                    y: agSob.map((r) => r.SOBRECOSTO),
                     marker: {
                       color: agSob.map((r) => r.SOBRECOSTO),
                       colorscale: [[0, "#ffc8c8"], [1, "#c00000"]] as [number, string][],
                       showscale: false,
                     },
                   }]}
-                  layout={{ xaxis: { title: { text: "SOBRECOSTO" } }, yaxis: { title: { text: "AGENCIA" } }, margin: { t: 8, r: 16, b: 48, l: 100 } }}
+                  layout={{ xaxis: { title: { text: "Agencia" } }, yaxis: { title: { text: "Costo" } }, margin: { t: 8, r: 16, b: 60, l: 80 } }}
                   height={340}
                 />
               </ChartCard>
