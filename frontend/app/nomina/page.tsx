@@ -386,14 +386,6 @@ export default function NominaPage() {
       {/* Tab: Demografía */}
       {tab === "demografia" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {genDist.length > 0 && (
-            <ChartCard title="Distribución por Generaciones">
-              <PlotChart
-                data={[{ type: "bar", x: genDist.map((r) => r.Generacion), y: genDist.map((r) => r.Cantidad), marker: { color: barColors(genDist.length) } }]}
-                height={280}
-              />
-            </ChartCard>
-          )}
           {nac.resumen.values[1] >= 0 && (
             <ChartCard title="Nacionalidad">
               <PlotChart
@@ -471,6 +463,14 @@ export default function NominaPage() {
       {/* Tab: Brecha */}
       {tab === "brecha" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {genDist.length > 0 && (
+            <ChartCard title="Distribución por Generaciones">
+              <PlotChart
+                data={[{ type: "bar", x: genDist.map((r) => r.Generacion), y: genDist.map((r) => r.Cantidad), marker: { color: barColors(genDist.length) } }]}
+                height={280}
+              />
+            </ChartCard>
+          )}
           {salEmp.length > 0 && (
             <ChartCard title="Salario Promedio por Empresa">
               <PlotChart
