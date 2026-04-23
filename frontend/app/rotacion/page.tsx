@@ -753,24 +753,7 @@ export default function RotacionPage() {
               <PlotChart data={lineTraces} height={300} />
             </ChartCard>
           )}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {porAno.length > 0 && (
-              <ChartCard title="Total Salidas por Año">
-                <PlotChart
-                  data={[{ type: "bar", x: porAno.map((r) => r.ano), y: porAno.map((r) => r.salidas),
-                    marker: { color: barColors(porAno.length) }, text: porAno.map((r) => String(r.salidas)),
-                    textposition: "outside" as const }]}
-                  layout={{ margin: { t: 30, r: 16, b: 50, l: 50 }, showlegend: false }}
-                  height={280}
-                />
-              </ChartCard>
-            )}
-            {tipoAnoTraces.length > 0 && (
-              <ChartCard title="Tipo de Salida por Año">
-                <PlotChart data={tipoAnoTraces} layout={{ barmode: "stack", margin: { t: 16, r: 16, b: 50, l: 50 } }} height={280} />
-              </ChartCard>
-            )}
-          </div>
+
           {heatmap.length > 0 && (
             <ChartCard title="Mapa de Calor: Salidas por Empresa y Mes">
               <PlotChart
