@@ -260,27 +260,41 @@ export default function NominaPage() {
         <div className="tab-content" style={{ display: "flex", flexDirection: "column", gap: 16 }}>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <ChartCard title="DISTRIBUCIÓN POR GÉNERO">
-              <div className="flex items-center gap-6">
+              <div className="flex items-center gap-4">
                 <div className="w-52 h-52 flex-shrink-0">
                   <PlotChart
                     data={[{
                       type: "pie", labels: genero.labels, values: genero.values,
-                      hole: 0.45, textinfo: "label+percent",
-                      textfont: { color: "#6b7a99" },
+                      hole: 0.45, textinfo: "percent",
+                      textfont: { color: "#fff", size: 13 },
                       marker: { colors: ["#d946ef", "#818cf8"] },
                     }]}
                     layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
                     height={280}
                   />
                 </div>
-                <div className="flex flex-col gap-5">
-                  <div>
-                    <div className="text-5xl font-black" style={{ color: "#d946ef", lineHeight: 1 }}>{genero.values[0] ?? 0}%</div>
-                    <div className="text-sm" style={{ color: "var(--text2)" }}>Mujeres · {genero.values[0] != null ? Math.round(genero.values[0] * kpis.total / 100) : "—"}</div>
+                <div className="flex flex-col gap-6">
+                  <div className="flex items-center gap-3">
+                    <FemalePictogram size={44} color="#d946ef" />
+                    <div>
+                      <div className="text-4xl font-black" style={{ color: "#d946ef", lineHeight: 1 }}>
+                        {kpis.total > 0 ? Math.round((genero.values[0] ?? 0) / kpis.total * 100) : 0}%
+                      </div>
+                      <div className="text-sm mt-0.5" style={{ color: "var(--text2)" }}>
+                        Mujeres · {genero.values[0] ?? 0}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-5xl font-black" style={{ color: "#818cf8", lineHeight: 1 }}>{genero.values[1] ?? 0}%</div>
-                    <div className="text-sm" style={{ color: "var(--text2)" }}>Hombres · {genero.values[1] != null ? Math.round(genero.values[1] * kpis.total / 100) : "—"}</div>
+                  <div className="flex items-center gap-3">
+                    <MalePictogram size={44} color="#818cf8" />
+                    <div>
+                      <div className="text-4xl font-black" style={{ color: "#818cf8", lineHeight: 1 }}>
+                        {kpis.total > 0 ? Math.round((genero.values[1] ?? 0) / kpis.total * 100) : 0}%
+                      </div>
+                      <div className="text-sm mt-0.5" style={{ color: "var(--text2)" }}>
+                        Hombres · {genero.values[1] ?? 0}
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
