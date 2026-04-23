@@ -181,11 +181,10 @@ function computeFromRows(allRows: Row[]) {
       const activos = rows.filter((r) => String(r.SITUACION ?? "").trim().toUpperCase() === "A").length;
       const egresos = rows.filter((r) => String(r.SITUACION ?? "").trim().toUpperCase() === "I").length;
       const pct     = activos > 0 ? Math.round((activos - egresos) / activos * 100) : 0;
-      const tipo    = String(rows.find((r) => r.TIPO_EMPRESA)?.TIPO_EMPRESA ?? "").toUpperCase().trim();
       const empUp   = empresa.toUpperCase().trim();
-      const grupo   = tipo === "AGENCIA" || AGENCIAS_SET.has(empUp) ? "agencia"
-                    : tipo === "TAC MEDIA" || TAC_SET.has(empUp)    ? "tac"
-                    : tipo === "CSC"      || CSC_SET.has(empUp)     ? "csc" : "otro";
+      const grupo   = AGENCIAS_SET.has(empUp) ? "agencia"
+                    : TAC_SET.has(empUp)       ? "tac"
+                    : CSC_SET.has(empUp)       ? "csc" : "otro";
       return { empresa, activos, egresos, pct, grupo };
     }).sort((a, b) => a.empresa.localeCompare(b.empresa));
   })();
@@ -377,13 +376,13 @@ export default function RotacionPage() {
                   )}
                   {retKpis.tac != null && (
                     <div>
-                      <div className="text-4xl font-black" style={{ color: "#f97316" }}>{retKpis.tac}%</div>
+                      <div className="text-4xl font-black" style={{ color: "#3b82f6" }}>{retKpis.tac}%</div>
                       <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>TAC Media</span></div>
                     </div>
                   )}
                   {retKpis.csc != null && (
                     <div>
-                      <div className="text-4xl font-black" style={{ color: "#f97316" }}>{retKpis.csc}%</div>
+                      <div className="text-4xl font-black" style={{ color: "#10b981" }}>{retKpis.csc}%</div>
                       <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>CSC</span></div>
                     </div>
                   )}
@@ -396,7 +395,11 @@ export default function RotacionPage() {
                         type: "bar", name: "Activos",
                         x: retencion.map((r) => r.empresa),
                         y: retencion.map((r) => r.activos),
-                        marker: { color: "#f97316" },
+                        marker: { color: retencion.map((r) =>
+                          r.grupo === "agencia" ? "#f97316"
+                          : r.grupo === "tac"   ? "#3b82f6"
+                          : r.grupo === "csc"   ? "#10b981" : "#a78bfa"
+                        )},
                         text: retencion.map((r) => String(r.activos)),
                         textposition: "outside",
                       },
