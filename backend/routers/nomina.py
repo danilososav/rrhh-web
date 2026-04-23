@@ -102,7 +102,7 @@ def normalizar_nomina(df_raw: pd.DataFrame) -> pd.DataFrame:
 
     for col in ["EMPRESA", "SITUACION", "NOMBRE", "CARGO", "AREA",
                 "DEPARTAMENTO", "SECCION", "NIVEL_AIC", "NACIONALIDAD",
-                "MOTIVO_SALIDA", "TIPO_PAGO", "TIPO_EMPRESA"]:
+                "MOTIVO_SALIDA", "TIPO_PAGO", "TIPO_EMPRESA", "DISCAPACIDAD"]:
         if col in df.columns:
             df[col] = df[col].astype(str).str.strip().str.upper().replace("NAN", np.nan)
 
@@ -388,7 +388,7 @@ async def procesar_nomina(file: UploadFile = File(...)):
     tabla_cols = [c for c in [
         "EMPRESA", "TIPO_EMPRESA", "NOMBRE", "CEDULA", "CARGO", "AREA", "DEPARTAMENTO", "SECCION",
         "NIVEL_AIC", "LIDER", "SEXO", "GENERACION", "EDAD", "NACIONALIDAD",
-        "SALARIO", "FECHA_INGRESO", "ANTIGUEDAD_ANOS", "SITUACION",
+        "DISCAPACIDAD", "SALARIO", "FECHA_INGRESO", "ANTIGUEDAD_ANOS", "SITUACION",
     ] if c in df.columns]
 
     tabla = _safe_records(df[tabla_cols].copy())

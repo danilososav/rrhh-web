@@ -122,13 +122,22 @@ function computeFromRows(rows: Row[]) {
       .sort((a, b) => b.count - a.count);
   })();
 
+  const discapacidad = (() => {
+    const disc = rows.filter((r) => r.DISCAPACIDAD && String(r.DISCAPACIDAD).trim() !== "" && String(r.DISCAPACIDAD).toUpperCase() !== "NAN");
+    return {
+      count: disc.length,
+      pct: total > 0 ? (disc.length / total * 100).toFixed(1) : "0.0",
+      personas: disc.map((r) => ({ nombre: r.NOMBRE ?? "—", empresa: r.EMPRESA ?? "—", tipo: r.DISCAPACIDAD ?? "—" })),
+    };
+  })();
+
   const ANILLOS = ["ANILLO 1", "ANILLO 2", "ANILLO 3"];
   const anillosGenero = ANILLOS.map((anillo) => {
     const r = rows.filter((x) => String(x.SECCION ?? "").toUpperCase().trim() === anillo);
     return { anillo, mujeres: r.filter((x) => x.SEXO === "F").length, hombres: r.filter((x) => x.SEXO === "M").length };
   });
 
-  return { kpis, genero, genDist, lidFem, lidMasc, lidEmp, salEmp, brechaNivel, nac, anillosGenero, extPorNac };
+  return { kpis, genero, genDist, lidFem, lidMasc, lidEmp, salEmp, brechaNivel, nac, anillosGenero, extPorNac, discapacidad };
 }
 
 function barColors(n: number) {
@@ -233,7 +242,7 @@ export default function NominaPage() {
 
   const rawRows: Row[]  = (data.tabla as Row[]) ?? [];
   const filteredRows    = applyFilters(rawRows, selected);
-  const { kpis, genero, genDist, lidFem, lidMasc, lidEmp, salEmp, brechaNivel, nac, anillosGenero, extPorNac } =
+  const { kpis, genero, genDist, lidFem, lidMasc, lidEmp, salEmp, brechaNivel, nac, anillosGenero, extPorNac, discapacidad } =
     computeFromRows(filteredRows);
 
   return (
@@ -420,6 +429,48 @@ export default function NominaPage() {
               />
             </ChartCard>
           )}
+          <ChartCard title="Inclusión Laboral">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-6">
+                <div>
+                  <div className="text-5xl font-black" style={{ color: "#10b981", lineHeight: 1 }}>{discapacidad.pct}%</div>
+                  <div className="text-sm mt-1" style={{ color: "var(--text2)" }}>Personas con<br/>Discapacidad</div>
+                </div>
+                {discapacidad.count > 0 && (
+                  <>
+                    <div className="text-3xl" style={{ color: "var(--text2)" }}>→</div>
+                    <div className="flex flex-col gap-2">
+                      {discapacidad.personas.map((p, i) => (
+                        <div key={i} className="flex items-center gap-3">
+                          <svg width="28" height="39" viewBox="0 0 80 112" fill="#10b981">
+                            <circle cx="40" cy="13" r="12"/>
+                            <rect x="36" y="25" width="8" height="7" rx="2"/>
+                            <path d="M29 32 Q40 28 51 32 L51 58 Q40 63 29 58 Z"/>
+                            <rect x="17" y="33" width="11" height="34" rx="5.5"/>
+                            <rect x="52" y="33" width="11" height="34" rx="5.5"/>
+                            <rect x="29" y="59" width="10" height="30" rx="5"/>
+                            <rect x="41" y="59" width="10" height="30" rx="5"/>
+                          </svg>
+                          <div>
+                            <div className="text-sm font-semibold" style={{ color: "#fff" }}>
+                              {p.tipo}
+                            </div>
+                            <div className="text-xs" style={{ color: "var(--text2)" }}>{p.empresa}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+                {discapacidad.count === 0 && (
+                  <div className="text-sm" style={{ color: "var(--text2)" }}>Sin registros</div>
+                )}
+              </div>
+              <div className="text-xs font-semibold" style={{ color: "var(--text2)" }}>
+                {discapacidad.count} persona{discapacidad.count !== 1 ? "s" : ""} de {kpis.total} colaboradores
+              </div>
+            </div>
+          </ChartCard>
         </div>
       )}
 
