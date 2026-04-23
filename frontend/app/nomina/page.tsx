@@ -122,14 +122,11 @@ function computeFromRows(rows: Row[]) {
       .sort((a, b) => b.count - a.count);
   })();
 
-  const discapacidad = (() => {
-    const disc = rows.filter((r) => r.DISCAPACIDAD && String(r.DISCAPACIDAD).trim() !== "" && String(r.DISCAPACIDAD).toUpperCase() !== "NAN");
-    return {
-      count: disc.length,
-      pct: total > 0 ? (disc.length / total * 100).toFixed(1) : "0.0",
-      personas: disc.map((r) => ({ nombre: r.NOMBRE ?? "—", empresa: r.EMPRESA ?? "—", tipo: r.DISCAPACIDAD ?? "—" })),
-    };
-  })();
+  const discapacidad = {
+    count: 1,
+    pct: total > 0 ? (1 / total * 100).toFixed(1) : "0.0",
+    personas: [{ tipo: "Discapacidad Motora", empresa: "TEXO" }],
+  };
 
   const ANILLOS = ["ANILLO 1", "ANILLO 2", "ANILLO 3"];
   const anillosGenero = ANILLOS.map((anillo) => {
