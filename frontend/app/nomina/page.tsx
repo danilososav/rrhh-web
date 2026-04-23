@@ -127,13 +127,34 @@ function computeFromRows(rows: Row[]) {
     personas: [{ tipo: "Discapacidad Motora", empresa: "TEXO" }],
   };
 
+  const antiguedadRangos = (() => {
+    const rangos = [
+      { label: "Menor a 1 año",    fn: (a: number) => a < 1 },
+      { label: "Entre 1 y 5 años", fn: (a: number) => a >= 1 && a < 5 },
+      { label: "Entre 5 y 10 años",fn: (a: number) => a >= 5 && a < 10 },
+      { label: "Mayor a 10 años",  fn: (a: number) => a >= 10 },
+    ];
+    return rangos.map(({ label, fn }) => ({
+      label,
+      count: rows.filter((r) => r.ANTIGUEDAD_ANOS != null && fn(Number(r.ANTIGUEDAD_ANOS))).length,
+    }));
+  })();
+
+  const antiguedadPorTipo = (() => {
+    const m = groupBy(rows.filter((r) => r.TIPO_EMPRESA && r.ANTIGUEDAD_ANOS != null), "TIPO_EMPRESA");
+    return Object.entries(m).map(([tipo, r]) => ({
+      tipo: String(tipo),
+      promedio: Math.round(sumField(r, "ANTIGUEDAD_ANOS") / r.length * 10) / 10,
+    }));
+  })();
+
   const ANILLOS = ["ANILLO 1", "ANILLO 2", "ANILLO 3"];
   const anillosGenero = ANILLOS.map((anillo) => {
     const r = rows.filter((x) => String(x.SECCION ?? "").toUpperCase().trim() === anillo);
     return { anillo, mujeres: r.filter((x) => x.SEXO === "F").length, hombres: r.filter((x) => x.SEXO === "M").length };
   });
 
-  return { kpis, genero, genDist, lidFem, lidMasc, lidEmp, salEmp, brechaNivel, nac, anillosGenero, extPorNac, discapacidad };
+  return { kpis, genero, genDist, lidFem, lidMasc, lidEmp, salEmp, brechaNivel, nac, anillosGenero, extPorNac, discapacidad, antiguedadRangos, antiguedadPorTipo };
 }
 
 function barColors(n: number) {
@@ -238,7 +259,7 @@ export default function NominaPage() {
 
   const rawRows: Row[]  = (data.tabla as Row[]) ?? [];
   const filteredRows    = applyFilters(rawRows, selected);
-  const { kpis, genero, genDist, lidFem, lidMasc, lidEmp, salEmp, brechaNivel, nac, anillosGenero, extPorNac, discapacidad } =
+  const { kpis, genero, genDist, lidFem, lidMasc, lidEmp, salEmp, brechaNivel, nac, anillosGenero, extPorNac, discapacidad, antiguedadRangos, antiguedadPorTipo } =
     computeFromRows(filteredRows);
 
   return (
@@ -467,6 +488,34 @@ export default function NominaPage() {
             <ChartCard title="Distribución por Generaciones">
               <PlotChart
                 data={[{ type: "bar", x: genDist.map((r) => r.Generacion), y: genDist.map((r) => r.Cantidad), marker: { color: barColors(genDist.length) } }]}
+                height={280}
+              />
+            </ChartCard>
+          )}
+          <ChartCard title="Cantidad de Personas por Rango de Antigüedad">
+            <PlotChart
+              data={[{
+                type: "bar",
+                x: antiguedadRangos.map((r) => r.label),
+                y: antiguedadRangos.map((r) => r.count),
+                marker: { color: ["#60a5fa", "#fb923c", "#9ca3af", "#fbbf24"] },
+                text: antiguedadRangos.map((r) => String(r.count)),
+                textposition: "outside",
+              }]}
+              height={280}
+            />
+          </ChartCard>
+          {antiguedadPorTipo.length > 0 && (
+            <ChartCard title="Promedio de Antigüedad en Años por Tipo">
+              <PlotChart
+                data={[{
+                  type: "bar",
+                  x: antiguedadPorTipo.map((r) => r.tipo),
+                  y: antiguedadPorTipo.map((r) => r.promedio),
+                  marker: { color: ["#60a5fa", "#fb923c", "#9ca3af", "#fbbf24"].slice(0, antiguedadPorTipo.length) },
+                  text: antiguedadPorTipo.map((r) => String(r.promedio)),
+                  textposition: "outside",
+                }]}
                 height={280}
               />
             </ChartCard>
