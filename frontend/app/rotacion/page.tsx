@@ -565,132 +565,6 @@ export default function RotacionPage() {
             </div>
           )}
 
-          {/* Rotación Involuntaria por Empresa */}
-          {rotInv.data.length > 0 && (
-            <div className="chart-card">
-              <h3 className="chart-title mb-4">Rotación Involuntaria por Empresa</h3>
-              <div className="flex gap-8">
-                <div className="flex flex-col justify-center gap-6 min-w-[140px]">
-                  {rotInv.kpis.agencias != null && (
-                    <div>
-                      <div className="text-4xl font-black" style={{ color: "#f97316" }}>{rotInv.kpis.agencias}%</div>
-                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>Agencias</span></div>
-                    </div>
-                  )}
-                  {rotInv.kpis.tac != null && (
-                    <div>
-                      <div className="text-4xl font-black" style={{ color: "#3b82f6" }}>{rotInv.kpis.tac}%</div>
-                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>TAC Media</span></div>
-                    </div>
-                  )}
-                  {rotInv.kpis.csc != null && (
-                    <div>
-                      <div className="text-4xl font-black" style={{ color: "#10b981" }}>{rotInv.kpis.csc}%</div>
-                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>CSC</span></div>
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <PlotChart
-                    data={[
-                      {
-                        type: "bar",
-                        name: "Involuntaria",
-                        x: rotInv.data.map((r) => r.empresa),
-                        y: rotInv.data.map((r) => r.involuntaria),
-                        marker: { color: "#9ca3af" },
-                        text: rotInv.data.map((r) => String(r.involuntaria)),
-                        textposition: "outside" as const,
-                      },
-                      {
-                        type: "scatter" as const,
-                        mode: "text+lines+markers" as const,
-                        name: "% Rotación Involuntaria",
-                        x: rotInv.data.map((r) => r.empresa),
-                        y: rotInv.data.map((r) => r.pct ?? 0),
-                        yaxis: "y2",
-                        line:   { color: "#eab308", width: 2 },
-                        marker: { color: "#eab308", size: 7 },
-                        text: rotInv.data.map((r) => r.pct != null ? `${r.pct}%` : ""),
-                        textposition: "top center" as const,
-                      },
-                    ]}
-                    layout={{
-                      barmode: "group",
-                      yaxis2: { overlaying: "y", side: "right", ticksuffix: "%", showgrid: false },
-                      margin: { t: 30, r: 60, b: 60, l: 40 },
-                      legend: { orientation: "h", y: -0.2 },
-                    }}
-                    height={380}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Rotación Voluntaria por Empresa */}
-          {rotVol.data.length > 0 && (
-            <div className="chart-card">
-              <h3 className="chart-title mb-4">Rotación Voluntaria por Empresa</h3>
-              <div className="flex gap-8">
-                <div className="flex flex-col justify-center gap-6 min-w-[140px]">
-                  {rotVol.kpis.agencias != null && (
-                    <div>
-                      <div className="text-4xl font-black" style={{ color: "#f97316" }}>{rotVol.kpis.agencias}%</div>
-                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>Agencias</span></div>
-                    </div>
-                  )}
-                  {rotVol.kpis.tac != null && (
-                    <div>
-                      <div className="text-4xl font-black" style={{ color: "#3b82f6" }}>{rotVol.kpis.tac}%</div>
-                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>TAC Media</span></div>
-                    </div>
-                  )}
-                  {rotVol.kpis.csc != null && (
-                    <div>
-                      <div className="text-4xl font-black" style={{ color: "#10b981" }}>{rotVol.kpis.csc}%</div>
-                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>CSC</span></div>
-                    </div>
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <PlotChart
-                    data={[
-                      {
-                        type: "bar",
-                        name: "Voluntaria",
-                        x: rotVol.data.map((r) => r.empresa),
-                        y: rotVol.data.map((r) => r.voluntaria),
-                        marker: { color: "#9ca3af" },
-                        text: rotVol.data.map((r) => String(r.voluntaria)),
-                        textposition: "outside" as const,
-                      },
-                      {
-                        type: "scatter" as const,
-                        mode: "text+lines+markers" as const,
-                        name: "% Rotación Voluntaria",
-                        x: rotVol.data.map((r) => r.empresa),
-                        y: rotVol.data.map((r) => r.pct ?? 0),
-                        yaxis: "y2",
-                        line:   { color: "#eab308", width: 2 },
-                        marker: { color: "#eab308", size: 7 },
-                        text: rotVol.data.map((r) => r.pct != null ? `${r.pct}%` : ""),
-                        textposition: "top center" as const,
-                      },
-                    ]}
-                    layout={{
-                      barmode: "group",
-                      yaxis2: { overlaying: "y", side: "right", ticksuffix: "%", showgrid: false },
-                      margin: { t: 30, r: 60, b: 60, l: 40 },
-                      legend: { orientation: "h", y: -0.2 },
-                    }}
-                    height={380}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Incremento / Disminución de Nómina */}
           {incDecHC.data.length > 0 && (
             <div className="chart-card">
@@ -834,19 +708,6 @@ export default function RotacionPage() {
                 />
               </ChartCard>
             )}
-            {tasaEmp.length > 0 && (
-              <ChartCard title="Tasa de Rotación Anual por Empresa (%)">
-                <PlotChart
-                  data={[{ type: "bar", orientation: "h",
-                    x: tasaEmp.map((r) => r.tasa), y: tasaEmp.map((r) => r.empresa),
-                    marker: { color: tasaEmp.map((r) => r.tasa),
-                      colorscale: [[0,"#10b981"],[0.5,"#f59e0b"],[1,"#ef4444"]],
-                      showscale: false } }]}
-                  layout={{ margin: { t: 16, r: 16, b: 36, l: 110 } }}
-                  height={Math.max(280, tasaEmp.length * 28)}
-                />
-              </ChartCard>
-            )}
           </div>
 
           {permEmp.length > 0 && (
@@ -859,6 +720,98 @@ export default function RotacionPage() {
                 height={Math.max(280, permEmp.length * 28)}
               />
             </ChartCard>
+          )}
+
+          {/* Rotación Involuntaria por Empresa */}
+          {rotInv.data.length > 0 && (
+            <div className="chart-card">
+              <h3 className="chart-title mb-4">Rotación Involuntaria por Empresa</h3>
+              <div className="flex gap-8">
+                <div className="flex flex-col justify-center gap-6 min-w-[140px]">
+                  {rotInv.kpis.agencias != null && (
+                    <div>
+                      <div className="text-4xl font-black" style={{ color: "#f97316" }}>{rotInv.kpis.agencias}%</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>Agencias</span></div>
+                    </div>
+                  )}
+                  {rotInv.kpis.tac != null && (
+                    <div>
+                      <div className="text-4xl font-black" style={{ color: "#3b82f6" }}>{rotInv.kpis.tac}%</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>TAC Media</span></div>
+                    </div>
+                  )}
+                  {rotInv.kpis.csc != null && (
+                    <div>
+                      <div className="text-4xl font-black" style={{ color: "#10b981" }}>{rotInv.kpis.csc}%</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>CSC</span></div>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <PlotChart
+                    data={[
+                      { type: "bar", name: "Involuntaria",
+                        x: rotInv.data.map((r) => r.empresa), y: rotInv.data.map((r) => r.involuntaria),
+                        marker: { color: "#9ca3af" }, text: rotInv.data.map((r) => String(r.involuntaria)),
+                        textposition: "outside" as const },
+                      { type: "scatter" as const, mode: "text+lines+markers" as const, name: "% Rotación Involuntaria",
+                        x: rotInv.data.map((r) => r.empresa), y: rotInv.data.map((r) => r.pct ?? 0),
+                        yaxis: "y2", line: { color: "#eab308", width: 2 }, marker: { color: "#eab308", size: 7 },
+                        text: rotInv.data.map((r) => r.pct != null ? `${r.pct}%` : ""), textposition: "top center" as const },
+                    ]}
+                    layout={{ barmode: "group", yaxis2: { overlaying: "y", side: "right", ticksuffix: "%", showgrid: false },
+                      margin: { t: 30, r: 60, b: 60, l: 40 }, legend: { orientation: "h", y: -0.2 } }}
+                    height={380}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Rotación Voluntaria por Empresa */}
+          {rotVol.data.length > 0 && (
+            <div className="chart-card">
+              <h3 className="chart-title mb-4">Rotación Voluntaria por Empresa</h3>
+              <div className="flex gap-8">
+                <div className="flex flex-col justify-center gap-6 min-w-[140px]">
+                  {rotVol.kpis.agencias != null && (
+                    <div>
+                      <div className="text-4xl font-black" style={{ color: "#f97316" }}>{rotVol.kpis.agencias}%</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>Agencias</span></div>
+                    </div>
+                  )}
+                  {rotVol.kpis.tac != null && (
+                    <div>
+                      <div className="text-4xl font-black" style={{ color: "#3b82f6" }}>{rotVol.kpis.tac}%</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>TAC Media</span></div>
+                    </div>
+                  )}
+                  {rotVol.kpis.csc != null && (
+                    <div>
+                      <div className="text-4xl font-black" style={{ color: "#10b981" }}>{rotVol.kpis.csc}%</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>CSC</span></div>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <PlotChart
+                    data={[
+                      { type: "bar", name: "Voluntaria",
+                        x: rotVol.data.map((r) => r.empresa), y: rotVol.data.map((r) => r.voluntaria),
+                        marker: { color: "#9ca3af" }, text: rotVol.data.map((r) => String(r.voluntaria)),
+                        textposition: "outside" as const },
+                      { type: "scatter" as const, mode: "text+lines+markers" as const, name: "% Rotación Voluntaria",
+                        x: rotVol.data.map((r) => r.empresa), y: rotVol.data.map((r) => r.pct ?? 0),
+                        yaxis: "y2", line: { color: "#eab308", width: 2 }, marker: { color: "#eab308", size: 7 },
+                        text: rotVol.data.map((r) => r.pct != null ? `${r.pct}%` : ""), textposition: "top center" as const },
+                    ]}
+                    layout={{ barmode: "group", yaxis2: { overlaying: "y", side: "right", ticksuffix: "%", showgrid: false },
+                      margin: { t: 30, r: 60, b: 60, l: 40 }, legend: { orientation: "h", y: -0.2 } }}
+                    height={380}
+                  />
+                </div>
+              </div>
+            </div>
           )}
         </div>
       )}
