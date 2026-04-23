@@ -7,6 +7,7 @@ import { useState } from "react";
 import { clearToken } from "@/lib/auth";
 import { useFilter } from "@/context/FilterContext";
 import { uniqueValues } from "@/lib/filterUtils";
+import { useTheme } from "@/context/ThemeContext";
 
 const NAV_ITEMS = [
   {
@@ -186,6 +187,7 @@ export default function Sidebar() {
   const pathname = usePathname();
   const router   = useRouter();
   const [imgError, setImgError] = useState(false);
+  const { theme, toggle } = useTheme();
 
   function handleLogout() {
     clearToken();
@@ -217,8 +219,8 @@ export default function Sidebar() {
                 width: "100%",
                 height: "auto",
                 maxWidth: 180,
-                filter: "brightness(0) invert(1)",
-                opacity: 0.88,
+                filter: theme === "dark" ? "brightness(0) invert(1)" : "none",
+                opacity: theme === "dark" ? 0.88 : 1,
               }}
               priority
               onError={() => setImgError(true)}
@@ -287,27 +289,71 @@ export default function Sidebar() {
 
       {/* Footer */}
       <div className="px-3 py-3" style={{ borderTop: "1px solid var(--border)" }}>
-        <button
-          onClick={handleLogout}
-          className="w-full flex items-center gap-2 rounded-lg px-3 py-2 transition-all text-sm"
-          style={{ color: "var(--text3)" }}
-          onMouseEnter={e => {
-            e.currentTarget.style.color = "#ef4444";
-            e.currentTarget.style.background = "rgba(239,68,68,0.08)";
-          }}
-          onMouseLeave={e => {
-            e.currentTarget.style.color = "var(--text3)";
-            e.currentTarget.style.background = "transparent";
-          }}
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round"
-              d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"
-            />
-          </svg>
-          Cerrar sesión
-        </button>
-        <p className="text-center mt-2" style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text3)" }}>
+        {/* Fila: tema + logout */}
+        <div className="flex items-center gap-2 mb-1">
+          {/* Toggle tema */}
+          <button
+            onClick={toggle}
+            title={theme === "dark" ? "Cambiar a modo día" : "Cambiar a modo noche"}
+            className="flex items-center justify-center rounded-lg transition-all"
+            style={{
+              width: 34,
+              height: 34,
+              flexShrink: 0,
+              color: "var(--text3)",
+              border: "1px solid var(--border)",
+              background: "var(--card)",
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.borderColor = "var(--accent)";
+              e.currentTarget.style.color = "var(--accent)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.borderColor = "var(--border)";
+              e.currentTarget.style.color = "var(--text3)";
+            }}
+          >
+            {theme === "dark" ? (
+              /* Sol */
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round"
+                  d="M12 3v2.25m6.364.386-1.591 1.591M21 12h-2.25m-.386 6.364-1.591-1.591M12 18.75V21m-4.773-4.227-1.591 1.591M5.25 12H3m4.227-4.773L5.636 5.636M15.75 12a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0Z"
+                />
+              </svg>
+            ) : (
+              /* Luna */
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round"
+                  d="M21.752 15.002A9.72 9.72 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"
+                />
+              </svg>
+            )}
+          </button>
+
+          {/* Logout */}
+          <button
+            onClick={handleLogout}
+            className="flex-1 flex items-center gap-2 rounded-lg px-3 py-2 transition-all text-sm"
+            style={{ color: "var(--text3)" }}
+            onMouseEnter={e => {
+              e.currentTarget.style.color = "#ef4444";
+              e.currentTarget.style.background = "rgba(239,68,68,0.08)";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.color = "var(--text3)";
+              e.currentTarget.style.background = "transparent";
+            }}
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={1.8} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round"
+                d="M15.75 9V5.25A2.25 2.25 0 0 0 13.5 3h-6a2.25 2.25 0 0 0-2.25 2.25v13.5A2.25 2.25 0 0 0 7.5 21h6a2.25 2.25 0 0 0 2.25-2.25V15m3 0 3-3m0 0-3-3m3 3H9"
+              />
+            </svg>
+            Cerrar sesión
+          </button>
+        </div>
+
+        <p className="text-center mt-1" style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text3)" }}>
           Danilo Sosa | Texo Sistemas
         </p>
       </div>

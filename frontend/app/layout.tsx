@@ -4,6 +4,7 @@ import "./globals.css";
 import LayoutShell from "@/components/LayoutShell";
 import { DashboardProvider } from "@/context/DashboardContext";
 import { FilterProvider } from "@/context/FilterContext";
+import { ThemeProvider } from "@/context/ThemeContext";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -22,11 +23,13 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body className={`${dmSans.className} antialiased`} style={{ background: "var(--bg)", color: "var(--text)" }} suppressHydrationWarning>
-        <DashboardProvider>
-          <FilterProvider>
-            <LayoutShell>{children}</LayoutShell>
-          </FilterProvider>
-        </DashboardProvider>
+        <ThemeProvider>
+          <DashboardProvider>
+            <FilterProvider>
+              <LayoutShell>{children}</LayoutShell>
+            </FilterProvider>
+          </DashboardProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
