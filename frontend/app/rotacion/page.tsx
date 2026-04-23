@@ -171,7 +171,33 @@ function computeFromRows(allRows: Row[]) {
     return rows;
   })();
 
-  return { kpis, tipoSalida, motOrig, tasaMensual, byAno, salEmp, tasaEmp, tipoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap };
+  const AGENCIAS_SET = new Set(["BRICK","NASTA","LUPE","OMD","ROGER","AMPLIFY"]);
+  const TAC_SET      = new Set(["TAC MEDIA"]);
+  const CSC_SET      = new Set(["TEXO","BPR","ROW"]);
+
+  const retencion = (() => {
+    const empMap = groupBy(allRows.filter((r) => r.EMPRESA), "EMPRESA");
+    return Object.entries(empMap).map(([empresa, rows]) => {
+      const activos = rows.filter((r) => String(r.SITUACION ?? "").trim().toUpperCase() === "A").length;
+      const egresos = rows.filter((r) => String(r.SITUACION ?? "").trim().toUpperCase() === "I").length;
+      const pct     = activos > 0 ? Math.round((activos - egresos) / activos * 100) : 0;
+      const tipo    = String(rows.find((r) => r.TIPO_EMPRESA)?.TIPO_EMPRESA ?? "").toUpperCase().trim();
+      const empUp   = empresa.toUpperCase().trim();
+      const grupo   = tipo === "AGENCIA" || AGENCIAS_SET.has(empUp) ? "agencia"
+                    : tipo === "TAC MEDIA" || TAC_SET.has(empUp)    ? "tac"
+                    : tipo === "CSC"      || CSC_SET.has(empUp)     ? "csc" : "otro";
+      return { empresa, activos, egresos, pct, grupo };
+    }).sort((a, b) => a.empresa.localeCompare(b.empresa));
+  })();
+
+  const pctAvg = (arr: { pct: number }[]) => arr.length ? Math.round(arr.reduce((s, r) => s + r.pct, 0) / arr.length) : null;
+  const retKpis = {
+    agencias: pctAvg(retencion.filter((r) => r.grupo === "agencia")),
+    tac:      pctAvg(retencion.filter((r) => r.grupo === "tac")),
+    csc:      pctAvg(retencion.filter((r) => r.grupo === "csc")),
+  };
+
+  return { kpis, tipoSalida, motOrig, tasaMensual, byAno, salEmp, tasaEmp, tipoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap, retencion, retKpis };
 }
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -223,7 +249,7 @@ export default function RotacionPage() {
   const filteredRows            = applyFilters(rawRows, selected);
   const advertencias: string[] = (data.advertencias as string[]) ?? [];
   const computed = computeFromRows(filteredRows);
-  const { kpis, tipoSalida, motOrig, byAno, salEmp, tasaEmp, tipoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap } = computed;
+  const { kpis, tipoSalida, motOrig, byAno, salEmp, tasaEmp, tipoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap, retencion, retKpis } = computed;
 
   const entrevistas: AnyObj = (data.entrevistas as AnyObj) ?? {};
   const dimData = entrevistas.por_dimension
@@ -335,6 +361,75 @@ export default function RotacionPage() {
               </ChartCard>
             )}
           </div>
+
+          {/* Retención del Talento */}
+          {retencion.length > 0 && (
+            <div className="chart-card">
+              <h3 className="chart-title mb-4">Retención del Talento</h3>
+              <div className="flex gap-8">
+                {/* KPIs laterales */}
+                <div className="flex flex-col justify-center gap-6 min-w-[140px]">
+                  {retKpis.agencias != null && (
+                    <div>
+                      <div className="text-4xl font-black" style={{ color: "#f97316" }}>{retKpis.agencias}%</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>Agencias</span></div>
+                    </div>
+                  )}
+                  {retKpis.tac != null && (
+                    <div>
+                      <div className="text-4xl font-black" style={{ color: "#f97316" }}>{retKpis.tac}%</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>TAC Media</span></div>
+                    </div>
+                  )}
+                  {retKpis.csc != null && (
+                    <div>
+                      <div className="text-4xl font-black" style={{ color: "#f97316" }}>{retKpis.csc}%</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>CSC</span></div>
+                    </div>
+                  )}
+                </div>
+                {/* Gráfico combinado */}
+                <div className="flex-1 min-w-0">
+                  <PlotChart
+                    data={[
+                      {
+                        type: "bar", name: "Activos",
+                        x: retencion.map((r) => r.empresa),
+                        y: retencion.map((r) => r.activos),
+                        marker: { color: "#f97316" },
+                        text: retencion.map((r) => String(r.activos)),
+                        textposition: "outside",
+                      },
+                      {
+                        type: "bar", name: "Egresos",
+                        x: retencion.map((r) => r.empresa),
+                        y: retencion.map((r) => r.egresos),
+                        marker: { color: "#9ca3af" },
+                        text: retencion.map((r) => String(r.egresos)),
+                        textposition: "outside",
+                      },
+                      {
+                        type: "scatter", mode: "lines+markers+text", name: "% Retención",
+                        x: retencion.map((r) => r.empresa),
+                        y: retencion.map((r) => r.pct),
+                        yaxis: "y2",
+                        line: { color: "#3b82f6", width: 2 },
+                        marker: { color: "#3b82f6", size: 7 },
+                        text: retencion.map((r) => `${r.pct}%`),
+                        textposition: "top center",
+                      },
+                    ]}
+                    layout={{
+                      barmode: "group",
+                      yaxis2: { overlaying: "y", side: "right", ticksuffix: "%", showgrid: false },
+                      margin: { t: 30, r: 60, b: 60, l: 40 },
+                    }}
+                    height={380}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
