@@ -171,9 +171,8 @@ function computeFromRows(allRows: Row[]) {
     return rows;
   })();
 
-  const AGENCIAS_SET = new Set(["BRICK","NASTA","LUPE","OMD","ROGER","AMPLIFY"]);
-  const TAC_SET      = new Set(["TAC MEDIA"]);
-  const CSC_SET      = new Set(["TEXO","BPR","ROW"]);
+  const TAC_SET      = new Set(["AMPLIFY","BPR"]);
+  const CSC_SET      = new Set(["TEXO"]);
 
   const retencion = (() => {
     const empMap = groupBy(allRows.filter((r) => r.EMPRESA), "EMPRESA");
@@ -182,9 +181,9 @@ function computeFromRows(allRows: Row[]) {
       const egresos = rows.filter((r) => String(r.SITUACION ?? "").trim().toUpperCase() === "I").length;
       const pct     = activos > 0 ? Math.round((activos - egresos) / activos * 100) : 0;
       const empUp   = empresa.toUpperCase().trim();
-      const grupo   = AGENCIAS_SET.has(empUp) ? "agencia"
-                    : TAC_SET.has(empUp)       ? "tac"
-                    : CSC_SET.has(empUp)       ? "csc" : "otro";
+      const grupo   = CSC_SET.has(empUp) ? "csc"
+                    : TAC_SET.has(empUp) ? "tac"
+                    : "agencia";
       return { empresa, activos, egresos, pct, grupo };
     }).sort((a, b) => a.empresa.localeCompare(b.empresa));
   })();
@@ -396,9 +395,9 @@ export default function RotacionPage() {
                         x: retencion.map((r) => r.empresa),
                         y: retencion.map((r) => r.activos),
                         marker: { color: retencion.map((r) =>
-                          r.grupo === "agencia" ? "#f97316"
-                          : r.grupo === "tac"   ? "#3b82f6"
-                          : r.grupo === "csc"   ? "#10b981" : "#a78bfa"
+                          r.grupo === "csc"   ? "#10b981"
+                          : r.grupo === "tac" ? "#3b82f6"
+                          : "#f97316"
                         )},
                         text: retencion.map((r) => String(r.activos)),
                         textposition: "outside",
