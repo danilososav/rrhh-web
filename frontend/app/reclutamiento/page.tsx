@@ -239,8 +239,8 @@ export default function ReclutamientoPage() {
           {top15.length > 0 && (
             <ChartCard title="Top 15 Puestos más Solicitados">
               <PlotChart
-                data={[{ type: "bar", orientation: "h", x: top15.map((r) => r.busquedas), y: top15.map((r) => r.POSICION), marker: { color: barColors(top15.length) } }]}
-                layout={{ margin: { t: 16, r: 16, b: 36, l: 200 } }}
+                data={[{ type: "bar", x: top15.map((r) => r.POSICION), y: top15.map((r) => r.busquedas), marker: { color: barColors(top15.length) } }]}
+                layout={{ margin: { t: 16, r: 16, b: 100, l: 40 }, xaxis: { tickangle: -35 } }}
                 height={420}
               />
             </ChartCard>
