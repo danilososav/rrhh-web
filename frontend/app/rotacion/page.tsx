@@ -123,6 +123,14 @@ function computeFromRows(allRows: Row[]) {
       }, {} as Record<string, number>)
   ).map(([k, n]) => { const [empresa, tipo] = k.split("||"); return { empresa, tipo, n }; });
 
+  const motivoEmp = Object.entries(
+    salidas.filter((r) => r.MOTIVO_SALIDA && String(r.MOTIVO_SALIDA).toUpperCase() !== "NAN")
+      .reduce((acc, r) => {
+        const key = `${r.EMPRESA}||${r.MOTIVO_SALIDA}`;
+        acc[key] = (acc[key] ?? 0) + 1; return acc;
+      }, {} as Record<string, number>)
+  ).map(([k, n]) => { const [empresa, motivo] = k.split("||"); return { empresa, motivo, n }; });
+
   const permEmp = Object.entries(groupBy(salidas.filter((r) => r.MESES_PERMANENCIA != null && !isNaN(Number(r.MESES_PERMANENCIA))), "EMPRESA"))
     .map(([emp, r]) => ({ empresa: emp, meses: Math.round(r.reduce((a, x) => a + Number(x.MESES_PERMANENCIA), 0) / r.length * 10) / 10 }))
     .filter((r) => r.meses > 0).sort((a, b) => a.meses - b.meses);
@@ -251,7 +259,7 @@ function computeFromRows(allRows: Row[]) {
       { empresa: string; ingresos: number; egresos: number; pct: number | null }[];
   })();
 
-  return { kpis, tipoSalida, motOrig, tasaMensual, byAno, salEmp, tasaEmp, tipoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap, retencion, retKpis, incDecHC, rotTalento };
+  return { kpis, tipoSalida, motOrig, tasaMensual, byAno, salEmp, tasaEmp, tipoEmp, motivoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap, retencion, retKpis, incDecHC, rotTalento };
 }
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -303,7 +311,7 @@ export default function RotacionPage() {
   const filteredRows            = applyFilters(rawRows, selected);
   const advertencias: string[] = (data.advertencias as string[]) ?? [];
   const computed = computeFromRows(filteredRows);
-  const { kpis, tipoSalida, motOrig, byAno, salEmp, tasaEmp, tipoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap, retencion, retKpis, incDecHC, rotTalento } = computed;
+  const { kpis, tipoSalida, motOrig, byAno, salEmp, tasaEmp, tipoEmp, motivoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap, retencion, retKpis, incDecHC, rotTalento } = computed;
 
   const entrevistas: AnyObj = (data.entrevistas as AnyObj) ?? {};
   const dimData = entrevistas.por_dimension
@@ -321,6 +329,15 @@ export default function RotacionPage() {
     type: "bar" as const, name: tipo,
     x: empresasUniq,
     y: empresasUniq.map((emp) => tipoEmp.find((r) => r.empresa === emp && r.tipo === tipo)?.n ?? 0),
+    marker: { color: COLOR_SEQ[i % COLOR_SEQ.length] },
+  }));
+
+  const motivosUnicos     = Array.from(new Set(motivoEmp.map((r) => r.motivo)));
+  const empresasMotivo    = Array.from(new Set(motivoEmp.map((r) => r.empresa)));
+  const motivoEmpTraces   = motivosUnicos.map((motivo, i) => ({
+    type: "bar" as const, name: motivo,
+    x: empresasMotivo,
+    y: empresasMotivo.map((emp) => motivoEmp.find((r) => r.empresa === emp && r.motivo === motivo)?.n ?? 0),
     marker: { color: COLOR_SEQ[i % COLOR_SEQ.length] },
   }));
 
@@ -586,6 +603,22 @@ export default function RotacionPage() {
                 }}
                 height={420}
               />
+              {motivoEmpTraces.length > 0 && (
+                <>
+                  <h4 className="text-xs font-semibold mt-6 mb-2" style={{ color: "var(--text2)" }}>MOTIVO DE SALIDA POR EMPRESA (%)</h4>
+                  <PlotChart
+                    data={motivoEmpTraces as AnyObj[]}
+                    layout={{
+                      barmode: "stack",
+                      barnorm: "percent",
+                      yaxis: { ticksuffix: "%", showgrid: false },
+                      margin: { t: 10, r: 16, b: 80, l: 110 },
+                      legend: { orientation: "h", y: -0.28 },
+                    }}
+                    height={220}
+                  />
+                </>
+              )}
             </ChartCard>
           )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
