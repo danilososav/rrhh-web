@@ -51,8 +51,6 @@ const CONCEPT_COLORS = [
 const TABS = [
   { id: "agencia",     label: "Por Agencia",          icon: "🏢" },
   { id: "composicion", label: "Composición de Costos", icon: "🌿" },
-  { id: "tipo",        label: "Por Tipo / Motivo",     icon: "📋" },
-  { id: "tendencia",   label: "Tendencia",             icon: "📈" },
   { id: "detalle",     label: "Detalle",               icon: "📄" },
 ];
 
@@ -379,24 +377,6 @@ export default function CostosPage() {
         </div>
       )}
 
-      {/* Selector de hoja */}
-      {hojas.length > 1 && (
-        <div className="mb-5 flex flex-wrap items-center gap-2">
-          <span className="text-xs mr-1" style={{ color: "var(--text3)" }}>Hoja:</span>
-          {hojas.map((h) => (
-            <button
-              key={h}
-              onClick={() => handleHojaChange(h)}
-              className="rounded-full px-3 py-1 text-xs font-medium transition-all"
-              style={h === hojaActiva
-                ? { background: "var(--accent)", color: "#fff" }
-                : { border: "1px solid var(--border)", background: "var(--card)", color: "var(--text2)" }}
-            >
-              {h}
-            </button>
-          ))}
-        </div>
-      )}
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
@@ -612,104 +592,6 @@ export default function CostosPage() {
       )}
 
       {/* ── Tab: Por Tipo / Motivo ────────────────────────────────────────── */}
-      {activeTab === "tipo" && (
-        <div className="space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {tipoData && (
-              <ChartCard title="⚠️ Sobrecosto por Tipo de Salida">
-                <PlotChart
-                  data={[{ type: "pie", labels: tipoData.labels, values: tipoData.values, hole: 0.4, textinfo: "label+percent", textfont: { color: "#cbd5e1" } }]}
-                  layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
-                  height={360}
-                />
-              </ChartCard>
-            )}
-            {top10motivo.length > 0 && (
-              <ChartCard title="⚠️ Top 10 Motivos por Sobrecosto">
-                <PlotChart
-                  data={[{
-                    type: "bar", orientation: "h",
-                    x: top10motivo.map((r) => r.sobrecosto),
-                    y: top10motivo.map((r) => r.motivo),
-                    marker: {
-                      color: top10motivo.map((r) => r.sobrecosto),
-                      colorscale: [[0, "#ffc8c8"], [1, "#c00000"]] as [number, string][],
-                      showscale: false,
-                    },
-                  }]}
-                  layout={{ xaxis: { title: { text: "Sobrecosto" } }, yaxis: { title: { text: "Motivo" } }, margin: { t: 8, r: 16, b: 48, l: 220 } }}
-                  height={360}
-                />
-              </ChartCard>
-            )}
-          </div>
-
-          {tipoProm.length > 0 && (
-            <ChartCard title="⚠️ Sobrecosto Promedio por Tipo de Salida">
-              <PlotChart
-                data={[{
-                  type: "bar",
-                  x: tipoProm.map((r) => r.tipo),
-                  y: tipoProm.map((r) => r.prom),
-                  marker: { color: agColors(tipoProm.length) },
-                }]}
-                layout={{ xaxis: { title: { text: "Tipo de Salida" } }, yaxis: { title: { text: "SOBRECOSTO" } }, margin: { t: 8, r: 16, b: 60, l: 80 } }}
-                height={340}
-              />
-            </ChartCard>
-          )}
-        </div>
-      )}
-
-      {/* ── Tab: Tendencia ───────────────────────────────────────────────── */}
-      {activeTab === "tendencia" && (
-        <div className="space-y-5">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-            {sobAno.length > 0 && (
-              <ChartCard title="⚠️ Sobrecosto Total por Año">
-                <PlotChart
-                  data={[{
-                    type: "bar",
-                    x: sobAno.map((r) => r.ano),
-                    y: sobAno.map((r) => r.sobrecosto),
-                    marker: { color: "#f87171" },
-                    text: sobAno.map((r) => fmtGs(r.sobrecosto)),
-                    textposition: "outside" as const,
-                  }]}
-                  layout={{ xaxis: { title: { text: "Año" } }, yaxis: { title: { text: "Sobrecosto" } }, margin: { t: 32, r: 16, b: 48, l: 80 } }}
-                  height={360}
-                />
-              </ChartCard>
-            )}
-            {liqAno.length > 0 && (
-              <ChartCard title="Cantidad de Liquidaciones por Año">
-                <PlotChart
-                  data={[{
-                    type: "bar",
-                    x: liqAno.map((r) => r.ano),
-                    y: liqAno.map((r) => r.liquidaciones),
-                    marker: { color: "#8b5cf6" },
-                    text: liqAno.map((r) => String(r.liquidaciones)),
-                    textposition: "outside" as const,
-                  }]}
-                  layout={{ xaxis: { title: { text: "Año" } }, yaxis: { title: { text: "Liquidaciones" } }, margin: { t: 32, r: 16, b: 48, l: 80 } }}
-                  height={360}
-                />
-              </ChartCard>
-            )}
-          </div>
-
-          {sobMensual.length > 0 && (
-            <ChartCard title="⚠️ Evolución Mensual del Sobrecosto" fullWidth>
-              <PlotChart
-                data={sobMensual}
-                layout={{ xaxis: { title: { text: "Mes" } }, yaxis: { title: { text: "Sobrecosto" } }, margin: { t: 8, r: 120, b: 48, l: 80 } }}
-                height={380}
-              />
-            </ChartCard>
-          )}
-        </div>
-      )}
 
       {/* ── Tab: Detalle ─────────────────────────────────────────────────── */}
       {activeTab === "detalle" && (
