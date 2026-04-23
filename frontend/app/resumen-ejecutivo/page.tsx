@@ -12,9 +12,10 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 type AnyObj = Record<string, any>;
 
 const MODULOS = [
-  { key: "nomina",   label: "Nómina",                  href: "/nomina"   },
-  { key: "rotacion", label: "Rotación de Personal",    href: "/rotacion" },
-  { key: "costos",   label: "Costos de Liquidaciones", href: "/costos"   },
+  { key: "nomina",        label: "Nómina",                  href: "/nomina"        },
+  { key: "rotacion",      label: "Rotación de Personal",    href: "/rotacion"      },
+  { key: "costos",        label: "Costos de Liquidaciones", href: "/costos"        },
+  { key: "reclutamiento", label: "Reclutamiento",           href: "/reclutamiento" },
 ] as const;
 
 function fmt(n: number | null | undefined, decimals = 1): string {
@@ -96,15 +97,16 @@ function KpisConsolidados({ kpis }: { kpis: AnyObj }) {
 }
 
 export default function ResumenEjecutivoPage() {
-  const { nominaData, rotacionData, costosData } = useDashboard();
+  const { nominaData, rotacionData, costosData, reclutamientoData } = useDashboard();
   const [result, setResult]   = useState<AnyObj | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError]     = useState<string | null>(null);
 
   const faltantes = MODULOS.filter(({ key }) => {
-    if (key === "nomina")   return !nominaData;
-    if (key === "rotacion") return !rotacionData;
-    if (key === "costos")   return !costosData;
+    if (key === "nomina")        return !nominaData;
+    if (key === "rotacion")      return !rotacionData;
+    if (key === "costos")        return !costosData;
+    if (key === "reclutamiento") return !reclutamientoData;
     return false;
   });
 
@@ -115,9 +117,10 @@ export default function ResumenEjecutivoPage() {
     setLoading(true);
     try {
       const body = {
-        nomina:        nominaData   ?? undefined,
-        rotacion:      rotacionData ?? undefined,
-        liquidaciones: costosData   ?? undefined,
+        nomina:         nominaData        ?? undefined,
+        rotacion:       rotacionData      ?? undefined,
+        liquidaciones:  costosData        ?? undefined,
+        reclutamiento:  reclutamientoData ?? undefined,
       };
       const res = await fetch(`${API_URL}/api/resumen`, {
         method: "POST",
@@ -152,9 +155,10 @@ export default function ResumenEjecutivoPage() {
           <p className="label-xs mb-3">Módulos pendientes de carga</p>
           {MODULOS.map(({ key, label, href }) => {
             const cargado =
-              (key === "nomina"   && !!nominaData)   ||
-              (key === "rotacion" && !!rotacionData) ||
-              (key === "costos"   && !!costosData);
+              (key === "nomina"        && !!nominaData)        ||
+              (key === "rotacion"      && !!rotacionData)      ||
+              (key === "costos"        && !!costosData)        ||
+              (key === "reclutamiento" && !!reclutamientoData);
             return (
               <Link
                 key={key}
@@ -203,7 +207,7 @@ export default function ResumenEjecutivoPage() {
           <p className="label-xs mb-2" style={{ color: "var(--accent)" }}>Resumen Ejecutivo con IA</p>
           <h1 className="page-title">Análisis Consolidado del Holding</h1>
           <p className="mt-2 text-sm" style={{ color: "var(--text2)" }}>
-            Los 3 datasets están cargados. Hacé click para generar el análisis con IA.
+            Los 4 datasets están cargados. Hacé click para generar el análisis con IA.
           </p>
         </div>
 
