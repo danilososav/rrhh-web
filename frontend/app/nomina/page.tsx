@@ -361,7 +361,7 @@ export default function NominaPage() {
                       textposition: "inside", insidetextanchor: "middle",
                     },
                   ]}
-                  layout={{ barmode: "group", xaxis: { title: "Cantidad" } }}
+                  layout={{ barmode: "group", xaxis: { title: { text: "Cantidad" } } }}
                   height={280}
                 />
               </ChartCard>
