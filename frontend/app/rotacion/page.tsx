@@ -204,7 +204,43 @@ function computeFromRows(allRows: Row[]) {
     csc:      pctAvg(retencion.filter((r) => r.grupo === "csc")),
   };
 
-  return { kpis, tipoSalida, motOrig, tasaMensual, byAno, salEmp, tasaEmp, tipoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap, retencion, retKpis };
+  // ── Incremento / Disminución de Nómina ───────────────────────────────────
+  const incDecHC = (() => {
+    const empMap = groupBy(allRows.filter((r) => r.EMPRESA), "EMPRESA");
+    const rows = Object.entries(empMap).map(([empresa, empRows]) => {
+      const anos = empRows.map((r) => Number(r.ANO_REPORTE)).filter((v) => !isNaN(v));
+      const ultAno = anos.length ? Math.max(...anos) : null;
+      if (!ultAno) return null;
+      const rowsAno = empRows.filter((r) => Number(r.ANO_REPORTE) === ultAno);
+      // hcInicio: todos los del mes 1 (A+I = headcount al 01/01)
+      const hcInicio = rowsAno.filter((r) => Number(r.MES_REPORTE) === 1).length;
+      // hcFin: activos en el último mes disponible (snapshot 31/12)
+      const meses  = rowsAno.map((r) => Number(r.MES_REPORTE)).filter((v) => !isNaN(v));
+      const ultMes = meses.length ? Math.max(...meses) : null;
+      const hcFin  = ultMes != null
+        ? rowsAno.filter((r) => Number(r.MES_REPORTE) === ultMes && String(r.SITUACION ?? "").trim().toUpperCase() === "A").length
+        : 0;
+      const pct    = hcInicio > 0 ? Math.round((hcFin - hcInicio) / hcInicio * 100) : null;
+      const empUp  = empresa.toUpperCase().trim();
+      const grupo  = CSC_SET.has(empUp) ? "otros" : TAC_SET.has(empUp) ? "tactical" : "agencia";
+      return { empresa, hcFin, hcInicio, pct, grupo, ano: ultAno };
+    }).filter(Boolean) as { empresa: string; hcFin: number; hcInicio: number; pct: number | null; grupo: string; ano: number }[];
+    const avg = (arr: typeof rows) => {
+      const v = arr.filter((r) => r.pct != null);
+      return v.length ? Math.round(v.reduce((s, r) => s + (r.pct ?? 0), 0) / v.length) : null;
+    };
+    return {
+      data: rows.sort((a, b) => a.empresa.localeCompare(b.empresa)),
+      kpis: {
+        agencias: avg(rows.filter((r) => r.grupo === "agencia")),
+        tactical: avg(rows.filter((r) => r.grupo === "tactical")),
+        otros:    avg(rows.filter((r) => r.grupo === "otros")),
+        ano:      rows[0]?.ano ?? new Date().getFullYear(),
+      },
+    };
+  })();
+
+  return { kpis, tipoSalida, motOrig, tasaMensual, byAno, salEmp, tasaEmp, tipoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap, retencion, retKpis, incDecHC };
 }
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -256,7 +292,7 @@ export default function RotacionPage() {
   const filteredRows            = applyFilters(rawRows, selected);
   const advertencias: string[] = (data.advertencias as string[]) ?? [];
   const computed = computeFromRows(filteredRows);
-  const { kpis, tipoSalida, motOrig, byAno, salEmp, tasaEmp, tipoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap, retencion, retKpis } = computed;
+  const { kpis, tipoSalida, motOrig, byAno, salEmp, tasaEmp, tipoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap, retencion, retKpis, incDecHC } = computed;
 
   const entrevistas: AnyObj = (data.entrevistas as AnyObj) ?? {};
   const dimData = entrevistas.por_dimension
@@ -436,6 +472,75 @@ export default function RotacionPage() {
                       margin: { t: 30, r: 60, b: 60, l: 40 },
                     }}
                     height={380}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Incremento / Disminución de Nómina */}
+          {incDecHC.data.length > 0 && (
+            <div className="chart-card">
+              <h3 className="chart-title mb-5">INCREMENTO / DISMINUCIÓN DE NÓMINA</h3>
+              <div className="flex gap-6">
+                {/* KPIs laterales */}
+                <div className="flex flex-col justify-center gap-8 min-w-[140px]">
+                  {[
+                    { val: incDecHC.kpis.agencias, label: "Agencias"  },
+                    { val: incDecHC.kpis.tactical, label: "Tactical"  },
+                    { val: incDecHC.kpis.otros,    label: "Otros"     },
+                  ].filter((g) => g.val != null).map(({ val, label }) => (
+                    <div key={label}>
+                      <div className="text-5xl font-black leading-none" style={{ color: "var(--text)" }}>{val}%</div>
+                      <div className="text-xs mt-1.5" style={{ color: "var(--text2)" }}>
+                        Promedio<br/>
+                        <span className="font-bold" style={{ color: "var(--text)" }}>{label}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Gráfico */}
+                <div className="flex-1 min-w-0">
+                  <PlotChart
+                    data={[
+                      {
+                        type: "bar",
+                        name: `Activos al 31/12/${incDecHC.kpis.ano}`,
+                        x: incDecHC.data.map((r) => r.empresa),
+                        y: incDecHC.data.map((r) => r.hcFin),
+                        marker: { color: "#f97316" },
+                        text: incDecHC.data.map((r) => String(r.hcFin)),
+                        textposition: "outside" as const,
+                      },
+                      {
+                        type: "bar",
+                        name: `Activos al 01/01/${incDecHC.kpis.ano}`,
+                        x: incDecHC.data.map((r) => r.empresa),
+                        y: incDecHC.data.map((r) => r.hcInicio),
+                        marker: { color: "#9ca3af" },
+                        text: incDecHC.data.map((r) => String(r.hcInicio)),
+                        textposition: "outside" as const,
+                      },
+                      {
+                        type: "scatter" as const,
+                        mode: "lines+markers+text" as const,
+                        name: "% Incremento / Disminución",
+                        x: incDecHC.data.map((r) => r.empresa),
+                        y: incDecHC.data.map((r) => r.pct ?? 0),
+                        yaxis: "y2",
+                        line:   { color: "#3b82f6", width: 2 },
+                        marker: { color: "#3b82f6", size: 7 },
+                        text: incDecHC.data.map((r) => r.pct != null ? `${r.pct}%` : ""),
+                        textposition: "top center" as const,
+                      },
+                    ] as AnyObj[]}
+                    layout={{
+                      barmode: "group",
+                      yaxis2: { overlaying: "y", side: "right", ticksuffix: "%", showgrid: false, zeroline: true },
+                      margin: { t: 30, r: 70, b: 80, l: 50 },
+                      legend: { orientation: "h", y: -0.22 },
+                    }}
+                    height={430}
                   />
                 </div>
               </div>

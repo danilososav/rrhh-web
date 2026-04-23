@@ -25,7 +25,6 @@ const TABS = [
   { id: "distribucion", label: "Distribución", icon: "👥" },
   { id: "demografia",   label: "Demografía",   icon: "🌍" },
   { id: "brecha",       label: "Brecha",       icon: "📊" },
-  { id: "incremento",  label: "Incremento HC", icon: "📈" },
 ];
 
 function fmt(n: number | null | undefined): string {
@@ -524,117 +523,11 @@ export default function NominaPage() {
         </div>
       )}
 
-      {/* Tab: Incremento HC */}
-      {tab === "incremento" && (() => {
-        const empMap = groupBy(filteredRows.filter((r) => r.EMPRESA), "EMPRESA");
-
-        // Detectar año de reporte = max año en FECHA_INGRESO
-        const allYears = filteredRows
-          .map((r) => { const d = new Date(String(r.FECHA_INGRESO ?? "")); return isNaN(d.getTime()) ? NaN : d.getFullYear(); })
-          .filter((y) => !isNaN(y) && y > 2010 && y <= 2035);
-        const reportYear = allYears.length ? Math.max(...allYears) : new Date().getFullYear();
-        const fechaCorte = new Date(reportYear, 0, 1); // 01/01/reportYear
-
-        const incData = Object.entries(empMap).map(([empresa, empRows]) => {
-          const activosFin = empRows.length;
-          const activosInicio = empRows.filter((r) => {
-            const d = new Date(String(r.FECHA_INGRESO ?? ""));
-            return !isNaN(d.getTime()) && d < fechaCorte;
-          }).length;
-          const pct = activosInicio > 0 ? Math.round((activosFin - activosInicio) / activosInicio * 100) : null;
-          const tipoNorm = String(empRows[0]?.TIPO_EMPRESA ?? "").toUpperCase().trim();
-          const grupo = tipoNorm === "TAC MEDIA" ? "tactical"
-                      : tipoNorm === "CSC"       ? "otros"
-                      : "agencia";
-          return { empresa, activosFin, activosInicio, pct, grupo };
-        }).sort((a, b) => a.empresa.localeCompare(b.empresa));
-
-        const avgPct = (arr: typeof incData) => {
-          const valid = arr.filter((r) => r.pct != null);
-          return valid.length ? Math.round(valid.reduce((s, r) => s + (r.pct ?? 0), 0) / valid.length) : null;
-        };
-        const kpiAg  = avgPct(incData.filter((r) => r.grupo === "agencia"));
-        const kpiTac = avgPct(incData.filter((r) => r.grupo === "tactical"));
-        const kpiOtros = avgPct(incData.filter((r) => r.grupo === "otros"));
-
-        const GRUPOS = [
-          { val: kpiAg,    label: "Agencias"  },
-          { val: kpiTac,   label: "Tactical"  },
-          { val: kpiOtros, label: "Otros"     },
-        ].filter((g) => g.val != null);
-
-        return (
-          <div className="chart-card">
-            <h3 className="chart-title mb-6">INCREMENTO / DISMINUCIÓN DE NÓMINA</h3>
-            <div className="flex gap-6">
-              {/* KPIs laterales */}
-              <div className="flex flex-col justify-center gap-8 min-w-[140px]">
-                {GRUPOS.map(({ val, label }) => (
-                  <div key={label}>
-                    <div className="text-5xl font-black leading-none" style={{ color: "var(--text)" }}>{val}%</div>
-                    <div className="text-xs mt-1.5" style={{ color: "var(--text2)" }}>
-                      Promedio<br/>
-                      <span className="font-bold" style={{ color: "var(--text)" }}>{label}</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-              {/* Gráfico barras + línea */}
-              <div className="flex-1 min-w-0">
-                <PlotChart
-                  data={[
-                    {
-                      type: "bar",
-                      name: `Activos al 31/12/${reportYear}`,
-                      x: incData.map((r) => r.empresa),
-                      y: incData.map((r) => r.activosFin),
-                      marker: { color: "#f97316" },
-                      text: incData.map((r) => String(r.activosFin)),
-                      textposition: "outside" as const,
-                    },
-                    {
-                      type: "bar",
-                      name: `Activos al 01/01/${reportYear}`,
-                      x: incData.map((r) => r.empresa),
-                      y: incData.map((r) => r.activosInicio),
-                      marker: { color: "#9ca3af" },
-                      text: incData.map((r) => String(r.activosInicio)),
-                      textposition: "outside" as const,
-                    },
-                    {
-                      type: "scatter" as const,
-                      mode: "lines+markers+text" as const,
-                      name: "% Incremento / Disminución",
-                      x: incData.map((r) => r.empresa),
-                      y: incData.map((r) => r.pct ?? 0),
-                      yaxis: "y2",
-                      line:   { color: "#3b82f6", width: 2 },
-                      marker: { color: "#3b82f6", size: 7 },
-                      text: incData.map((r) => r.pct != null ? `${r.pct}%` : ""),
-                      textposition: "top center" as const,
-                    },
-                  ] as AnyObj[]}
-                  layout={{
-                    barmode: "group",
-                    yaxis:  { title: { text: "Personas" } },
-                    yaxis2: { overlaying: "y", side: "right", ticksuffix: "%", showgrid: false, zeroline: true },
-                    margin: { t: 30, r: 70, b: 80, l: 50 },
-                    legend: { orientation: "h", y: -0.22 },
-                  }}
-                  height={430}
-                />
-              </div>
-            </div>
-          </div>
-        );
-      })()}
-
       {(() => {
         const TAB_COLS: Record<string, string[]> = {
           distribucion: ["EMPRESA", "TIPO_EMPRESA", "NOMBRE", "SEXO", "LIDER", "SECCION", "NIVEL_AIC"],
           demografia:   ["EMPRESA", "NOMBRE", "GENERACION", "EDAD", "FECHA_NACIMIENTO", "NACIONALIDAD"],
           brecha:       ["EMPRESA", "TIPO_EMPRESA", "NOMBRE", "GENERACION", "ANTIGUEDAD_ANOS", "FECHA_INGRESO"],
-          incremento:   ["EMPRESA", "TIPO_EMPRESA", "NOMBRE", "FECHA_INGRESO", "ANTIGUEDAD_ANOS"],
         };
         const cols = TAB_COLS[tab] ?? Object.keys(rawRows[0] ?? {});
         const tableRows = rawRows.map((r) =>
