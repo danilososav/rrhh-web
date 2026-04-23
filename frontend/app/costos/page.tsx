@@ -126,6 +126,14 @@ function computeFromRows(rows: Row[]) {
   const nivComp  = Object.entries(nivMap)
     .map(([n, r]) => ({ nivel: n, total_costo: sumField(r, "TOTAL_COSTO"), sobrecosto: sumField(r, "SOBRECOSTO") }));
 
+  // ── Costos Mensuales ────────────────────────────────────────────────────
+  const MESES_FULL = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Setiembre","Octubre","Noviembre","Diciembre"];
+  const MES_COLORS = ["#4472c4","#ed7d31","#a5a5a5","#ffc000","#5b9bd5","#70ad47","#264478","#9e480e","#636363","#997300","#255e91","#375623"];
+  const mesMap = groupBy(rows, "MES_SALIDA_N");
+  const costoMensual = MESES_FULL
+    .map((mes, i) => ({ mes, total: sumField(mesMap[String(i + 1)] ?? [], "TOTAL_COSTO"), color: MES_COLORS[i] }))
+    .filter((m) => m.total !== 0);
+
   // ── Tendencia ───────────────────────────────────────────────────────────
   const MESES_NOMBRE: Record<number, string> = {
     1:"Ene",2:"Feb",3:"Mar",4:"Abr",5:"May",6:"Jun",
@@ -163,7 +171,7 @@ function computeFromRows(rows: Row[]) {
       });
   })();
 
-  return { kpis, agSob, agSobDesc, agCant, agProm, composicion, compPorAgencia, tipoData, tipoProm, top10motivo, nivCosto, nivCant, nivSob, nivProm, nivComp, sobAno, liqAno, sobMensual };
+  return { kpis, agSob, agSobDesc, agCant, agProm, composicion, compPorAgencia, tipoData, tipoProm, top10motivo, nivCosto, nivCant, nivSob, nivProm, nivComp, sobAno, liqAno, sobMensual, costoMensual };
 }
 
 function ChartCard({ title, children, fullWidth }: { title: string; children: React.ReactNode; fullWidth?: boolean }) {
@@ -326,7 +334,7 @@ export default function CostosPage() {
   // ── Dashboard ─────────────────────────────────────────────────────────────
   const rawRows: Row[] = (data!.raw_rows as Row[]) ?? [];
   const filteredRows   = applyFilters(rawRows, selected);
-  const { kpis, agSob, agSobDesc, agCant, agProm, composicion, compPorAgencia, tipoData, tipoProm, top10motivo, nivCosto, nivCant, nivSob, nivProm, nivComp, sobAno, liqAno, sobMensual } =
+  const { kpis, agSob, agSobDesc, agCant, agProm, composicion, compPorAgencia, tipoData, tipoProm, top10motivo, nivCosto, nivCant, nivSob, nivProm, nivComp, sobAno, liqAno, sobMensual, costoMensual } =
     computeFromRows(filteredRows);
   const tabla: AnyObj[] = (data!.tabla as AnyObj[]) ?? [];
 
@@ -432,6 +440,24 @@ export default function CostosPage() {
               </ChartCard>
             )}
           </div>
+
+          {costoMensual.length > 0 && (
+            <ChartCard title="Costos Mensuales" fullWidth>
+              <PlotChart
+                data={costoMensual.map((m) => ({
+                  type: "bar" as const,
+                  name: m.mes,
+                  x: [m.mes],
+                  y: [m.total],
+                  marker: { color: m.color },
+                  text: [fmtGs(m.total)],
+                  textposition: "outside" as const,
+                }))}
+                layout={{ barmode: "group", showlegend: true, xaxis: { title: { text: "Mes" } }, yaxis: { title: { text: "Costo Total" } }, margin: { t: 32, r: 16, b: 60, l: 80 }, legend: { orientation: "h", y: -0.25 } }}
+                height={420}
+              />
+            </ChartCard>
+          )}
 
           {/* Análisis por Nivel AIC */}
           {(nivCosto.length > 0 || nivCant.length > 0) && (
