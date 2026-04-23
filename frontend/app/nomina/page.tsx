@@ -394,11 +394,13 @@ export default function NominaPage() {
               <PlotChart
                 data={[{
                   type: "pie", labels: nac.resumen.labels, values: nac.resumen.values,
-                  hole: 0.45, textinfo: "label+percent",
-                  textfont: { color: "#ffffff", size: 13 },
+                  hole: 0.45, textinfo: "label+percent+value",
+                  textposition: "auto",
+                  textfont: { color: "#ffffff", size: 12 },
                   marker: { colors: ["#7c5af6", "#10b981"] },
+                  automargin: true,
                 }]}
-                layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
+                layout={{ margin: { t: 24, r: 80, b: 16, l: 80 } }}
                 height={280}
               />
             </ChartCard>
