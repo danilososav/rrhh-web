@@ -409,7 +409,7 @@ export default function RotacionPage() {
                         textposition: "outside",
                       },
                       {
-                        type: "scatter", mode: "lines+markers+text", name: "% Retención",
+                        type: "scatter", mode: "text+lines+markers", name: "% Retención",
                         x: retencion.map((r) => r.empresa),
                         y: retencion.map((r) => r.pct),
                         yaxis: "y2",
