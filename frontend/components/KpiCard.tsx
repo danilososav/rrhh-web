@@ -57,13 +57,17 @@ export default function KpiCard({ title, value, subtitle, accent, accentColor, i
 
   return (
     <div
-      className="flex flex-col gap-2 p-5 rounded-xl transition-all duration-200 cursor-default"
-      style={{ background: "var(--card)", border: "1px solid var(--border)" }}
+      className="kpi-card flex flex-col gap-2 p-5 rounded-xl transition-all duration-200 cursor-default"
+      style={{
+        background: "var(--card)",
+        border: "1px solid var(--border)",
+        borderRadius: "12px",
+      }}
       onMouseEnter={e => {
         const el = e.currentTarget as HTMLDivElement;
         el.style.borderColor = color ?? "var(--accent)";
         el.style.transform = "translateY(-2px)";
-        el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.2)";
+        el.style.boxShadow = "0 8px 24px rgba(0,0,0,0.15)";
       }}
       onMouseLeave={e => {
         const el = e.currentTarget as HTMLDivElement;
@@ -73,7 +77,7 @@ export default function KpiCard({ title, value, subtitle, accent, accentColor, i
       }}
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="label-xs">{title}</span>
+        <span className="kpi-label">{title}</span>
         {icon && <span style={{ color: "var(--text3)" }} className="mt-0.5 shrink-0">{icon}</span>}
       </div>
 

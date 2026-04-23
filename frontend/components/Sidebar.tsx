@@ -203,27 +203,45 @@ export default function Sidebar() {
     >
       {/* Logo */}
       <div
-        className="flex items-center justify-center px-5 py-5"
+        className="flex flex-col items-center px-5 py-5"
         style={{ borderBottom: "1px solid var(--border)" }}
       >
-        {!imgError ? (
-          <Image
-            src="/logo.jpg"
-            alt="Texo"
-            width={180}
-            height={48}
-            style={{ width: "100%", height: "auto", maxWidth: 180 }}
-            priority
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <span
-            className="text-base font-bold tracking-widest uppercase"
-            style={{ color: "var(--text)" }}
-          >
-            Texo
-          </span>
-        )}
+        <div className="relative mb-2.5">
+          {!imgError ? (
+            <Image
+              src="/logo.png"
+              alt="Texo"
+              width={180}
+              height={48}
+              style={{
+                width: "100%",
+                height: "auto",
+                maxWidth: 180,
+                filter: "brightness(0) invert(1)",
+                opacity: 0.88,
+              }}
+              priority
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <span
+              className="text-base font-bold tracking-widest uppercase"
+              style={{ color: "var(--text)", opacity: 1 }}
+            >
+              Texo
+            </span>
+          )}
+        </div>
+        <span
+          className="text-[10px] font-bold tracking-[0.2em] uppercase"
+          style={{ color: "var(--text3)" }}
+        >
+          Portal de RRHH
+        </span>
+        <div
+          className="w-full h-[2px] mt-2 rounded-sm"
+          style={{ background: "linear-gradient(90deg, var(--accent), transparent)" }}
+        />
       </div>
 
       {/* Nav label */}
@@ -290,7 +308,7 @@ export default function Sidebar() {
           Cerrar sesión
         </button>
         <p className="text-center mt-2" style={{ fontSize: 10, letterSpacing: "0.12em", textTransform: "uppercase", color: "var(--text3)" }}>
-          Portal RRHH &copy; {new Date().getFullYear()}
+          Danilo Sosa | Texo Sistemas
         </p>
       </div>
     </aside>

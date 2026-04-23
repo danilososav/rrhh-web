@@ -54,6 +54,45 @@ html, body {
 ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 
+/* ── Presentation mode ── */
+.presentation-mode .kpi-value {
+  font-size: 56px !important;
+  transition: font-size 0.3s ease;
+}
+.presentation-mode .kpi-label {
+  font-size: 12px !important;
+}
+.presentation-mode .chart-title {
+  font-size: 13px !important;
+}
+.presentation-mode .page-title {
+  font-size: 28px !important;
+}
+.presentation-mode .content {
+  padding: 32px 40px !important;
+}
+.presentation-mode .sidebar {
+  width: 0 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  border: none !important;
+}
+
+/* ── Tab animation ── */
+@keyframes tabIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.tab-content {
+  animation: tabIn 0.22s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
 @layer utilities {
   .text-balance { text-wrap: balance; }
 
@@ -74,6 +113,8 @@ html, body {
   }
   .chart-card:hover {
     border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
   }
 
   /* Section label (10px uppercase) */
@@ -109,5 +150,14 @@ html, body {
     letter-spacing: -0.03em;
     color: var(--text);
     line-height: 1;
+  }
+
+  /* KPI label */
+  .kpi-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--text2);
   }
 }

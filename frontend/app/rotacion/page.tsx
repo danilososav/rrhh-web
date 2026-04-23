@@ -177,9 +177,18 @@ function computeFromRows(allRows: Row[]) {
   const retencion = (() => {
     const empMap = groupBy(allRows.filter((r) => r.EMPRESA), "EMPRESA");
     return Object.entries(empMap).map(([empresa, rows]) => {
-      const activos = rows.filter((r) => String(r.SITUACION ?? "").trim().toUpperCase() === "A").length;
+      // Egresos = total de filas con SITUACION=I en todo el período
       const egresos = rows.filter((r) => String(r.SITUACION ?? "").trim().toUpperCase() === "I").length;
-      const pct     = activos > 0 ? Math.round((activos - egresos) / activos * 100) : 0;
+      // Activos = snapshot del último mes disponible (evita contar la misma persona 12 veces)
+      const anos  = rows.map((r) => Number(r.ANO_REPORTE)).filter((v) => !isNaN(v));
+      const ultAno = anos.length ? Math.max(...anos) : null;
+      const rowsAno = ultAno != null ? rows.filter((r) => Number(r.ANO_REPORTE) === ultAno) : rows;
+      const meses  = rowsAno.map((r) => Number(r.MES_REPORTE)).filter((v) => !isNaN(v));
+      const ultMes = meses.length ? Math.max(...meses) : null;
+      const snap   = ultMes != null ? rowsAno.filter((r) => Number(r.MES_REPORTE) === ultMes) : rowsAno;
+      const activos = snap.filter((r) => String(r.SITUACION ?? "").trim().toUpperCase() === "A").length;
+      const total   = activos + egresos;
+      const pct     = total > 0 ? Math.round(activos / total * 100) : 0;
       const empUp   = empresa.toUpperCase().trim();
       const grupo   = CSC_SET.has(empUp) ? "csc"
                     : TAC_SET.has(empUp) ? "tac"
