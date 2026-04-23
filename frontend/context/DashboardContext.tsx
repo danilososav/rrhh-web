@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 const STORAGE_KEYS = {
   nomina: "rrhh_nomina",
@@ -39,18 +39,17 @@ interface DashboardContextValue {
 const DashboardContext = createContext<DashboardContextValue | null>(null);
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
-  const [nominaData, setNominaDataState] = useState<Record<string, unknown> | null>(
-    () => loadFromStorage(STORAGE_KEYS.nomina)
-  );
-  const [rotacionData, setRotacionDataState] = useState<Record<string, unknown> | null>(
-    () => loadFromStorage(STORAGE_KEYS.rotacion)
-  );
-  const [costosData, setCostosDataState] = useState<Record<string, unknown> | null>(
-    () => loadFromStorage(STORAGE_KEYS.costos)
-  );
-  const [reclutamientoData, setReclutamientoDataState] = useState<Record<string, unknown> | null>(
-    () => loadFromStorage(STORAGE_KEYS.reclutamiento)
-  );
+  const [nominaData, setNominaDataState] = useState<Record<string, unknown> | null>(null);
+  const [rotacionData, setRotacionDataState] = useState<Record<string, unknown> | null>(null);
+  const [costosData, setCostosDataState] = useState<Record<string, unknown> | null>(null);
+  const [reclutamientoData, setReclutamientoDataState] = useState<Record<string, unknown> | null>(null);
+
+  useEffect(() => {
+    setNominaDataState(loadFromStorage(STORAGE_KEYS.nomina));
+    setRotacionDataState(loadFromStorage(STORAGE_KEYS.rotacion));
+    setCostosDataState(loadFromStorage(STORAGE_KEYS.costos));
+    setReclutamientoDataState(loadFromStorage(STORAGE_KEYS.reclutamiento));
+  }, []);
 
   function setNominaData(data: Record<string, unknown>) {
     setNominaDataState(data);
