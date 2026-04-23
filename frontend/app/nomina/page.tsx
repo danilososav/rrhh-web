@@ -426,20 +426,20 @@ export default function NominaPage() {
               />
             </ChartCard>
           )}
-          <ChartCard title="Inclusión Laboral">
-            <div className="flex flex-col gap-4">
-              <div className="flex items-center gap-6">
+          <ChartCard title="Inclusión Laboral" span2>
+            <div className="flex flex-col gap-6 py-4">
+              <div className="flex items-center gap-12">
                 <div>
-                  <div className="text-5xl font-black" style={{ color: "#10b981", lineHeight: 1 }}>{discapacidad.pct}%</div>
-                  <div className="text-sm mt-1" style={{ color: "var(--text2)" }}>Personas con<br/>Discapacidad</div>
+                  <div className="text-8xl font-black" style={{ color: "#10b981", lineHeight: 1 }}>{discapacidad.pct}%</div>
+                  <div className="text-base mt-2" style={{ color: "var(--text2)" }}>Personas con Discapacidad</div>
                 </div>
                 {discapacidad.count > 0 && (
                   <>
-                    <div className="text-3xl" style={{ color: "var(--text2)" }}>→</div>
-                    <div className="flex flex-col gap-2">
+                    <div className="text-5xl" style={{ color: "var(--text2)" }}>→</div>
+                    <div className="flex flex-col gap-4">
                       {discapacidad.personas.map((p, i) => (
-                        <div key={i} className="flex items-center gap-3">
-                          <svg width="28" height="39" viewBox="0 0 80 112" fill="#10b981">
+                        <div key={i} className="flex items-center gap-5">
+                          <svg width="52" height="73" viewBox="0 0 80 112" fill="#10b981">
                             <circle cx="40" cy="13" r="12"/>
                             <rect x="36" y="25" width="8" height="7" rx="2"/>
                             <path d="M29 32 Q40 28 51 32 L51 58 Q40 63 29 58 Z"/>
@@ -449,10 +449,8 @@ export default function NominaPage() {
                             <rect x="41" y="59" width="10" height="30" rx="5"/>
                           </svg>
                           <div>
-                            <div className="text-sm font-semibold" style={{ color: "#fff" }}>
-                              {p.tipo}
-                            </div>
-                            <div className="text-xs" style={{ color: "var(--text2)" }}>{p.empresa}</div>
+                            <div className="text-xl font-bold" style={{ color: "#fff" }}>{p.tipo}</div>
+                            <div className="text-base" style={{ color: "var(--text2)" }}>{p.empresa}</div>
                           </div>
                         </div>
                       ))}
@@ -460,10 +458,10 @@ export default function NominaPage() {
                   </>
                 )}
                 {discapacidad.count === 0 && (
-                  <div className="text-sm" style={{ color: "var(--text2)" }}>Sin registros</div>
+                  <div className="text-base" style={{ color: "var(--text2)" }}>Sin registros</div>
                 )}
               </div>
-              <div className="text-xs font-semibold" style={{ color: "var(--text2)" }}>
+              <div className="text-sm font-semibold" style={{ color: "var(--text2)" }}>
                 {discapacidad.count} persona{discapacidad.count !== 1 ? "s" : ""} de {kpis.total} colaboradores
               </div>
             </div>
