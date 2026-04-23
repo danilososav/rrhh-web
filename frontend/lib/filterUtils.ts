@@ -44,6 +44,12 @@ export function fmtGs(n: number): string {
   return `₲ ${n.toFixed(0)}`;
 }
 
+/** Build defaultSelected pre-selecting 2025 for a year field if it exists in rows */
+export function defaultYear2025(rows: Row[], field: string): Record<string, string[]> {
+  const has2025 = rows.some((r) => String(r[field] ?? "").trim() === "2025");
+  return has2025 ? { [field]: ["2025"] } : {};
+}
+
 /** Apply multi-field filter to raw rows */
 export function applyFilters(rows: Row[], selected: Record<string, string[]>): Row[] {
   return rows.filter((r) =>

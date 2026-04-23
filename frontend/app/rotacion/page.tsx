@@ -8,7 +8,7 @@ import TabBar from "@/components/TabBar";
 import DataTable from "@/components/DataTable";
 import { useDashboard } from "@/context/DashboardContext";
 import { useFilter } from "@/context/FilterContext";
-import { Row, groupBy, applyFilters, FilterConfig } from "@/lib/filterUtils";
+import { Row, groupBy, applyFilters, FilterConfig, defaultYear2025 } from "@/lib/filterUtils";
 
 type AnyObj = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -338,7 +338,10 @@ export default function RotacionPage() {
   const [showUpload, setShowUpload] = useState(false);
 
   useEffect(() => {
-    if (rotacionData) register(FILTER_CONFIGS, (rotacionData.raw_rows as Row[]) ?? []);
+    if (rotacionData) {
+      const rows = (rotacionData.raw_rows as Row[]) ?? [];
+      register(FILTER_CONFIGS, rows, defaultYear2025(rows, "ANO_REPORTE"));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -346,7 +349,8 @@ export default function RotacionPage() {
     setData(result);
     setRotacionData(result);
     setShowUpload(false);
-    register(FILTER_CONFIGS, (result.raw_rows as Row[]) ?? []);
+    const rows = (result.raw_rows as Row[]) ?? [];
+    register(FILTER_CONFIGS, rows, defaultYear2025(rows, "ANO_REPORTE"));
   }
 
   if (!data) {

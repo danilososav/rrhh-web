@@ -8,7 +8,7 @@ interface FilterContextValue {
   rows: Row[];
   selected: Record<string, string[]>;
   onChange: (field: string, values: string[]) => void;
-  register: (configs: FilterConfig[], rows: Row[]) => void;
+  register: (configs: FilterConfig[], rows: Row[], defaultSelected?: Record<string, string[]>) => void;
   reset: () => void;
 }
 
@@ -19,10 +19,10 @@ export function FilterProvider({ children }: { children: ReactNode }) {
   const [rows, setRows]       = useState<Row[]>([]);
   const [selected, setSelected] = useState<Record<string, string[]>>({});
 
-  const register = useCallback((newConfigs: FilterConfig[], newRows: Row[]) => {
+  const register = useCallback((newConfigs: FilterConfig[], newRows: Row[], defaultSelected?: Record<string, string[]>) => {
     setConfigs(newConfigs);
     setRows(newRows);
-    setSelected({});
+    setSelected(defaultSelected ?? {});
   }, []);
 
   const reset = useCallback(() => {

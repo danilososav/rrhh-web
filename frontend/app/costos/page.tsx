@@ -8,7 +8,7 @@ import DataTable from "@/components/DataTable";
 import { useDashboard } from "@/context/DashboardContext";
 import { useFilter } from "@/context/FilterContext";
 import { authHeaders } from "@/lib/auth";
-import { Row, sumField, groupBy, fmtGs, applyFilters, FilterConfig } from "@/lib/filterUtils";
+import { Row, sumField, groupBy, fmtGs, applyFilters, FilterConfig, defaultYear2025 } from "@/lib/filterUtils";
 
 type AnyObj = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -204,7 +204,10 @@ export default function CostosPage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (costosData) register(FILTER_CONFIGS, (costosData.raw_rows as Row[]) ?? []);
+    if (costosData) {
+      const rows = (costosData.raw_rows as Row[]) ?? [];
+      register(FILTER_CONFIGS, rows, defaultYear2025(rows, "ANO_SALIDA"));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -231,7 +234,8 @@ export default function CostosPage() {
       setHojaActiva(json.hoja_activa ?? "");
       setActiveTab("agencia");
       setShowUpload(false);
-      register(FILTER_CONFIGS, (json.raw_rows as Row[]) ?? []);
+      const rawRows = (json.raw_rows as Row[]) ?? [];
+      register(FILTER_CONFIGS, rawRows, defaultYear2025(rawRows, "ANO_SALIDA"));
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Error desconocido");
     } finally {

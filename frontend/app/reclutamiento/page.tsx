@@ -8,7 +8,7 @@ import TabBar from "@/components/TabBar";
 import DataTable from "@/components/DataTable";
 import { useDashboard } from "@/context/DashboardContext";
 import { useFilter } from "@/context/FilterContext";
-import { Row, sumField, groupBy, applyFilters, FilterConfig } from "@/lib/filterUtils";
+import { Row, sumField, groupBy, applyFilters, FilterConfig, defaultYear2025 } from "@/lib/filterUtils";
 
 type AnyObj = Record<string, any>; // eslint-disable-line @typescript-eslint/no-explicit-any
 
@@ -139,7 +139,10 @@ export default function ReclutamientoPage() {
   const [tab, setTab]       = useState("general");
 
   useEffect(() => {
-    if (reclutamientoData) register(FILTER_CONFIGS, (reclutamientoData.tabla as Row[]) ?? []);
+    if (reclutamientoData) {
+      const rows = (reclutamientoData.tabla as Row[]) ?? [];
+      register(FILTER_CONFIGS, rows, defaultYear2025(rows, "ANO"));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -147,7 +150,8 @@ export default function ReclutamientoPage() {
     setData(result);
     setReclutamientoData(result);
     setShowUpload(false);
-    register(FILTER_CONFIGS, (result.tabla as Row[]) ?? []);
+    const rows = (result.tabla as Row[]) ?? [];
+    register(FILTER_CONFIGS, rows, defaultYear2025(rows, "ANO"));
   }
 
   if (!data) {
