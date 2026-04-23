@@ -24,8 +24,7 @@ const FILTER_CONFIGS: FilterConfig[] = [
 const TABS = [
   { id: "distribucion", label: "Distribución", icon: "👥" },
   { id: "demografia",   label: "Demografía",   icon: "🌍" },
-  { id: "salarios",     label: "Salarios",     icon: "💰" },
-  { id: "liderazgo",    label: "Liderazgo",    icon: "🏆" },
+  { id: "brecha",       label: "Brecha",       icon: "📊" },
 ];
 
 function fmt(n: number | null | undefined): string {
@@ -469,8 +468,8 @@ export default function NominaPage() {
         </div>
       )}
 
-      {/* Tab: Salarios */}
-      {tab === "salarios" && (
+      {/* Tab: Brecha */}
+      {tab === "brecha" && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {salEmp.length > 0 && (
             <ChartCard title="Salario Promedio por Empresa">
@@ -492,12 +491,6 @@ export default function NominaPage() {
               />
             </ChartCard>
           )}
-        </div>
-      )}
-
-      {/* Tab: Liderazgo */}
-      {tab === "liderazgo" && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {lidEmp.length > 0 && (
             <ChartCard title="% Líderes por Empresa">
               <PlotChart
