@@ -132,30 +132,40 @@ function ChartCard({ title, children, span2 = false }: { title: string; children
 
 function FemalePictogram({ size = 80, color = "#d946ef" }: { size?: number; color?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 80 80">
-      {/* fondo circular */}
-      <circle cx="40" cy="40" r="38" fill={color} fillOpacity="0.12" />
+    <svg width={size} height={size * 1.4} viewBox="0 0 80 112" fill={color}>
       {/* cabeza */}
-      <circle cx="40" cy="20" r="10" fill={color} />
+      <circle cx="40" cy="13" r="12" />
+      {/* cuello */}
+      <rect x="36" y="25" width="8" height="7" rx="2" />
+      {/* torso con cintura */}
+      <path d="M27 32 Q40 28 53 32 L51 58 Q40 63 29 58 Z" />
+      {/* brazo izq */}
+      <rect x="15" y="33" width="11" height="34" rx="5.5" />
+      {/* brazo der */}
+      <rect x="54" y="33" width="11" height="34" rx="5.5" />
       {/* falda acampanada */}
-      <path d="M27 32 Q40 27 53 32 L62 64 Q40 70 18 64 Z" fill={color} />
+      <path d="M19 59 Q40 54 61 59 L68 105 Q40 112 12 105 Z" />
     </svg>
   );
 }
 
 function MalePictogram({ size = 80, color = "#818cf8" }: { size?: number; color?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 80 80">
-      {/* fondo circular */}
-      <circle cx="40" cy="40" r="38" fill={color} fillOpacity="0.12" />
+    <svg width={size} height={size * 1.4} viewBox="0 0 80 112" fill={color}>
       {/* cabeza */}
-      <circle cx="40" cy="20" r="10" fill={color} />
-      {/* torso */}
-      <path d="M27 32 Q40 27 53 32 L53 50 H27 Z" fill={color} />
+      <circle cx="40" cy="13" r="12" />
+      {/* cuello */}
+      <rect x="36" y="25" width="8" height="7" rx="2" />
+      {/* torso (incluye perfil de brazos) */}
+      <rect x="22" y="32" width="36" height="44" rx="8" />
+      {/* brazo izq */}
+      <rect x="10" y="33" width="11" height="38" rx="5.5" />
+      {/* brazo der */}
+      <rect x="59" y="33" width="11" height="38" rx="5.5" />
       {/* pierna izq */}
-      <rect x="27" y="51" width="11" height="14" rx="3" fill={color} />
+      <rect x="22" y="77" width="15" height="34" rx="7" />
       {/* pierna der */}
-      <rect x="42" y="51" width="11" height="14" rx="3" fill={color} />
+      <rect x="43" y="77" width="15" height="34" rx="7" />
     </svg>
   );
 }
