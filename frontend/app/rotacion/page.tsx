@@ -234,7 +234,24 @@ function computeFromRows(allRows: Row[]) {
     return { data, ano: perEmp[0]?.ano ?? new Date().getFullYear() };
   })();
 
-  return { kpis, tipoSalida, motOrig, tasaMensual, byAno, salEmp, tasaEmp, tipoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap, retencion, retKpis, incDecHC };
+  // ── Rotación del Talento por Empresa ─────────────────────────────────────
+  const rotTalento = (() => {
+    const empMap = groupBy(allRows.filter((r) => r.EMPRESA), "EMPRESA");
+    return Object.entries(empMap).map(([empresa, empRows]) => {
+      const anos    = empRows.map((r) => Number(r.ANO_REPORTE)).filter((v) => !isNaN(v));
+      const ultAno  = anos.length ? Math.max(...anos) : null;
+      if (!ultAno) return null;
+      const rowsAno = empRows.filter((r) => Number(r.ANO_REPORTE) === ultAno);
+      const ingresos = rowsAno.filter((r) => String(r.SITUACION ?? "").trim().toUpperCase() === "A").length;
+      const egresos  = rowsAno.filter((r) => String(r.SITUACION ?? "").trim().toUpperCase() === "I").length;
+      const hcEnero  = rowsAno.filter((r) => Number(r.MES_REPORTE) === 1).length;
+      const pct      = hcEnero > 0 ? Math.round(egresos / hcEnero * 100) : null;
+      return { empresa, ingresos, egresos, pct };
+    }).filter(Boolean).filter((r) => r!.ingresos > 0 || r!.egresos > 0) as
+      { empresa: string; ingresos: number; egresos: number; pct: number | null }[];
+  })();
+
+  return { kpis, tipoSalida, motOrig, tasaMensual, byAno, salEmp, tasaEmp, tipoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap, retencion, retKpis, incDecHC, rotTalento };
 }
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -286,7 +303,7 @@ export default function RotacionPage() {
   const filteredRows            = applyFilters(rawRows, selected);
   const advertencias: string[] = (data.advertencias as string[]) ?? [];
   const computed = computeFromRows(filteredRows);
-  const { kpis, tipoSalida, motOrig, byAno, salEmp, tasaEmp, tipoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap, retencion, retKpis, incDecHC } = computed;
+  const { kpis, tipoSalida, motOrig, byAno, salEmp, tasaEmp, tipoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap, retencion, retKpis, incDecHC, rotTalento } = computed;
 
   const entrevistas: AnyObj = (data.entrevistas as AnyObj) ?? {};
   const dimData = entrevistas.por_dimension
@@ -525,6 +542,52 @@ export default function RotacionPage() {
       {/* ── Tab: Por Empresa ── */}
       {activeTab === "empresa" && (
         <div className="space-y-4">
+          {rotTalento.length > 0 && (
+            <ChartCard title="ROTACIÓN DEL TALENTO">
+              <PlotChart
+                data={[
+                  {
+                    type: "bar",
+                    name: "Nº de Ingresos",
+                    x: rotTalento.map((r) => r.empresa),
+                    y: rotTalento.map((r) => r.ingresos),
+                    marker: { color: "#f97316" },
+                    text: rotTalento.map((r) => String(r.ingresos)),
+                    textposition: "outside" as const,
+                  },
+                  {
+                    type: "bar",
+                    name: "Nº de Egresos",
+                    x: rotTalento.map((r) => r.empresa),
+                    y: rotTalento.map((r) => r.egresos),
+                    marker: { color: "#9ca3af" },
+                    text: rotTalento.map((r) => String(r.egresos)),
+                    textposition: "outside" as const,
+                  },
+                  {
+                    type: "scatter" as const,
+                    mode: "lines+markers+text" as const,
+                    name: "% Rotación",
+                    x: rotTalento.map((r) => r.empresa),
+                    y: rotTalento.map((r) => r.pct ?? 0),
+                    yaxis: "y2",
+                    line:   { color: "#eab308", width: 2 },
+                    marker: { color: "#eab308", size: 7 },
+                    text: rotTalento.map((r) => r.pct != null ? `${r.pct}%` : ""),
+                    textposition: "top center" as const,
+                  },
+                ] as AnyObj[]}
+                layout={{
+                  barmode: "group",
+                  yaxis:  { ticksuffix: "%", rangemode: "tozero" },
+                  yaxis2: { overlaying: "y", side: "right", showgrid: false, zeroline: true },
+                  margin: { t: 30, r: 60, b: 80, l: 50 },
+                  legend: { orientation: "h", y: -0.22 },
+                }}
+                height={420}
+              />
+            </ChartCard>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {salEmp.length > 0 && (
               <ChartCard title="Total Salidas por Empresa">
