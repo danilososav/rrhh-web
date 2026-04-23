@@ -29,7 +29,6 @@ const TABS = [
   { id: "empresa",      label: "Por Empresa",          icon: "🏢" },
   { id: "cargo",        label: "Por Cargo / Área",     icon: "📋" },
   { id: "tendencia",    label: "Tendencia",            icon: "📈" },
-  { id: "entrevistas",  label: "Entrevistas de Salida", icon: "💬" },
   { id: "detalle",      label: "Detalle",              icon: "📄" },
 ];
 
@@ -663,11 +662,7 @@ export default function RotacionPage() {
               </ChartCard>
             )}
           </div>
-          {tipoEmpTraces.length > 0 && (
-            <ChartCard title="Tipo de Salida por Empresa">
-              <PlotChart data={tipoEmpTraces} layout={{ barmode: "stack", margin: { t: 16, r: 16, b: 60, l: 16 } }} height={300} />
-            </ChartCard>
-          )}
+
           {permEmp.length > 0 && (
             <ChartCard title="Permanencia Promedio por Empresa (meses)">
               <PlotChart
@@ -788,71 +783,6 @@ export default function RotacionPage() {
         </div>
       )}
 
-      {/* ── Tab: Entrevistas de Salida ── */}
-      {activeTab === "entrevistas" && (
-        <div className="space-y-4">
-          {dimData && dimData.length > 0 ? (
-            <>
-              {entrevistas.satisfaccion_promedio != null && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-2">
-                  <KpiCard title="Satisfacción Promedio" value={`${entrevistas.satisfaccion_promedio} / 5`} accentColor="var(--accent)" />
-                </div>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <ChartCard title="Promedio por Dimensión (escala 1–5)">
-                  <PlotChart
-                    data={[{ type: "bar", orientation: "h",
-                      x: dimData.map(([, v]) => v), y: dimData.map(([k]) => k),
-                      marker: { color: dimData.map(([, v]) => v), colorscale: "RdYlGn", cmin: 1, cmax: 5, showscale: false } }]}
-                    layout={{ margin: { t: 16, r: 16, b: 36, l: 240 }, xaxis: { range: [0, 5] } }}
-                    height={320}
-                  />
-                </ChartCard>
-                <ChartCard title="Radar de Satisfacción">
-                  <PlotChart
-                    data={[{ type: "scatterpolar" as const, r: dimData.map(([, v]) => v),
-                      theta: dimData.map(([k]) => k), fill: "toself",
-                      line: { color: "#7c5af6" }, name: "Puntuación" }]}
-                    layout={{ polar: { radialaxis: { visible: true, range: [0, 5] } }, margin: { t: 30, r: 30, b: 30, l: 30 } }}
-                    height={320}
-                  />
-                </ChartCard>
-              </div>
-              {entrevistas.insight_ia && (
-                <div className="rounded-xl p-5" style={{ border: "1px solid rgba(124,90,246,0.25)", background: "rgba(124,90,246,0.07)" }}>
-                  <p className="label-xs mb-2" style={{ color: "var(--accent)" }}>
-                    Análisis IA — Satisfacción promedio: {entrevistas.satisfaccion_promedio}
-                  </p>
-                  <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: "var(--text)" }}>{entrevistas.insight_ia}</p>
-                </div>
-              )}
-              {entrevistas.por_empresa && (
-                <ChartCard title="Puntuación por Dimensión y Empresa">
-                  <PlotChart
-                    data={(() => {
-                      const rows = entrevistas.por_empresa as AnyObj[];
-                      const emps = Array.from(new Set(rows.map((r) => r.EMPRESA)));
-                      return emps.map((emp, i) => ({
-                        type: "bar" as const, name: String(emp), orientation: "h" as const,
-                        x: rows.filter((r) => r.EMPRESA === emp).map((r) => r.promedio),
-                        y: rows.filter((r) => r.EMPRESA === emp).map((r) => r.pregunta),
-                        marker: { color: COLOR_SEQ[i % COLOR_SEQ.length] },
-                      }));
-                    })()}
-                    layout={{ barmode: "group", margin: { t: 16, r: 16, b: 36, l: 240 }, xaxis: { range: [0, 5] } }}
-                    height={340}
-                  />
-                </ChartCard>
-              )}
-            </>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-16 text-center gap-3">
-              <p className="text-sm" style={{ color: "var(--text2)" }}>No se encontraron columnas de entrevistas (P1–P8) en el archivo cargado.</p>
-              <p className="text-xs" style={{ color: "var(--text3)" }}>El archivo debe contener columnas P1_ORIENTACION a P8_APERTURA_SUPERIOR.</p>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* ── Tab: Detalle ── */}
       {activeTab === "detalle" && (
