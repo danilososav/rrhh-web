@@ -394,7 +394,7 @@ export default function NominaPage() {
               <PlotChart
                 data={[{
                   type: "pie", labels: nac.resumen.labels, values: nac.resumen.values,
-                  hole: 0.45, textinfo: "label+percent+value",
+                  hole: 0.45, textinfo: "label+value+percent",
                   textposition: "auto",
                   textfont: { color: "#ffffff", size: 12 },
                   marker: { colors: ["#7c5af6", "#10b981"] },
