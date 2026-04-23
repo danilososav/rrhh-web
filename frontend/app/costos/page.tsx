@@ -396,7 +396,7 @@ export default function CostosPage() {
         <div className="space-y-5">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
             {agSob.length > 0 && (
-              <ChartCard title="⚠️ Sobrecosto por Agencia (costo de desvinculaciones)">
+              <ChartCard title="⚠️ Costos por Agencia">
                 <PlotChart
                   data={[{
                     type: "bar", orientation: "h",
@@ -428,36 +428,6 @@ export default function CostosPage() {
               </ChartCard>
             )}
           </div>
-
-          {agProm.length > 0 && (
-            <ChartCard title="⚠️ Sobrecosto Promedio por Liquidación por Agencia">
-              <PlotChart
-                data={[{
-                  type: "bar",
-                  x: agProm.map((r) => r.AGENCIA),
-                  y: agProm.map((r) => r.prom),
-                  marker: { color: agColors(agProm.length) },
-                }]}
-                layout={{ xaxis: { title: { text: "Agencia" } }, yaxis: { title: { text: "Sobrecosto Promedio" } }, margin: { t: 8, r: 16, b: 60, l: 80 } }}
-                height={320}
-              />
-            </ChartCard>
-          )}
-
-          {agSobDesc.length > 0 && (
-            <ChartCard title="Sobrecosto por Agencia (costo de la no retención)">
-              <PlotChart
-                data={[{
-                  type: "bar",
-                  x: agSobDesc.map((r) => r.AGENCIA),
-                  y: agSobDesc.map((r) => r.SOBRECOSTO),
-                  marker: { color: agColors(agSobDesc.length) },
-                }]}
-                layout={{ xaxis: { title: { text: "AGENCIA" } }, yaxis: { title: { text: "Sobrecosto" } }, margin: { t: 8, r: 16, b: 60, l: 80 } }}
-                height={340}
-              />
-            </ChartCard>
-          )}
 
           {/* Análisis por Nivel AIC */}
           {(nivCosto.length > 0 || nivCant.length > 0) && (
