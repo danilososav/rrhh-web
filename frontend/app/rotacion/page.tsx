@@ -171,7 +171,7 @@ function computeFromRows(allRows: Row[]) {
     return rows;
   })();
 
-  const TAC_SET      = new Set(["AMPLIFY","BPR","TAC MEDIA"]);
+  const TAC_SET      = new Set(["AMPLIFY","BPR"]);
   const CSC_SET      = new Set(["TEXO"]);
 
   const retencion = (() => {
@@ -222,7 +222,7 @@ function computeFromRows(allRows: Row[]) {
         : 0;
       const pct    = hcInicio > 0 ? Math.round((hcFin - hcInicio) / hcInicio * 100) : null;
       const empUp  = empresa.toUpperCase().trim();
-      const grupo  = CSC_SET.has(empUp) ? "otros" : TAC_SET.has(empUp) ? "tactical" : "agencia";
+      const grupo  = CSC_SET.has(empUp) ? "csc" : TAC_SET.has(empUp) ? "tac" : "agencia";
       return { empresa, hcFin, hcInicio, pct, grupo, ano: ultAno };
     }).filter(Boolean) as { empresa: string; hcFin: number; hcInicio: number; pct: number | null; grupo: string; ano: number }[];
     const avg = (arr: typeof rows) => {
@@ -233,8 +233,8 @@ function computeFromRows(allRows: Row[]) {
       data: rows.sort((a, b) => a.empresa.localeCompare(b.empresa)),
       kpis: {
         agencias: avg(rows.filter((r) => r.grupo === "agencia")),
-        tactical: avg(rows.filter((r) => r.grupo === "tactical")),
-        otros:    avg(rows.filter((r) => r.grupo === "otros")),
+        tac:      avg(rows.filter((r) => r.grupo === "tac")),
+        csc:      avg(rows.filter((r) => r.grupo === "csc")),
         ano:      rows[0]?.ano ?? new Date().getFullYear(),
       },
     };
@@ -487,8 +487,8 @@ export default function RotacionPage() {
                 <div className="flex flex-col justify-center gap-8 min-w-[140px]">
                   {[
                     { val: incDecHC.kpis.agencias, label: "Agencias"  },
-                    { val: incDecHC.kpis.tactical, label: "Tactical"  },
-                    { val: incDecHC.kpis.otros,    label: "Otros"     },
+                    { val: incDecHC.kpis.tac,      label: "TAC Media" },
+                    { val: incDecHC.kpis.csc,      label: "CSC"       },
                   ].filter((g) => g.val != null).map(({ val, label }) => (
                     <div key={label}>
                       <div className="text-5xl font-black leading-none" style={{ color: "var(--text)" }}>{val}%</div>
