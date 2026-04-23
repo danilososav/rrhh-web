@@ -395,7 +395,7 @@ export default function NominaPage() {
                 data={[{
                   type: "pie", labels: nac.resumen.labels, values: nac.resumen.values,
                   hole: 0.45, textinfo: "label+percent",
-                  textfont: { color: "#6b7a99" },
+                  textfont: { color: "#ffffff", size: 13 },
                   marker: { colors: ["#7c5af6", "#10b981"] },
                 }]}
                 layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
@@ -404,7 +404,7 @@ export default function NominaPage() {
             </ChartCard>
           )}
           {extPorNac.length > 0 && (
-            <ChartCard title="Colaboradores Extranjeros por Nacionalidad">
+            <ChartCard title="Colaboradores por Nacionalidad">
               <PlotChart
                 data={[{
                   type: "bar",
