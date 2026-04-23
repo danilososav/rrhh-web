@@ -241,6 +241,36 @@ function computeFromRows(allRows: Row[]) {
     };
   })();
 
+  // ── Rotación Voluntaria por Empresa ──────────────────────────────────────
+  const rotVol = (() => {
+    const empMap = groupBy(allRows.filter((r) => r.EMPRESA), "EMPRESA");
+    const rows = Object.entries(empMap).map(([empresa, empRows]) => {
+      const anos    = empRows.map((r) => Number(r.ANO_REPORTE)).filter((v) => !isNaN(v));
+      const ultAno  = anos.length ? Math.max(...anos) : null;
+      if (!ultAno) return null;
+      const rowsAno    = empRows.filter((r) => Number(r.ANO_REPORTE) === ultAno);
+      const voluntaria = rowsAno.filter((r) => String(r.TIPO_SALIDA ?? "").toUpperCase().includes("VOL")).length;
+      const hcEnero    = rowsAno.filter((r) => Number(r.MES_REPORTE) === 1).length;
+      const pct        = hcEnero > 0 ? Math.round(voluntaria / hcEnero * 100) : null;
+      const empUp      = empresa.toUpperCase().trim();
+      const grupo      = CSC_SET.has(empUp) ? "csc" : TAC_SET.has(empUp) ? "tac" : "agencia";
+      return { empresa, voluntaria, pct, grupo };
+    }).filter(Boolean) as { empresa: string; voluntaria: number; pct: number | null; grupo: string }[];
+
+    const avg = (arr: typeof rows) => {
+      const v = arr.filter((r) => r.pct != null);
+      return v.length ? Math.round(v.reduce((s, r) => s + (r.pct ?? 0), 0) / v.length) : null;
+    };
+    return {
+      data: rows.sort((a, b) => a.empresa.localeCompare(b.empresa)),
+      kpis: {
+        agencias: avg(rows.filter((r) => r.grupo === "agencia")),
+        tac:      avg(rows.filter((r) => r.grupo === "tac")),
+        csc:      avg(rows.filter((r) => r.grupo === "csc")),
+      },
+    };
+  })();
+
   // ── Incremento / Disminución de Nómina ───────────────────────────────────
   const incDecHC = (() => {
     const empMap = groupBy(allRows.filter((r) => r.EMPRESA), "EMPRESA");
@@ -288,7 +318,7 @@ function computeFromRows(allRows: Row[]) {
       { empresa: string; ingresos: number; egresos: number; pct: number | null }[];
   })();
 
-  return { kpis, tipoSalida, motOrig, tasaMensual, byAno, salEmp, tasaEmp, tipoEmp, motivoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap, retencion, retKpis, rotInv, incDecHC, rotTalento };
+  return { kpis, tipoSalida, motOrig, tasaMensual, byAno, salEmp, tasaEmp, tipoEmp, motivoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap, retencion, retKpis, rotInv, rotVol, incDecHC, rotTalento };
 }
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -340,7 +370,7 @@ export default function RotacionPage() {
   const filteredRows            = applyFilters(rawRows, selected);
   const advertencias: string[] = (data.advertencias as string[]) ?? [];
   const computed = computeFromRows(filteredRows);
-  const { kpis, tipoSalida, motOrig, byAno, salEmp, tasaEmp, tipoEmp, motivoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap, retencion, retKpis, rotInv, incDecHC, rotTalento } = computed;
+  const { kpis, tipoSalida, motOrig, byAno, salEmp, tasaEmp, tipoEmp, motivoEmp, permEmp, topCargos, permCargo, topAreas, topDept, permHist, porAno, tipoAno, heatmap, retencion, retKpis, rotInv, rotVol, incDecHC, rotTalento } = computed;
 
   const entrevistas: AnyObj = (data.entrevistas as AnyObj) ?? {};
   const dimData = entrevistas.por_dimension
@@ -582,6 +612,69 @@ export default function RotacionPage() {
                         line:   { color: "#eab308", width: 2 },
                         marker: { color: "#eab308", size: 7 },
                         text: rotInv.data.map((r) => r.pct != null ? `${r.pct}%` : ""),
+                        textposition: "top center" as const,
+                      },
+                    ]}
+                    layout={{
+                      barmode: "group",
+                      yaxis2: { overlaying: "y", side: "right", ticksuffix: "%", showgrid: false },
+                      margin: { t: 30, r: 60, b: 60, l: 40 },
+                      legend: { orientation: "h", y: -0.2 },
+                    }}
+                    height={380}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Rotación Voluntaria por Empresa */}
+          {rotVol.data.length > 0 && (
+            <div className="chart-card">
+              <h3 className="chart-title mb-4">Rotación Voluntaria por Empresa</h3>
+              <div className="flex gap-8">
+                <div className="flex flex-col justify-center gap-6 min-w-[140px]">
+                  {rotVol.kpis.agencias != null && (
+                    <div>
+                      <div className="text-4xl font-black" style={{ color: "#f97316" }}>{rotVol.kpis.agencias}%</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>Agencias</span></div>
+                    </div>
+                  )}
+                  {rotVol.kpis.tac != null && (
+                    <div>
+                      <div className="text-4xl font-black" style={{ color: "#3b82f6" }}>{rotVol.kpis.tac}%</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>TAC Media</span></div>
+                    </div>
+                  )}
+                  {rotVol.kpis.csc != null && (
+                    <div>
+                      <div className="text-4xl font-black" style={{ color: "#10b981" }}>{rotVol.kpis.csc}%</div>
+                      <div className="text-xs mt-0.5" style={{ color: "var(--text2)" }}>Promedio<br/><span className="font-bold" style={{ color: "var(--text)" }}>CSC</span></div>
+                    </div>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <PlotChart
+                    data={[
+                      {
+                        type: "bar",
+                        name: "Voluntaria",
+                        x: rotVol.data.map((r) => r.empresa),
+                        y: rotVol.data.map((r) => r.voluntaria),
+                        marker: { color: "#9ca3af" },
+                        text: rotVol.data.map((r) => String(r.voluntaria)),
+                        textposition: "outside" as const,
+                      },
+                      {
+                        type: "scatter" as const,
+                        mode: "text+lines+markers" as const,
+                        name: "% Rotación Voluntaria",
+                        x: rotVol.data.map((r) => r.empresa),
+                        y: rotVol.data.map((r) => r.pct ?? 0),
+                        yaxis: "y2",
+                        line:   { color: "#eab308", width: 2 },
+                        marker: { color: "#eab308", size: 7 },
+                        text: rotVol.data.map((r) => r.pct != null ? `${r.pct}%` : ""),
                         textposition: "top center" as const,
                       },
                     ]}
