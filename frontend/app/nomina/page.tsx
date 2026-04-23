@@ -132,20 +132,30 @@ function ChartCard({ title, children, span2 = false }: { title: string; children
 
 function FemalePictogram({ size = 80, color = "#d946ef" }: { size?: number; color?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill={color}>
-      <circle cx="24" cy="9" r="7" />
-      <path d="M12 44 L18.5 24 Q24 19 29.5 24 L36 44 Z" />
+    <svg width={size} height={size} viewBox="0 0 80 80">
+      {/* fondo circular */}
+      <circle cx="40" cy="40" r="38" fill={color} fillOpacity="0.12" />
+      {/* cabeza */}
+      <circle cx="40" cy="20" r="10" fill={color} />
+      {/* falda acampanada */}
+      <path d="M27 32 Q40 27 53 32 L62 64 Q40 70 18 64 Z" fill={color} />
     </svg>
   );
 }
 
 function MalePictogram({ size = 80, color = "#818cf8" }: { size?: number; color?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" fill={color}>
-      <circle cx="24" cy="9" r="7" />
-      <rect x="14" y="19" width="20" height="14" rx="3" />
-      <rect x="14" y="34" width="8" height="12" rx="2" />
-      <rect x="26" y="34" width="8" height="12" rx="2" />
+    <svg width={size} height={size} viewBox="0 0 80 80">
+      {/* fondo circular */}
+      <circle cx="40" cy="40" r="38" fill={color} fillOpacity="0.12" />
+      {/* cabeza */}
+      <circle cx="40" cy="20" r="10" fill={color} />
+      {/* torso */}
+      <path d="M27 32 Q40 27 53 32 L53 50 H27 Z" fill={color} />
+      {/* pierna izq */}
+      <rect x="27" y="51" width="11" height="14" rx="3" fill={color} />
+      {/* pierna der */}
+      <rect x="42" y="51" width="11" height="14" rx="3" fill={color} />
     </svg>
   );
 }
