@@ -407,41 +407,23 @@ export default function NominaPage() {
             </ChartCard>
           )}
           <ChartCard title="Inclusión Laboral" span2>
-            <div className="flex flex-col gap-6 py-4">
-              <div className="flex items-center gap-12">
-                <div>
-                  <div className="text-8xl font-black" style={{ color: "#10b981", lineHeight: 1 }}>{discapacidad.pct}%</div>
-                  <div className="text-base mt-2" style={{ color: "var(--text2)" }}>Personas con Discapacidad</div>
-                </div>
-                {discapacidad.count > 0 && (
-                  <>
-                    <div className="text-5xl" style={{ color: "var(--text2)" }}>→</div>
-                    <div className="flex flex-col gap-4">
-                      {discapacidad.personas.map((p, i) => (
-                        <div key={i} className="flex items-center gap-5">
-                          <svg width="52" height="73" viewBox="0 0 80 112" fill="#10b981">
-                            <circle cx="40" cy="13" r="12"/>
-                            <rect x="36" y="25" width="8" height="7" rx="2"/>
-                            <path d="M29 32 Q40 28 51 32 L51 58 Q40 63 29 58 Z"/>
-                            <rect x="17" y="33" width="11" height="34" rx="5.5"/>
-                            <rect x="52" y="33" width="11" height="34" rx="5.5"/>
-                            <rect x="29" y="59" width="10" height="30" rx="5"/>
-                            <rect x="41" y="59" width="10" height="30" rx="5"/>
-                          </svg>
-                          <div>
-                            <div className="text-xl font-bold" style={{ color: "var(--text)" }}>{p.tipo}</div>
-                            <div className="text-base" style={{ color: "var(--text2)" }}>{p.empresa}</div>
-                          </div>
-                        </div>
-                      ))}
+            <div className="flex flex-col items-center justify-center gap-4 py-6 text-center">
+              <div className="text-8xl font-black" style={{ color: "#059669", lineHeight: 1 }}>{discapacidad.pct}%</div>
+              <div className="text-base" style={{ color: "var(--text2)" }}>Personas con Discapacidad</div>
+              {discapacidad.count > 0 && (
+                <div className="flex flex-col gap-2 mt-2">
+                  {discapacidad.personas.map((p, i) => (
+                    <div key={i}>
+                      <div className="text-lg font-bold" style={{ color: "var(--text)" }}>{p.tipo}</div>
+                      <div className="text-sm" style={{ color: "var(--text2)" }}>{p.empresa}</div>
                     </div>
-                  </>
-                )}
-                {discapacidad.count === 0 && (
-                  <div className="text-base" style={{ color: "var(--text2)" }}>Sin registros</div>
-                )}
-              </div>
-              <div className="text-sm font-semibold" style={{ color: "var(--text2)" }}>
+                  ))}
+                </div>
+              )}
+              {discapacidad.count === 0 && (
+                <div className="text-base" style={{ color: "var(--text2)" }}>Sin registros</div>
+              )}
+              <div className="text-sm font-semibold mt-1" style={{ color: "var(--text3)" }}>
                 {discapacidad.count} persona{discapacidad.count !== 1 ? "s" : ""} de {kpis.total} colaboradores
               </div>
             </div>
