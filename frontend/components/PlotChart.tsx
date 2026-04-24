@@ -13,14 +13,20 @@ const Plot = dynamic<PlotParams>(
   }
 );
 
-/* Palette matches handoff design system */
+/* Dark palette (original) */
 const COLOR_SEQ = [
   "#7c5af6", "#10b981", "#06b6d4", "#f59e0b",
   "#d946ef", "#818cf8", "#ef4444", "#fb923c",
   "#84cc16", "#14b8a6",
 ];
 
-export { COLOR_SEQ };
+/* Light palette — 5+5 complementary colors with strong contrast on white */
+const LIGHT_COLOR_SEQ = [
+  "#2563EB", "#059669", "#D97706", "#7C3AED", "#DC2626",
+  "#0891B2", "#65A30D", "#C2410C", "#4338CA", "#0F766E",
+];
+
+export { COLOR_SEQ, LIGHT_COLOR_SEQ };
 
 const DARK_BASE: Partial<Plotly.Layout> = {
   paper_bgcolor: "rgba(0,0,0,0)",
@@ -37,19 +43,39 @@ const DARK_AXIS: Partial<Plotly.LayoutAxis> = {
   zerolinecolor: "#1e2e47",
 };
 
+const LIGHT_BASE: Partial<Plotly.Layout> = {
+  paper_bgcolor: "rgba(0,0,0,0)",
+  plot_bgcolor:  "rgba(0,0,0,0)",
+  font:   { color: "#1e293b", size: 12, family: "DM Sans, system-ui, sans-serif" },
+  legend: { bgcolor: "rgba(0,0,0,0)", font: { color: "#334155", size: 11 } },
+  colorway: LIGHT_COLOR_SEQ,
+};
+
+const LIGHT_AXIS: Partial<Plotly.LayoutAxis> = {
+  gridcolor:     "#e2e8f0",
+  linecolor:     "#cbd5e1",
+  tickfont:      { color: "#475569", size: 11 },
+  zerolinecolor: "#94a3b8",
+};
+
 interface PlotChartProps extends Omit<PlotParams, "layout"> {
   layout?: Partial<Plotly.Layout>;
   height?: number;
+  light?: boolean;
 }
 
-export default function PlotChart({ data, layout, height = 300, ...rest }: PlotChartProps) {
+export default function PlotChart({ data, layout, height = 300, light = false, ...rest }: PlotChartProps) {
+  const base = light ? LIGHT_BASE : DARK_BASE;
+  const axis = light ? LIGHT_AXIS : DARK_AXIS;
+
   const merged: Partial<Plotly.Layout> = {
-    ...DARK_BASE,
+    ...base,
     height,
     margin: { t: 24, r: 16, b: 48, l: 64 },
     ...layout,
-    xaxis: { ...DARK_AXIS, ...(layout?.xaxis as object) },
-    yaxis: { ...DARK_AXIS, ...(layout?.yaxis as object) },
+    xaxis: { ...axis, ...(layout?.xaxis as object) },
+    yaxis: { ...axis, ...(layout?.yaxis as object) },
+    ...(layout?.yaxis2 ? { yaxis2: { ...axis, ...(layout.yaxis2 as object) } } : {}),
   };
 
   return (

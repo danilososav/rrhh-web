@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import FileUpload from "@/components/FileUpload";
 import KpiCard from "@/components/KpiCard";
-import PlotChart, { COLOR_SEQ } from "@/components/PlotChart";
+import PlotChart, { LIGHT_COLOR_SEQ } from "@/components/PlotChart";
 import TabBar from "@/components/TabBar";
 import DataTable from "@/components/DataTable";
 import { useDashboard } from "@/context/DashboardContext";
@@ -33,7 +33,7 @@ const TABS = [
 ];
 
 function barColors(n: number) {
-  return Array.from({ length: n }, (_, i) => COLOR_SEQ[i % COLOR_SEQ.length]);
+  return Array.from({ length: n }, (_, i) => LIGHT_COLOR_SEQ[i % LIGHT_COLOR_SEQ.length]);
 }
 
 function isSalida(r: Row) {
@@ -392,7 +392,7 @@ export default function RotacionPage() {
     type: "bar" as const, name: tipo,
     x: empresasUniq,
     y: empresasUniq.map((emp) => tipoEmp.find((r) => r.empresa === emp && r.tipo === tipo)?.n ?? 0),
-    marker: { color: COLOR_SEQ[i % COLOR_SEQ.length] },
+    marker: { color: LIGHT_COLOR_SEQ[i % LIGHT_COLOR_SEQ.length] },
   }));
 
   const motivosUnicos     = Array.from(new Set(motivoEmp.map((r) => r.motivo)));
@@ -401,7 +401,7 @@ export default function RotacionPage() {
     type: "bar" as const, name: motivo,
     x: empresasMotivo,
     y: empresasMotivo.map((emp) => motivoEmp.find((r) => r.empresa === emp && r.motivo === motivo)?.n ?? 0),
-    marker: { color: COLOR_SEQ[i % COLOR_SEQ.length] },
+    marker: { color: LIGHT_COLOR_SEQ[i % LIGHT_COLOR_SEQ.length] },
   }));
 
   const tiposUnicosAno = Array.from(new Set(tipoAno.map((r) => r.tipo)));
@@ -410,7 +410,7 @@ export default function RotacionPage() {
     type: "bar" as const, name: tipo,
     x: anosUniq,
     y: anosUniq.map((ano) => tipoAno.find((r) => r.ano === ano && r.tipo === tipo)?.n ?? 0),
-    marker: { color: COLOR_SEQ[i % COLOR_SEQ.length] },
+    marker: { color: LIGHT_COLOR_SEQ[i % LIGHT_COLOR_SEQ.length] },
   }));
 
   const tablaRot: AnyObj[]     = (data.tabla as AnyObj[]) ?? [];
@@ -474,9 +474,11 @@ export default function RotacionPage() {
             {tipoSalida.labels.length > 0 && (
               <ChartCard title="Voluntaria vs Involuntaria">
                 <PlotChart
+                  light
                   data={[{ type: "pie", labels: tipoSalida.labels, values: tipoSalida.values, hole: 0.4,
-                    textinfo: "label+percent", textfont: { color: "#6b7a99" },
-                    marker: { colors: COLOR_SEQ } }]}
+                    textinfo: "label+percent", textposition: "outside",
+                    textfont: { color: "#1e293b" },
+                    marker: { colors: LIGHT_COLOR_SEQ } }]}
                   layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
                   height={300}
                 />
@@ -485,10 +487,11 @@ export default function RotacionPage() {
             {motOrig.length > 0 && (
               <ChartCard title="Top 5 Motivos de Salida">
                 <PlotChart
+                  light
                   data={[{ type: "bar", orientation: "h",
                     x: motOrig.map((r) => r.cantidad),
                     y: motOrig.map((r) => r.motivo),
-                    marker: { color: "#7c5af6" } }]}
+                    marker: { color: "#2563EB" } }]}
                   layout={{ margin: { t: 16, r: 16, b: 36, l: 220 } }}
                   height={320}
                 />
@@ -501,13 +504,14 @@ export default function RotacionPage() {
             <div className="chart-card">
               <h3 className="chart-title mb-5">INCREMENTO / DISMINUCIÓN DE NÓMINA</h3>
               <PlotChart
+                light
                 data={[
                   {
                     type: "bar",
                     name: `Activos al 31/12/${incDecHC.ano}`,
                     x: incDecHC.data.map((r) => r.label),
                     y: incDecHC.data.map((r) => r.hcFin),
-                    marker: { color: "#f97316" },
+                    marker: { color: "#D97706" },
                     text: incDecHC.data.map((r) => String(r.hcFin)),
                     textposition: "outside" as const,
                   },
@@ -516,7 +520,7 @@ export default function RotacionPage() {
                     name: `Activos al 01/01/${incDecHC.ano}`,
                     x: incDecHC.data.map((r) => r.label),
                     y: incDecHC.data.map((r) => r.hcInicio),
-                    marker: { color: "#9ca3af" },
+                    marker: { color: "#94a3b8" },
                     text: incDecHC.data.map((r) => String(r.hcInicio)),
                     textposition: "outside" as const,
                   },
@@ -527,8 +531,8 @@ export default function RotacionPage() {
                     x: incDecHC.data.map((r) => r.label),
                     y: incDecHC.data.map((r) => r.pct ?? 0),
                     yaxis: "y2",
-                    line:   { color: "#3b82f6", width: 2 },
-                    marker: { color: "#3b82f6", size: 7 },
+                    line:   { color: "#2563EB", width: 2 },
+                    marker: { color: "#2563EB", size: 7 },
                     text: incDecHC.data.map((r) => r.pct != null ? `${r.pct}%` : ""),
                     textposition: "top center" as const,
                   },
@@ -552,6 +556,7 @@ export default function RotacionPage() {
           {salEmp.length > 0 && (
             <ChartCard title="Total Salidas por Empresa">
               <PlotChart
+                light
                 data={[{ type: "bar",
                   x: salEmp.map((r) => r.EMPRESA), y: salEmp.map((r) => r.salidas),
                   text: salEmp.map((r) => String(r.salidas)),
@@ -565,13 +570,14 @@ export default function RotacionPage() {
           {rotTalento.length > 0 && (
             <ChartCard title="ROTACIÓN DEL TALENTO">
               <PlotChart
+                light
                 data={[
                   {
                     type: "bar",
                     name: "Nº de Ingresos",
                     x: rotTalento.map((r) => r.empresa),
                     y: rotTalento.map((r) => r.ingresos),
-                    marker: { color: "#f97316" },
+                    marker: { color: "#059669" },
                     text: rotTalento.map((r) => String(r.ingresos)),
                     textposition: "outside" as const,
                   },
@@ -580,7 +586,7 @@ export default function RotacionPage() {
                     name: "Nº de Egresos",
                     x: rotTalento.map((r) => r.empresa),
                     y: rotTalento.map((r) => r.egresos),
-                    marker: { color: "#9ca3af" },
+                    marker: { color: "#94a3b8" },
                     text: rotTalento.map((r) => String(r.egresos)),
                     textposition: "outside" as const,
                   },
@@ -591,8 +597,8 @@ export default function RotacionPage() {
                     x: rotTalento.map((r) => r.empresa),
                     y: rotTalento.map((r) => r.pct ?? 0),
                     yaxis: "y2",
-                    line:   { color: "#eab308", width: 2 },
-                    marker: { color: "#eab308", size: 7 },
+                    line:   { color: "#DC2626", width: 2 },
+                    marker: { color: "#DC2626", size: 7 },
                     text: rotTalento.map((r) => r.pct != null ? `${r.pct}%` : ""),
                     textposition: "top center" as const,
                   },
@@ -615,6 +621,7 @@ export default function RotacionPage() {
                   <>
                     <h4 className="text-xs font-semibold mt-6 mb-2" style={{ color: "var(--text2)" }}>MOTIVO DE SALIDA POR EMPRESA (%)</h4>
                     <PlotChart
+                      light
                       data={motivoEmpTraces.map((t) => ({ ...t, orientation: "h", x: t.y, y: t.x })) as AnyObj[]}
                       layout={{
                         barmode: "stack",
@@ -627,7 +634,7 @@ export default function RotacionPage() {
                           text: `<b>${totalesMotivoEmp[i]}</b>`,
                           xref: "x", yref: "y",
                           showarrow: false,
-                          font: { size: 11, color: "#cbd5e1" },
+                          font: { size: 11, color: "#334155" },
                           xanchor: "left",
                         })),
                       }}
@@ -665,18 +672,19 @@ export default function RotacionPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <PlotChart
+                    light
                     data={[
                       { type: "bar", name: "Activos",
                         x: retencion.map((r) => r.empresa), y: retencion.map((r) => r.activos),
-                        marker: { color: retencion.map((r) => r.grupo === "csc" ? "#10b981" : r.grupo === "tac" ? "#3b82f6" : "#f97316") },
+                        marker: { color: retencion.map((r) => r.grupo === "csc" ? "#059669" : r.grupo === "tac" ? "#2563EB" : "#D97706") },
                         text: retencion.map((r) => String(r.activos)), textposition: "outside" },
                       { type: "bar", name: "Egresos",
                         x: retencion.map((r) => r.empresa), y: retencion.map((r) => r.egresos),
-                        marker: { color: "#9ca3af" },
+                        marker: { color: "#94a3b8" },
                         text: retencion.map((r) => String(r.egresos)), textposition: "outside" },
                       { type: "scatter", mode: "text+lines+markers", name: "% Retención",
                         x: retencion.map((r) => r.empresa), y: retencion.map((r) => r.pct),
-                        yaxis: "y2", line: { color: "#3b82f6", width: 2 }, marker: { color: "#3b82f6", size: 7 },
+                        yaxis: "y2", line: { color: "#2563EB", width: 2 }, marker: { color: "#2563EB", size: 7 },
                         text: retencion.map((r) => `${r.pct}%`), textposition: "top center" },
                     ]}
                     layout={{ barmode: "group",
@@ -692,6 +700,7 @@ export default function RotacionPage() {
           {permEmp.length > 0 && (
             <ChartCard title="Permanencia Promedio por Empresa (meses)">
               <PlotChart
+                light
                 data={[{ type: "bar", orientation: "h",
                   x: permEmp.map((r) => r.meses), y: permEmp.map((r) => r.empresa),
                   marker: { color: permEmp.map((r) => r.meses), colorscale: "Blues", showscale: false } }]}
@@ -728,14 +737,15 @@ export default function RotacionPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <PlotChart
+                    light
                     data={[
                       { type: "bar", name: "Involuntaria",
                         x: rotInv.data.map((r) => r.empresa), y: rotInv.data.map((r) => r.involuntaria),
-                        marker: { color: "#9ca3af" }, text: rotInv.data.map((r) => String(r.involuntaria)),
+                        marker: { color: "#94a3b8" }, text: rotInv.data.map((r) => String(r.involuntaria)),
                         textposition: "outside" as const },
                       { type: "scatter" as const, mode: "text+lines+markers" as const, name: "% Rotación Involuntaria",
                         x: rotInv.data.map((r) => r.empresa), y: rotInv.data.map((r) => r.pct ?? 0),
-                        yaxis: "y2", line: { color: "#eab308", width: 2 }, marker: { color: "#eab308", size: 7 },
+                        yaxis: "y2", line: { color: "#DC2626", width: 2 }, marker: { color: "#DC2626", size: 7 },
                         text: rotInv.data.map((r) => r.pct != null ? `${r.pct}%` : ""), textposition: "top center" as const },
                     ]}
                     layout={{ barmode: "group", yaxis2: { overlaying: "y", side: "right", ticksuffix: "%", showgrid: false },
@@ -774,14 +784,15 @@ export default function RotacionPage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <PlotChart
+                    light
                     data={[
                       { type: "bar", name: "Voluntaria",
                         x: rotVol.data.map((r) => r.empresa), y: rotVol.data.map((r) => r.voluntaria),
-                        marker: { color: "#9ca3af" }, text: rotVol.data.map((r) => String(r.voluntaria)),
+                        marker: { color: "#94a3b8" }, text: rotVol.data.map((r) => String(r.voluntaria)),
                         textposition: "outside" as const },
                       { type: "scatter" as const, mode: "text+lines+markers" as const, name: "% Rotación Voluntaria",
                         x: rotVol.data.map((r) => r.empresa), y: rotVol.data.map((r) => r.pct ?? 0),
-                        yaxis: "y2", line: { color: "#eab308", width: 2 }, marker: { color: "#eab308", size: 7 },
+                        yaxis: "y2", line: { color: "#7C3AED", width: 2 }, marker: { color: "#7C3AED", size: 7 },
                         text: rotVol.data.map((r) => r.pct != null ? `${r.pct}%` : ""), textposition: "top center" as const },
                     ]}
                     layout={{ barmode: "group", yaxis2: { overlaying: "y", side: "right", ticksuffix: "%", showgrid: false },
@@ -802,6 +813,7 @@ export default function RotacionPage() {
             {topCargos.length > 0 && (
               <ChartCard title="Top 15 Cargos con Más Rotación">
                 <PlotChart
+                  light
                   data={[{ type: "bar", orientation: "h",
                     x: topCargos.map((r) => r.salidas), y: topCargos.map((r) => r.cargo),
                     marker: { color: barColors(topCargos.length) } }]}
@@ -813,6 +825,7 @@ export default function RotacionPage() {
             {permCargo.length > 0 && (
               <ChartCard title="Top 15 Cargos con Menor Permanencia">
                 <PlotChart
+                  light
                   data={[{ type: "bar", orientation: "h",
                     x: permCargo.map((r) => r.meses), y: permCargo.map((r) => r.cargo),
                     marker: { color: permCargo.map((r) => r.meses), colorscale: "RdYlGn", showscale: false } }]}
@@ -827,6 +840,7 @@ export default function RotacionPage() {
               {topAreas.length > 0 && (
                 <ChartCard title="Top 10 Áreas con Más Rotación">
                   <PlotChart
+                    light
                     data={[{ type: "bar", orientation: "h",
                       x: topAreas.map((r) => r.salidas), y: topAreas.map((r) => r.area),
                       marker: { color: barColors(topAreas.length) } }]}
@@ -838,6 +852,7 @@ export default function RotacionPage() {
               {topDept.length > 0 && (
                 <ChartCard title="Top 10 Departamentos con Más Rotación">
                   <PlotChart
+                    light
                     data={[{ type: "bar", orientation: "h",
                       x: topDept.map((r) => r.salidas), y: topDept.map((r) => r.dept),
                       marker: { color: barColors(topDept.length) } }]}
@@ -851,7 +866,8 @@ export default function RotacionPage() {
           {permHist.length > 0 && (
             <ChartCard title="Distribución de Permanencia al Momento de la Salida (meses)">
               <PlotChart
-                data={[{ type: "histogram", x: permHist, marker: { color: "#7c5af6" } } as AnyObj]}
+                light
+                data={[{ type: "histogram", x: permHist, marker: { color: "#2563EB" } } as AnyObj]}
                 layout={{ margin: { t: 16, r: 16, b: 50, l: 50 } }}
                 height={280}
               />
@@ -868,14 +884,15 @@ export default function RotacionPage() {
         <div className="space-y-4">
           {lineTraces.length > 0 && (
             <ChartCard title="Tendencia de Salidas por Mes y Año">
-              <PlotChart data={lineTraces} height={300} />
+              <PlotChart light data={lineTraces} height={300} />
             </ChartCard>
           )}
 
           {heatmap.length > 0 && (
             <ChartCard title="Mapa de Calor: Salidas por Empresa y Mes">
               <PlotChart
-                data={[{ type: "heatmap" as const, x: heatmap.map((r) => r.mes_nombre), y: heatmap.map((r) => r.empresa), z: heatmap.map((r) => r.n), colorscale: "Purples" }]}
+                light
+                data={[{ type: "heatmap" as const, x: heatmap.map((r) => r.mes_nombre), y: heatmap.map((r) => r.empresa), z: heatmap.map((r) => r.n), colorscale: "Blues" }]}
                 layout={{ margin: { t: 16, r: 16, b: 60, l: 110 } }}
                 height={320}
               />
