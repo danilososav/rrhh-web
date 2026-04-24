@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import FileUpload from "@/components/FileUpload";
 import KpiCard from "@/components/KpiCard";
-import PlotChart, { COLOR_SEQ } from "@/components/PlotChart";
+import PlotChart, { LIGHT_COLOR_SEQ } from "@/components/PlotChart";
 import TabBar from "@/components/TabBar";
 import DataTable from "@/components/DataTable";
 import { useDashboard } from "@/context/DashboardContext";
@@ -158,7 +158,7 @@ function computeFromRows(rows: Row[]) {
 }
 
 function barColors(n: number) {
-  return Array.from({ length: n }, (_, i) => COLOR_SEQ[i % COLOR_SEQ.length]);
+  return Array.from({ length: n }, (_, i) => LIGHT_COLOR_SEQ[i % LIGHT_COLOR_SEQ.length]);
 }
 
 function ChartCard({ title, children, span2 = false }: { title: string; children: React.ReactNode; span2?: boolean }) {
@@ -253,7 +253,7 @@ export default function NominaPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-        <KpiCard title="Colaboradores"  value={fmt(kpis.total)}          accentColor="var(--accent)" />
+        <KpiCard title="Colaboradores"  value={fmt(kpis.total)} />
         <KpiCard title="Empresas"       value={fmt(kpis.empresas)} />
         <KpiCard title="Colaboradores en Agencias"  value={fmt(kpis.agencias)} />
         <KpiCard title="Colaboradores en TAC Media" value={fmt(kpis.tac_media)} />
@@ -275,26 +275,26 @@ export default function NominaPage() {
                   <div className="flex flex-col gap-5">
                     <div className="grid grid-cols-2 gap-3">
                       <div className="flex flex-col items-center gap-2 py-5 px-3 rounded-2xl"
-                        style={{ background: "rgba(217,70,239,0.08)", border: "1px solid rgba(217,70,239,0.18)" }}>
+                        style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.15)" }}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src="/mujer.png" alt="Mujeres" style={{ height: 100, width: "auto" }} />
-                        <div className="text-5xl font-black leading-none" style={{ color: "#d946ef" }}>{pctF}%</div>
+                        <div className="text-5xl font-black leading-none" style={{ color: "#7C3AED" }}>{pctF}%</div>
                         <div className="text-base font-semibold" style={{ color: "var(--text2)" }}>Mujeres</div>
-                        <div className="text-3xl font-bold" style={{ color: "#fff" }}>{genero.values[0] ?? 0}</div>
+                        <div className="text-3xl font-bold" style={{ color: "var(--text)" }}>{genero.values[0] ?? 0}</div>
                       </div>
                       <div className="flex flex-col items-center gap-2 py-5 px-3 rounded-2xl"
-                        style={{ background: "rgba(129,140,248,0.08)", border: "1px solid rgba(129,140,248,0.18)" }}>
+                        style={{ background: "rgba(37,99,235,0.06)", border: "1px solid rgba(37,99,235,0.15)" }}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src="/hombre.png" alt="Hombres" style={{ height: 100, width: "auto" }} />
-                        <div className="text-5xl font-black leading-none" style={{ color: "#818cf8" }}>{pctM}%</div>
+                        <div className="text-5xl font-black leading-none" style={{ color: "#2563EB" }}>{pctM}%</div>
                         <div className="text-base font-semibold" style={{ color: "var(--text2)" }}>Hombres</div>
-                        <div className="text-3xl font-bold" style={{ color: "#fff" }}>{genero.values[1] ?? 0}</div>
+                        <div className="text-3xl font-bold" style={{ color: "var(--text)" }}>{genero.values[1] ?? 0}</div>
                       </div>
                     </div>
                     <div>
                       <div className="flex rounded-full overflow-hidden h-2.5">
-                        <div style={{ width: `${pctF}%`, background: "linear-gradient(90deg,#c026d3,#d946ef)" }} />
-                        <div style={{ flex: 1, background: "linear-gradient(90deg,#818cf8,#6366f1)" }} />
+                        <div style={{ width: `${pctF}%`, background: "linear-gradient(90deg,#6d28d9,#7C3AED)" }} />
+                        <div style={{ flex: 1, background: "linear-gradient(90deg,#2563EB,#1d4ed8)" }} />
                       </div>
                       <div className="flex justify-between text-xs mt-1.5" style={{ color: "var(--text2)" }}>
                         <span>Mujeres {pctF}%</span>
@@ -308,9 +308,10 @@ export default function NominaPage() {
             {genero.por_empresa.length > 0 && (
               <ChartCard title="GÉNERO POR EMPRESA">
                 <PlotChart
+                  light
                   data={[
-                    { type: "bar", name: "Mujeres", x: genero.por_empresa.map((r) => r.EMPRESA), y: genero.por_empresa.map((r) => r.Mujeres), marker: { color: "#d946ef" } },
-                    { type: "bar", name: "Hombres", x: genero.por_empresa.map((r) => r.EMPRESA), y: genero.por_empresa.map((r) => r.Hombres), marker: { color: "#818cf8" } },
+                    { type: "bar", name: "Mujeres", x: genero.por_empresa.map((r) => r.EMPRESA), y: genero.por_empresa.map((r) => r.Mujeres), marker: { color: "#7C3AED" } },
+                    { type: "bar", name: "Hombres", x: genero.por_empresa.map((r) => r.EMPRESA), y: genero.por_empresa.map((r) => r.Hombres), marker: { color: "#2563EB" } },
                   ]}
                   layout={{ barmode: "group" }}
                   height={280}
@@ -319,11 +320,12 @@ export default function NominaPage() {
             )}
             <ChartCard title="Líderes por Género">
               <PlotChart
+                light
                 data={[{
                   type: "pie", labels: ["Mujeres", "Hombres"], values: [lidFem, lidMasc],
                   hole: 0.45, textinfo: "label+percent",
-                  textfont: { color: "#6b7a99" },
-                  marker: { colors: ["#d946ef", "#818cf8"] },
+                  textposition: "outside", textfont: { color: "#1e293b" },
+                  marker: { colors: ["#7C3AED", "#2563EB"] },
                 }]}
                 layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
                 height={280}
@@ -332,12 +334,13 @@ export default function NominaPage() {
             {anillosGenero.some((a) => a.mujeres + a.hombres > 0) && (
               <ChartCard title="Distribución por Anillos y Género">
                 <PlotChart
+                  light
                   data={[
                     {
                       name: "ANILLO 3", type: "bar", orientation: "h",
                       y: ["HOMBRES", "MUJERES"],
                       x: [anillosGenero[2].hombres, anillosGenero[2].mujeres],
-                      marker: { color: "#f97316" },
+                      marker: { color: "#D97706" },
                       text: [String(anillosGenero[2].hombres), String(anillosGenero[2].mujeres)],
                       textposition: "inside", insidetextanchor: "middle",
                     },
@@ -345,7 +348,7 @@ export default function NominaPage() {
                       name: "ANILLO 2", type: "bar", orientation: "h",
                       y: ["HOMBRES", "MUJERES"],
                       x: [anillosGenero[1].hombres, anillosGenero[1].mujeres],
-                      marker: { color: "#1e40af" },
+                      marker: { color: "#2563EB" },
                       text: [String(anillosGenero[1].hombres), String(anillosGenero[1].mujeres)],
                       textposition: "inside", insidetextanchor: "middle",
                     },
@@ -353,7 +356,7 @@ export default function NominaPage() {
                       name: "ANILLO 1", type: "bar", orientation: "h",
                       y: ["HOMBRES", "MUJERES"],
                       x: [anillosGenero[0].hombres, anillosGenero[0].mujeres],
-                      marker: { color: "#14b8a6" },
+                      marker: { color: "#059669" },
                       text: [String(anillosGenero[0].hombres), String(anillosGenero[0].mujeres)],
                       textposition: "inside", insidetextanchor: "middle",
                     },
@@ -373,12 +376,13 @@ export default function NominaPage() {
           {nac.resumen.values[1] >= 0 && (
             <ChartCard title="Nacionalidad">
               <PlotChart
+                light
                 data={[{
                   type: "pie", labels: nac.resumen.labels, values: nac.resumen.values,
                   hole: 0.45, textinfo: "label+value+percent",
-                  textposition: "auto",
-                  textfont: { color: "#ffffff", size: 12 },
-                  marker: { colors: ["#7c5af6", "#10b981"] },
+                  textposition: "outside",
+                  textfont: { color: "#1e293b", size: 12 },
+                  marker: { colors: ["#2563EB", "#059669"] },
                   automargin: true,
                 }]}
                 layout={{ margin: { t: 24, r: 80, b: 16, l: 80 } }}
@@ -389,6 +393,7 @@ export default function NominaPage() {
           {extPorNac.length > 0 && (
             <ChartCard title="Colaboradores por Nacionalidad">
               <PlotChart
+                light
                 data={[{
                   type: "bar",
                   x: extPorNac.map((r) => r.nac),
@@ -424,7 +429,7 @@ export default function NominaPage() {
                             <rect x="41" y="59" width="10" height="30" rx="5"/>
                           </svg>
                           <div>
-                            <div className="text-xl font-bold" style={{ color: "#fff" }}>{p.tipo}</div>
+                            <div className="text-xl font-bold" style={{ color: "var(--text)" }}>{p.tipo}</div>
                             <div className="text-base" style={{ color: "var(--text2)" }}>{p.empresa}</div>
                           </div>
                         </div>
@@ -450,6 +455,7 @@ export default function NominaPage() {
           {genDist.length > 0 && (
             <ChartCard title="Distribución por Generaciones">
               <PlotChart
+                light
                 data={[{ type: "bar", x: genDist.map((r) => r.Generacion), y: genDist.map((r) => r.Cantidad), marker: { color: barColors(genDist.length) } }]}
                 height={280}
               />
@@ -457,11 +463,12 @@ export default function NominaPage() {
           )}
           <ChartCard title="Cantidad de Personas por Rango de Antigüedad">
             <PlotChart
+              light
               data={[{
                 type: "bar",
                 x: antiguedadRangos.map((r) => r.label),
                 y: antiguedadRangos.map((r) => r.count),
-                marker: { color: ["#60a5fa", "#fb923c", "#9ca3af", "#fbbf24"] },
+                marker: { color: [LIGHT_COLOR_SEQ[0], LIGHT_COLOR_SEQ[2], LIGHT_COLOR_SEQ[4], LIGHT_COLOR_SEQ[3]] },
                 text: antiguedadRangos.map((r) => String(r.count)),
                 textposition: "outside",
               }]}
@@ -471,11 +478,12 @@ export default function NominaPage() {
           {antiguedadPorTipo.length > 0 && (
             <ChartCard title="Promedio de Antigüedad en Años por Tipo">
               <PlotChart
+                light
                 data={[{
                   type: "bar",
                   x: antiguedadPorTipo.map((r) => r.tipo),
                   y: antiguedadPorTipo.map((r) => r.promedio),
-                  marker: { color: ["#60a5fa", "#fb923c", "#9ca3af", "#fbbf24"].slice(0, antiguedadPorTipo.length) },
+                  marker: { color: [LIGHT_COLOR_SEQ[0], LIGHT_COLOR_SEQ[2], LIGHT_COLOR_SEQ[4], LIGHT_COLOR_SEQ[3]].slice(0, antiguedadPorTipo.length) },
                   text: antiguedadPorTipo.map((r) => String(r.promedio)),
                   textposition: "outside",
                 }]}

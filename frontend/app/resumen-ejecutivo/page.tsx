@@ -311,25 +311,25 @@ export default function ResumenEjecutivoPage() {
       <div className="mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="chart-card items-center text-center p-8">
           <p className="label-xs">{kpisConsol.total_colaboradores != null ? "Total Colaboradores" : "Colaboradores"}</p>
-          <div className="text-6xl font-black leading-none mt-3" style={{ color: "#7c5af6", letterSpacing: "-2px" }}>
+          <div className="text-6xl font-black leading-none mt-3" style={{ color: "#4338CA", letterSpacing: "-2px" }}>
             {kpisConsol.total_colaboradores != null ? Math.round(kpisConsol.total_colaboradores).toLocaleString() : "—"}
           </div>
         </div>
         <div className="chart-card items-center text-center p-8">
           <p className="label-xs">Tasa de Rotación</p>
-          <div className="text-6xl font-black leading-none mt-3" style={{ color: "#ef4444", letterSpacing: "-2px" }}>
+          <div className="text-6xl font-black leading-none mt-3" style={{ color: "#DC2626", letterSpacing: "-2px" }}>
             {kpisConsol.tasa_rotacion_anual != null ? `${kpisConsol.tasa_rotacion_anual.toFixed(1)}%` : "—"}
           </div>
         </div>
         <div className="chart-card items-center text-center p-8">
           <p className="label-xs">% Mujeres Líderes</p>
-          <div className="text-6xl font-black leading-none mt-3" style={{ color: "#d946ef", letterSpacing: "-2px" }}>
+          <div className="text-6xl font-black leading-none mt-3" style={{ color: "#7C3AED", letterSpacing: "-2px" }}>
             {kpisConsol.lider_pct != null ? `${kpisConsol.lider_pct.toFixed(0)}%` : "—"}
           </div>
         </div>
         <div className="chart-card items-center text-center p-8">
           <p className="label-xs">Nómina Mensual</p>
-          <div className="text-6xl font-black leading-none mt-3" style={{ color: "#10b981", letterSpacing: "-2px" }}>
+          <div className="text-6xl font-black leading-none mt-3" style={{ color: "#059669", letterSpacing: "-2px" }}>
             {kpisConsol.costo_total != null ? `₲ ${(kpisConsol.costo_total / 1000000).toFixed(0)}M` : "—"}
           </div>
         </div>

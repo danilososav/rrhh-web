@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import FileUpload from "@/components/FileUpload";
 import KpiCard from "@/components/KpiCard";
-import PlotChart, { COLOR_SEQ } from "@/components/PlotChart";
+import PlotChart, { LIGHT_COLOR_SEQ } from "@/components/PlotChart";
 import TabBar from "@/components/TabBar";
 import DataTable from "@/components/DataTable";
 import { useDashboard } from "@/context/DashboardContext";
@@ -119,7 +119,7 @@ function computeFromRows(rows: Row[]) {
 }
 
 function barColors(n: number) {
-  return Array.from({ length: n }, (_, i) => COLOR_SEQ[i % COLOR_SEQ.length]);
+  return Array.from({ length: n }, (_, i) => LIGHT_COLOR_SEQ[i % LIGHT_COLOR_SEQ.length]);
 }
 
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
@@ -207,11 +207,11 @@ export default function ReclutamientoPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3 mb-6">
-        <KpiCard title="Total Búsquedas" value={kpis.total_busquedas} accentColor="var(--accent)" />
-        <KpiCard title="Abiertas"        value={kpis.abiertas} accentColor="var(--cyan)" />
-        <KpiCard title="Cerradas"        value={kpis.cerradas_pct != null ? `${kpis.cerradas_pct}%` : "—"} subtitle={`${kpis.cerradas ?? 0} búsquedas`} accentColor="var(--green)" />
-        <KpiCard title="Canceladas"      value={kpis.canceladas} accentColor="var(--red)" />
-        <KpiCard title="Pausadas"        value={kpis.pausadas} accentColor="var(--orange)" />
+        <KpiCard title="Total Búsquedas" value={kpis.total_busquedas} />
+        <KpiCard title="Abiertas"        value={kpis.abiertas} />
+        <KpiCard title="Cerradas"        value={kpis.cerradas_pct != null ? `${kpis.cerradas_pct}%` : "—"} subtitle={`${kpis.cerradas ?? 0} búsquedas`} />
+        <KpiCard title="Canceladas"      value={kpis.canceladas} />
+        <KpiCard title="Pausadas"        value={kpis.pausadas} />
         <KpiCard title="Días Promedio"   value={kpis.dias_promedio != null ? `${kpis.dias_promedio}d` : "—"} />
         <KpiCard title="Candidatos"      value={kpis.total_candidatos} />
       </div>
@@ -225,6 +225,7 @@ export default function ReclutamientoPage() {
           {agBusc.length > 0 && (
             <ChartCard title="Búsquedas por Agencia">
               <PlotChart
+                light
                 data={[{ type: "bar", orientation: "h", x: agBusc.map((r) => r.busquedas), y: agBusc.map((r) => r.AGENCIA), marker: { color: barColors(agBusc.length) } }]}
                 layout={{ margin: { t: 16, r: 16, b: 36, l: 130 } }}
                 height={320}
@@ -234,6 +235,7 @@ export default function ReclutamientoPage() {
           {tasaResp.length > 0 && (
             <ChartCard title="Tasa de Éxito por Responsable">
               <PlotChart
+                light
                 data={[{ type: "bar", x: tasaResp.map((r) => r.RESPONSABLE), y: tasaResp.map((r) => r.tasa_exito_pct), marker: { color: barColors(tasaResp.length) } }]}
                 layout={{ yaxis: { ticksuffix: "%" } }}
                 height={320}
@@ -243,6 +245,7 @@ export default function ReclutamientoPage() {
           {top15.length > 0 && (
             <ChartCard title="Top 15 Puestos más Solicitados">
               <PlotChart
+                light
                 data={[{ type: "bar", x: top15.map((r) => r.POSICION), y: top15.map((r) => r.busquedas), marker: { color: barColors(top15.length) } }]}
                 layout={{ margin: { t: 16, r: 16, b: 100, l: 40 }, xaxis: { tickangle: -35 } }}
                 height={420}
@@ -258,9 +261,10 @@ export default function ReclutamientoPage() {
           {canal && (
             <ChartCard title="Canal de Ingreso">
               <PlotChart
+                light
                 data={[{ type: "pie", labels: canal.labels, values: canal.values, hole: 0.4,
-                  textinfo: "label+percent", textfont: { color: "#6b7a99" },
-                  marker: { colors: ["#7c5af6","#818cf8","#d946ef","#06b6d4","#10b981","#f59e0b"] } }]}
+                  textinfo: "label+percent", textposition: "outside", textfont: { color: "#1e293b" },
+                  marker: { colors: LIGHT_COLOR_SEQ } }]}
                 layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
                 height={300}
               />
@@ -269,10 +273,12 @@ export default function ReclutamientoPage() {
           {agBusc.length > 0 && (
             <ChartCard title="Distribución de Búsquedas por Agencia">
               <PlotChart
+                light
                 data={[{ type: "pie",
                   labels: agBusc.map((r) => r.AGENCIA),
                   values: agBusc.map((r) => r.busquedas),
-                  hole: 0.4, textinfo: "label+percent", textfont: { color: "#6b7a99" } }]}
+                  hole: 0.4, textinfo: "label+percent", textposition: "outside", textfont: { color: "#1e293b" },
+                  marker: { colors: LIGHT_COLOR_SEQ } }]}
                 layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
                 height={300}
               />
@@ -284,11 +290,11 @@ export default function ReclutamientoPage() {
             <div className="flex flex-col gap-3 pt-2">
               {(() => {
                 const funnelData = [
-                  { label: "Candidatos recibidos", val: kpis.total_candidatos || 0, color: "#7c5af6" },
-                  { label: "Preseleccionados", val: Math.round((kpis.total_candidatos || 0) * 0.4), color: "#818cf8" },
-                  { label: "Entrevistas", val: Math.round((kpis.total_candidatos || 0) * 0.2), color: "#06b6d4" },
-                  { label: "Ofertas enviadas", val: Math.round((kpis.total_candidatos || 0) * 0.05), color: "#10b981" },
-                  { label: "Contratados", val: kpis.cerradas || 0, color: "#34d399" },
+                  { label: "Candidatos recibidos", val: kpis.total_candidatos || 0, color: "#2563EB" },
+                  { label: "Preseleccionados", val: Math.round((kpis.total_candidatos || 0) * 0.4), color: "#7C3AED" },
+                  { label: "Entrevistas", val: Math.round((kpis.total_candidatos || 0) * 0.2), color: "#0891B2" },
+                  { label: "Ofertas enviadas", val: Math.round((kpis.total_candidatos || 0) * 0.05), color: "#D97706" },
+                  { label: "Contratados", val: kpis.cerradas || 0, color: "#059669" },
                 ].filter(f => f.val > 0);
                 const maxVal = Math.max(...funnelData.map(f => f.val), 1);
                 return funnelData.map(f => (
@@ -320,6 +326,7 @@ export default function ReclutamientoPage() {
           {agDias.length > 0 && (
             <ChartCard title="Días Promedio de Cierre por Agencia">
               <PlotChart
+                light
                 data={[{ type: "bar", x: agDias.map((r) => r.AGENCIA), y: agDias.map((r) => r.dias_promedio), marker: { color: barColors(agDias.length) } }]}
                 layout={{ yaxis: { ticksuffix: "d" } }}
                 height={300}
@@ -328,12 +335,13 @@ export default function ReclutamientoPage() {
           )}
           {lineTraces.length > 0 && (
             <ChartCard title="Tendencia de Búsquedas Mensual">
-              <PlotChart data={lineTraces} height={300} />
+              <PlotChart light data={lineTraces} height={300} />
             </ChartCard>
           )}
           {diasAno.length > 0 && (
             <ChartCard title="Días Promedio de Cierre por Año">
               <PlotChart
+                light
                 data={[{ type: "bar", x: diasAno.map((r) => r.ANO), y: diasAno.map((r) => r.dias_promedio), marker: { color: barColors(diasAno.length) } }]}
                 layout={{ yaxis: { ticksuffix: "d" } }}
                 height={300}

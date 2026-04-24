@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, DragEvent, ChangeEvent } from "react";
 import KpiCard from "@/components/KpiCard";
-import PlotChart, { COLOR_SEQ } from "@/components/PlotChart";
+import PlotChart, { LIGHT_COLOR_SEQ } from "@/components/PlotChart";
 import TabBar from "@/components/TabBar";
 import DataTable from "@/components/DataTable";
 import { useDashboard } from "@/context/DashboardContext";
@@ -38,14 +38,14 @@ const CONCEPTOS: [string, string][] = [
 ];
 
 function agColors(n: number) {
-  return Array.from({ length: n }, (_, i) => COLOR_SEQ[i % COLOR_SEQ.length]);
+  return Array.from({ length: n }, (_, i) => LIGHT_COLOR_SEQ[i % LIGHT_COLOR_SEQ.length]);
 }
 
 // Color fijo por concepto (mismo orden que CONCEPTOS)
 const CONCEPT_COLORS = [
-  "#8b5cf6","#10b981","#06b6d4","#f59e0b","#ec4899",
-  "#84cc16","#f97316","#14b8a6","#3b82f6","#f43f5e",
-  "#a78bfa","#cbd5e1",
+  "#7C3AED","#059669","#0891B2","#D97706","#DC2626",
+  "#65A30D","#C2410C","#0F766E","#2563EB","#4338CA",
+  "#7C3AED","#64748b",
 ];
 
 const TABS = [
@@ -392,11 +392,11 @@ export default function CostosPage() {
 
       {/* KPIs */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-        <KpiCard title="Liquidaciones"   value={kpis.total_liquidaciones} accentColor="var(--accent)" />
-        <KpiCard title="Sobrecosto"      value={kpis.sobrecosto_fmt}      accentColor="var(--red)" />
+        <KpiCard title="Liquidaciones"   value={kpis.total_liquidaciones} />
+        <KpiCard title="Sobrecosto"      value={kpis.sobrecosto_fmt} />
         <KpiCard title="Costo Total"     value={kpis.total_costo_fmt} />
         <KpiCard title="Total Bruto"     value={kpis.total_bruto_fmt} />
-        <KpiCard title="Neto"            value={kpis.total_neto_fmt}      accentColor="var(--green)" />
+        <KpiCard title="Neto"            value={kpis.total_neto_fmt} />
         <KpiCard title="Aporte Patronal" value={kpis.aporte_patronal_fmt} />
       </div>
 
@@ -410,13 +410,14 @@ export default function CostosPage() {
             {agSob.length > 0 && (
               <ChartCard title="Costos por Agencia">
                 <PlotChart
+                  light
                   data={[{
                     type: "bar",
                     x: agSob.map((r) => r.AGENCIA),
                     y: agSob.map((r) => r.SOBRECOSTO),
                     marker: {
                       color: agSob.map((r) => r.SOBRECOSTO),
-                      colorscale: [[0, "#ffc8c8"], [1, "#c00000"]] as [number, string][],
+                      colorscale: [[0, "#fecaca"], [1, "#DC2626"]] as [number, string][],
                       showscale: false,
                     },
                   }]}
@@ -428,6 +429,7 @@ export default function CostosPage() {
             {agCant.length > 0 && (
               <ChartCard title="Cantidad de Liquidaciones por Agencia">
                 <PlotChart
+                  light
                   data={[{
                     type: "bar", orientation: "h",
                     x: agCant.map((r) => r.cantidad),
@@ -444,6 +446,7 @@ export default function CostosPage() {
           {costoMensual.length > 0 && (
             <ChartCard title="Costos Mensuales" fullWidth>
               <PlotChart
+                light
                 data={costoMensual.map((m) => ({
                   type: "bar" as const,
                   name: m.mes,
@@ -467,6 +470,7 @@ export default function CostosPage() {
               {nivCosto.length > 0 && (
                 <ChartCard title="Costo Total de Liquidaciones por Nivel AIC">
                   <PlotChart
+                    light
                     data={[{
                       type: "bar",
                       x: nivCosto.map((r) => r.nivel),
@@ -483,6 +487,7 @@ export default function CostosPage() {
               {nivCant.length > 0 && (
                 <ChartCard title="Cantidad de Liquidaciones por Nivel AIC">
                   <PlotChart
+                    light
                     data={[{
                       type: "bar",
                       x: nivCant.map((r) => r.nivel),
@@ -499,13 +504,14 @@ export default function CostosPage() {
               {nivSob.length > 0 && (
                 <ChartCard title="⚠️ Sobrecosto por Nivel AIC (impacto financiero de desvinculaciones)">
                   <PlotChart
+                    light
                     data={[{
                       type: "bar",
                       x: nivSob.map((r) => r.nivel),
                       y: nivSob.map((r) => r.sobrecosto),
                       marker: {
                         color: nivSob.map((r) => r.sobrecosto),
-                        colorscale: [[0, "#ffc8c8"], [1, "#c00000"]] as [number, string][],
+                        colorscale: [[0, "#fecaca"], [1, "#DC2626"]] as [number, string][],
                         showscale: false,
                       },
                       text: nivSob.map((r) => fmtGs(r.sobrecosto)),
@@ -519,6 +525,7 @@ export default function CostosPage() {
               {nivProm.length > 0 && (
                 <ChartCard title="Costo Promedio por Liquidación según Nivel AIC">
                   <PlotChart
+                    light
                     data={[{
                       type: "bar",
                       x: nivProm.map((r) => r.nivel),
@@ -535,9 +542,10 @@ export default function CostosPage() {
               {nivComp.length > 0 && (
                 <ChartCard title="Costo Total vs Sobrecosto por Nivel AIC" fullWidth>
                   <PlotChart
+                    light
                     data={[
-                      { type: "bar", name: "Costo Total", x: nivComp.map((r) => r.nivel), y: nivComp.map((r) => r.total_costo), marker: { color: "#4f8ef7" } },
-                      { type: "bar", name: "Sobrecosto",  x: nivComp.map((r) => r.nivel), y: nivComp.map((r) => r.sobrecosto),  marker: { color: "#f43f5e" } },
+                      { type: "bar", name: "Costo Total", x: nivComp.map((r) => r.nivel), y: nivComp.map((r) => r.total_costo), marker: { color: "#2563EB" } },
+                      { type: "bar", name: "Sobrecosto",  x: nivComp.map((r) => r.nivel), y: nivComp.map((r) => r.sobrecosto),  marker: { color: "#DC2626" } },
                     ]}
                     layout={{ barmode: "group", xaxis: { title: { text: "Nivel AIC" } }, yaxis: { title: { text: "Monto" } }, margin: { t: 8, r: 16, b: 48, l: 80 } }}
                     height={340}
@@ -557,7 +565,8 @@ export default function CostosPage() {
             {composicion && (
               <ChartCard title="Composición del Costo Total">
                 <PlotChart
-                  data={[{ type: "pie", labels: composicion.labels, values: composicion.values, hole: 0.4, textinfo: "label+percent", textfont: { color: "#cbd5e1" } }]}
+                  light
+                  data={[{ type: "pie", labels: composicion.labels, values: composicion.values, hole: 0.4, textinfo: "label+percent", textposition: "outside", textfont: { color: "#1e293b" }, marker: { colors: composicion.colors } }]}
                   layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
                   height={380}
                 />
@@ -566,6 +575,7 @@ export default function CostosPage() {
             {composicion && (
               <ChartCard title="Monto por Concepto">
                 <PlotChart
+                  light
                   data={[{
                     type: "bar", orientation: "h",
                     x: composicion.values,
@@ -582,6 +592,7 @@ export default function CostosPage() {
           {compPorAgencia.length > 0 && (
             <ChartCard title="Composición del Costo por Agencia" fullWidth>
               <PlotChart
+                light
                 data={compPorAgencia}
                 layout={{ barmode: "stack", xaxis: { title: { text: "AGENCIA" } }, yaxis: { title: { text: "Monto" } }, margin: { t: 8, r: 200, b: 60, l: 80 }, legend: { x: 1.02, y: 1 } }}
                 height={420}
