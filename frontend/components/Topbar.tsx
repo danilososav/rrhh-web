@@ -9,30 +9,15 @@ interface TopbarProps {
 }
 
 export default function Topbar({ moduleLabel, pageTitle, onRefresh }: TopbarProps) {
-  const [dark, setDark] = useState(false);
   const [presenting, setPresenting] = useState(false);
 
-  // Leer preferencia guardada
+  // Forzar siempre modo claro
   useEffect(() => {
-    const saved = localStorage.getItem("rrhh-theme");
-    if (saved) {
-      const { dark: savedDark } = JSON.parse(saved);
-      setDark(savedDark !== undefined ? savedDark : false);
-    }
-  }, []);
-
-  // Guardar preferencia y aplicar clase
-  useEffect(() => {
-    localStorage.setItem("rrhh-theme", JSON.stringify({ dark }));
     const html = document.documentElement;
-    if (dark) {
-      html.classList.remove("light");
-      html.classList.add("dark");
-    } else {
-      html.classList.add("light");
-      html.classList.remove("dark");
-    }
-  }, [dark]);
+    html.classList.add("light");
+    html.classList.remove("dark");
+    localStorage.removeItem("rrhh-theme");
+  }, []);
 
   // Manejar modo presentación
   useEffect(() => {
@@ -144,24 +129,6 @@ export default function Topbar({ moduleLabel, pageTitle, onRefresh }: TopbarProp
             </button>
           )}
 
-          {/* Theme toggle */}
-          <button
-            onClick={() => setDark(!dark)}
-            className="w-9 h-9 rounded-lg flex items-center justify-center transition-all"
-            style={{
-              background: "var(--card2)",
-              border: "1px solid var(--border)",
-              color: "var(--text)",
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.borderColor = "var(--accent)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.borderColor = "var(--border)";
-            }}
-          >
-            {dark ? "☀️" : "🌙"}
-          </button>
         </div>
       </div>
     </header>
