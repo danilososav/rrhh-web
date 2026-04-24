@@ -273,19 +273,25 @@ export default function NominaPage() {
                 const pctM = kpis.total > 0 ? Math.round((genero.values[1] ?? 0) / kpis.total * 100) : 0;
                 return (
                   <div className="flex flex-col gap-5">
-                    <div className="flex justify-center">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/pictograma.png" alt="Distribución por género" style={{ height: 100, width: "auto" }} />
-                    </div>
                     <div className="grid grid-cols-2 gap-3">
+                      {/* Mujeres — mitad derecha del pictograma (figura rosa) */}
                       <div className="flex flex-col items-center gap-2 py-5 px-3 rounded-2xl"
                         style={{ background: "rgba(217,70,239,0.08)", border: "1px solid rgba(217,70,239,0.18)" }}>
+                        <div style={{ width: 55, height: 110, overflow: "hidden" }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src="/pictograma.png" alt="Mujeres" style={{ height: 110, width: "auto", marginLeft: -55 }} />
+                        </div>
                         <div className="text-5xl font-black leading-none" style={{ color: "#d946ef" }}>{pctF}%</div>
                         <div className="text-base font-semibold" style={{ color: "var(--text2)" }}>Mujeres</div>
                         <div className="text-3xl font-bold" style={{ color: "#fff" }}>{genero.values[0] ?? 0}</div>
                       </div>
+                      {/* Hombres — mitad izquierda del pictograma (figura cyan) */}
                       <div className="flex flex-col items-center gap-2 py-5 px-3 rounded-2xl"
                         style={{ background: "rgba(129,140,248,0.08)", border: "1px solid rgba(129,140,248,0.18)" }}>
+                        <div style={{ width: 55, height: 110, overflow: "hidden" }}>
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src="/pictograma.png" alt="Hombres" style={{ height: 110, width: "auto" }} />
+                        </div>
                         <div className="text-5xl font-black leading-none" style={{ color: "#818cf8" }}>{pctM}%</div>
                         <div className="text-base font-semibold" style={{ color: "var(--text2)" }}>Hombres</div>
                         <div className="text-3xl font-bold" style={{ color: "#fff" }}>{genero.values[1] ?? 0}</div>
