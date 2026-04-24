@@ -51,7 +51,7 @@ function computeFromRows(allRows: Row[]) {
   const todasSalidas = allRows.filter(isAnySalida);
   const hcEnero      = allRows.filter((r) => Number(r.MES_REPORTE) === 1).length;
   const empresas     = new Set(allRows.map((r) => r.EMPRESA).filter(Boolean)).size;
-  const vol          = salidas.filter((r) => String(r.TIPO_SALIDA ?? "").toUpperCase().includes("VOL")).length;
+  const vol          = salidas.filter((r) => { const t = String(r.TIPO_SALIDA ?? "").toUpperCase(); return t.includes("VOL") && !t.includes("INV"); }).length;
   const invol        = salidas.filter((r) => String(r.TIPO_SALIDA ?? "").toUpperCase().includes("INV")).length;
   const permArr      = salidas.map((r) => Number(r.MESES_PERMANENCIA)).filter((v) => !isNaN(v));
   const permProm     = permArr.length ? Math.round((permArr.reduce((a, b) => a + b, 0) / permArr.length) * 10) / 10 : null;
