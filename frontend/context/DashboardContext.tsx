@@ -9,6 +9,7 @@ const STORAGE_KEYS = {
   rotacion: "rrhh_rotacion",
   costos: "rrhh_costos",
   reclutamiento: "rrhh_reclutamiento",
+  respuestas: "rrhh_respuestas",
 } as const;
 
 type Module = keyof typeof STORAGE_KEYS;
@@ -75,10 +76,12 @@ interface DashboardContextValue {
   rotacionData: Record<string, unknown> | null;
   costosData: Record<string, unknown> | null;
   reclutamientoData: Record<string, unknown> | null;
+  respuestasData: Record<string, unknown> | null;
   setNominaData: (data: Record<string, unknown>) => void;
   setRotacionData: (data: Record<string, unknown>) => void;
   setCostosData: (data: Record<string, unknown>) => void;
   setReclutamientoData: (data: Record<string, unknown>) => void;
+  setRespuestasData: (data: Record<string, unknown>) => void;
 }
 
 const DashboardContext = createContext<DashboardContextValue | null>(null);
@@ -88,19 +91,22 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   const [rotacionData, setRotacionDataState] = useState<Record<string, unknown> | null>(null);
   const [costosData, setCostosDataState] = useState<Record<string, unknown> | null>(null);
   const [reclutamientoData, setReclutamientoDataState] = useState<Record<string, unknown> | null>(null);
+  const [respuestasData, setRespuestasDataState] = useState<Record<string, unknown> | null>(null);
 
   useEffect(() => {
     async function hydrate() {
-      const [nomina, rotacion, costos, reclutamiento] = await Promise.all([
+      const [nomina, rotacion, costos, reclutamiento, respuestas] = await Promise.all([
         fetchFromCache("nomina"),
         fetchFromCache("rotacion"),
         fetchFromCache("costos"),
         fetchFromCache("reclutamiento"),
+        fetchFromCache("respuestas"),
       ]);
       setNominaDataState(nomina ?? loadFromStorage(STORAGE_KEYS.nomina));
       setRotacionDataState(rotacion ?? loadFromStorage(STORAGE_KEYS.rotacion));
       setCostosDataState(costos ?? loadFromStorage(STORAGE_KEYS.costos));
       setReclutamientoDataState(reclutamiento ?? loadFromStorage(STORAGE_KEYS.reclutamiento));
+      setRespuestasDataState(respuestas ?? loadFromStorage(STORAGE_KEYS.respuestas));
     }
     hydrate();
   }, []);
@@ -129,6 +135,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
     pushToCache("reclutamiento", data);
   }
 
+  function setRespuestasData(data: Record<string, unknown>) {
+    setRespuestasDataState(data);
+    saveToStorage(STORAGE_KEYS.respuestas, data);
+    pushToCache("respuestas", data);
+  }
+
   return (
     <DashboardContext.Provider
       value={{
@@ -136,10 +148,12 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
         rotacionData,
         costosData,
         reclutamientoData,
+        respuestasData,
         setNominaData,
         setRotacionData,
         setCostosData,
         setReclutamientoData,
+        setRespuestasData,
       }}
     >
       {children}

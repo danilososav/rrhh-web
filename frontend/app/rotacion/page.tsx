@@ -30,6 +30,7 @@ const TABS = [
   { id: "cargo",        label: "Por Cargo / Área",     icon: "📋" },
   { id: "tendencia",    label: "Tendencia",            icon: "📈" },
   { id: "detalle",      label: "Detalle",              icon: "📄" },
+  { id: "respuestas",   label: "Respuestas",           icon: "💬" },
 ];
 
 function barColors(n: number) {
@@ -331,11 +332,13 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 }
 
 export default function RotacionPage() {
-  const { rotacionData, setRotacionData } = useDashboard();
+  const { rotacionData, setRotacionData, respuestasData, setRespuestasData } = useDashboard();
   const { selected, register } = useFilter();
   const [data, setData]       = useState<AnyObj | null>(rotacionData);
   const [activeTab, setActiveTab] = useState("general");
   const [showUpload, setShowUpload] = useState(false);
+  const [respData, setRespData]     = useState<AnyObj | null>(respuestasData as AnyObj | null);
+  const [showRespUpload, setShowRespUpload] = useState(false);
 
   useEffect(() => {
     if (rotacionData) {
@@ -351,6 +354,12 @@ export default function RotacionPage() {
     setShowUpload(false);
     const rows = (result.raw_rows as Row[]) ?? [];
     register(FILTER_CONFIGS, rows, defaultYear2025(rows, "ANO_REPORTE"));
+  }
+
+  function handleRespResult(result: AnyObj) {
+    setRespData(result);
+    setRespuestasData(result);
+    setShowRespUpload(false);
   }
 
   if (!data) {
@@ -909,6 +918,334 @@ export default function RotacionPage() {
             <span className="font-medium" style={{ color: "var(--text)" }}>{salidasFiltradas.length}</span> salidas registradas con los filtros aplicados
           </p>
           <DataTable rows={tablaRot} title="Detalle de Rotación" />
+        </div>
+      )}
+
+      {/* ── Tab: Respuestas ── */}
+      {activeTab === "respuestas" && (
+        <RespuestasTab
+          respData={respData}
+          showUpload={showRespUpload}
+          setShowUpload={setShowRespUpload}
+          onResult={handleRespResult}
+        />
+      )}
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Sub-componente: pestaña Respuestas de Entrevista de Salida
+// ─────────────────────────────────────────────────────────────────────────────
+
+const RESP_LABEL: Record<string, string> = {
+  P1: "1. Orientación",
+  P2: "2. Capacitación",
+  P3: "3. Crecimiento",
+  P4: "4. Infraestructura",
+  P5: "5. Ambiente",
+  P6: "6. Supervisor",
+  P7: "7. Apoyo superior",
+  P8: "8. Apertura",
+};
+
+function RespuestasTab({
+  respData,
+  showUpload,
+  setShowUpload,
+  onResult,
+}: {
+  respData: AnyObj | null;
+  showUpload: boolean;
+  setShowUpload: (v: boolean) => void;
+  onResult: (r: AnyObj) => void;
+}) {
+  if (!respData) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[48vh] gap-6">
+        <div className="text-center">
+          <p className="label-xs mb-2" style={{ color: "var(--accent)" }}>Entrevistas de Salida</p>
+          <h2 className="page-title text-2xl">Respuestas de Entrevista</h2>
+          <p className="mt-2 text-sm max-w-sm mx-auto" style={{ color: "var(--text2)" }}>
+            Subí el archivo Excel de respuestas del formulario de entrevista de salida.
+          </p>
+        </div>
+        <div className="w-full max-w-md">
+          <FileUpload endpoint="/api/respuestas" fieldName="file" multiple={false} onResult={onResult} />
+        </div>
+      </div>
+    );
+  }
+
+  type Dim = { dimension: string; promedio: number };
+  type EmpRow = { EMPRESA: string; promedio_general: number };
+  type EmpDim = { empresa: string; dimension: string; promedio: number | null };
+  type Motivo = { motivo: string; cantidad: number };
+  type VolvEmp = { EMPRESA: string; si: number; total: number; pct: number };
+  type TablaRow = AnyObj;
+
+  const kpis            = (respData.kpis as AnyObj) ?? {};
+  const dimensiones     = (respData.dimensiones as Dim[]) ?? [];
+  const porEmpresa      = (respData.por_empresa as EmpRow[]) ?? [];
+  const porEmpDim       = (respData.por_empresa_dimension as EmpDim[]) ?? [];
+  const motivos         = (respData.motivos as Motivo[]) ?? [];
+  const volveriaEmp     = (respData.volveria_emp as VolvEmp[]) ?? [];
+  const tabla           = (respData.tabla as TablaRow[]) ?? [];
+
+  // Top 5 motivos
+  const top5Motivos = [...motivos].sort((a, b) => b.cantidad - a.cantidad).slice(0, 5);
+
+  // Top 5 cargos con más renuncias — calculado desde tabla
+  const cargoCounts = tabla.reduce((acc, row) => {
+    const c = String(row.CARGO ?? "").trim();
+    if (c && c.toUpperCase() !== "NAN") acc[c] = (acc[c] ?? 0) + 1;
+    return acc;
+  }, {} as Record<string, number>);
+  const top5Cargos = Object.entries(cargoCounts)
+    .map(([cargo, cantidad]) => ({ cargo, cantidad }))
+    .sort((a, b) => b.cantidad - a.cantidad)
+    .slice(0, 5);
+
+  // Traces para heatmap empresa × dimensión
+  const empresasUniq = Array.from(new Set(porEmpDim.map((r) => r.empresa)));
+  const dimsUniq     = Array.from(new Set(porEmpDim.map((r) => r.dimension)));
+  const heatZ        = dimsUniq.map((dim) =>
+    empresasUniq.map((emp) => porEmpDim.find((r) => r.empresa === emp && r.dimension === dim)?.promedio ?? null)
+  );
+
+  // Preguntas disponibles en tabla
+  const pCols = Object.keys(RESP_LABEL).filter((k) => tabla.length > 0 && k in tabla[0]);
+
+  return (
+    <div className="space-y-4">
+      {/* Header con botón actualizar */}
+      <div className="flex items-center justify-between">
+        <p className="text-sm font-medium" style={{ color: "var(--text2)" }}>
+          Entrevistas de salida — {kpis.total_respuestas ?? 0} respuestas
+        </p>
+        <button
+          onClick={() => setShowUpload(!showUpload)}
+          className="rounded-lg px-4 py-2 text-sm font-medium transition-all"
+          style={{ background: "var(--card)", border: "1px solid var(--border)", color: "var(--text2)" }}
+          onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--accent)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--accent)"; }}
+          onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.borderColor = "var(--border)"; (e.currentTarget as HTMLButtonElement).style.color = "var(--text2)"; }}
+        >
+          Actualizar datos
+        </button>
+      </div>
+
+      {showUpload && (
+        <div className="rounded-xl p-4" style={{ border: "1px solid var(--accent)", background: "var(--card)" }}>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-medium" style={{ color: "var(--text)" }}>Cargar nuevas respuestas</p>
+            <button onClick={() => setShowUpload(false)} className="text-xs" style={{ color: "var(--text3)" }}>Cancelar</button>
+          </div>
+          <FileUpload endpoint="/api/respuestas" fieldName="file" multiple={false} onResult={onResult} />
+        </div>
+      )}
+
+      {/* KPIs */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <KpiCard title="Total Respuestas"      value={kpis.total_respuestas ?? "—"} />
+        <KpiCard title="Satisfacción Promedio" value={kpis.satisfaccion_promedio != null ? `${kpis.satisfaccion_promedio} / 5` : "—"} />
+        <KpiCard title="Volvería a trabajar"   value={kpis.pct_volveria != null ? `${kpis.pct_volveria}%` : "—"} />
+        <KpiCard title="Recomendaría Texo"     value={kpis.pct_recomienda != null ? `${kpis.pct_recomienda}%` : "—"} />
+      </div>
+
+      {/* Promedio por dimensión */}
+      {dimensiones.length > 0 && (
+        <ChartCard title="Satisfacción promedio por dimensión (escala 1–5)">
+          <PlotChart
+            light
+            data={[{
+              type: "bar",
+              orientation: "h",
+              x: [...dimensiones].sort((a, b) => a.promedio - b.promedio).map((d) => d.promedio),
+              y: [...dimensiones].sort((a, b) => a.promedio - b.promedio).map((d) => d.dimension),
+              text: [...dimensiones].sort((a, b) => a.promedio - b.promedio).map((d) => String(d.promedio)),
+              textposition: "outside" as const,
+              marker: {
+                color: [...dimensiones].sort((a, b) => a.promedio - b.promedio).map((d) =>
+                  d.promedio < 3 ? "#DC2626" : d.promedio < 4 ? "#D97706" : "#059669"
+                ),
+              },
+            }]}
+            layout={{
+              xaxis: { range: [0, 5.5], dtick: 1 },
+              margin: { t: 16, r: 80, b: 36, l: 220 },
+            }}
+            height={Math.max(280, dimensiones.length * 40)}
+          />
+        </ChartCard>
+      )}
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Top 5 motivos de salida */}
+        {top5Motivos.length > 0 && (
+          <ChartCard title="Top 5 motivos de salida">
+            <PlotChart
+              light
+              data={[{
+                type: "bar",
+                orientation: "h",
+                x: [...top5Motivos].reverse().map((r) => r.cantidad),
+                y: [...top5Motivos].reverse().map((r) => r.motivo),
+                text: [...top5Motivos].reverse().map((r) => String(r.cantidad)),
+                textposition: "outside" as const,
+                marker: { color: LIGHT_COLOR_SEQ.slice(0, top5Motivos.length) },
+              }]}
+              layout={{ margin: { t: 16, r: 50, b: 36, l: 240 }, xaxis: { zeroline: false } }}
+              height={300}
+            />
+          </ChartCard>
+        )}
+
+        {/* Top 5 cargos con más renuncias */}
+        {top5Cargos.length > 0 && (
+          <ChartCard title="Top 5 cargos con más renuncias">
+            <PlotChart
+              light
+              data={[{
+                type: "bar",
+                orientation: "h",
+                x: [...top5Cargos].reverse().map((r) => r.cantidad),
+                y: [...top5Cargos].reverse().map((r) => r.cargo),
+                text: [...top5Cargos].reverse().map((r) => String(r.cantidad)),
+                textposition: "outside" as const,
+                marker: { color: [...top5Cargos].reverse().map((_, i) => LIGHT_COLOR_SEQ[i % LIGHT_COLOR_SEQ.length]) },
+              }]}
+              layout={{ margin: { t: 16, r: 50, b: 36, l: 200 }, xaxis: { zeroline: false, dtick: 1 } }}
+              height={300}
+            />
+          </ChartCard>
+        )}
+      </div>
+
+      {/* Promedio general por empresa */}
+      {porEmpresa.length > 0 && (
+        <ChartCard title="Satisfacción promedio por empresa">
+          <PlotChart
+            light
+            data={[{
+              type: "bar",
+              x: [...porEmpresa].sort((a, b) => a.promedio_general - b.promedio_general).map((r) => r.EMPRESA),
+              y: [...porEmpresa].sort((a, b) => a.promedio_general - b.promedio_general).map((r) => r.promedio_general),
+              text: [...porEmpresa].sort((a, b) => a.promedio_general - b.promedio_general).map((r) => String(r.promedio_general)),
+              textposition: "outside" as const,
+              marker: { color: LIGHT_COLOR_SEQ[0] },
+            }]}
+            layout={{ yaxis: { range: [0, 5.5] }, margin: { t: 30, r: 16, b: 80, l: 50 } }}
+            height={300}
+          />
+        </ChartCard>
+      )}
+
+      {/* Heatmap empresa × dimensión */}
+      {empresasUniq.length > 0 && dimsUniq.length > 0 && (
+        <ChartCard title="Mapa de satisfacción: empresa × dimensión">
+          <PlotChart
+            light
+            data={[{
+              type: "heatmap" as const,
+              x: empresasUniq,
+              y: dimsUniq,
+              z: heatZ,
+              colorscale: "RdYlGn",
+              zmin: 1,
+              zmax: 5,
+              text: heatZ.map((row) => row.map((v) => v != null ? String(v) : "")),
+              texttemplate: "%{text}",
+              showscale: true,
+            } as AnyObj]}
+            layout={{ margin: { t: 16, r: 60, b: 80, l: 230 } }}
+            height={Math.max(300, dimsUniq.length * 45)}
+          />
+        </ChartCard>
+      )}
+
+      {/* % Volvería por empresa */}
+      {volveriaEmp.length > 0 && (
+        <ChartCard title="¿Volvería a trabajar? — por empresa">
+          <PlotChart
+            light
+            data={[
+              {
+                type: "bar",
+                name: "Sí",
+                x: volveriaEmp.map((r) => r.EMPRESA),
+                y: volveriaEmp.map((r) => r.si),
+                marker: { color: "#059669" },
+                text: volveriaEmp.map((r) => String(r.si)),
+                textposition: "inside" as const,
+              },
+              {
+                type: "bar",
+                name: "No",
+                x: volveriaEmp.map((r) => r.EMPRESA),
+                y: volveriaEmp.map((r) => r.total - r.si),
+                marker: { color: "#94a3b8" },
+                text: volveriaEmp.map((r) => String(r.total - r.si)),
+                textposition: "inside" as const,
+              },
+              {
+                type: "scatter" as const,
+                mode: "text+lines+markers" as const,
+                name: "% Sí",
+                x: volveriaEmp.map((r) => r.EMPRESA),
+                y: volveriaEmp.map((r) => r.pct),
+                yaxis: "y2",
+                line: { color: "#7C3AED", width: 2 },
+                marker: { color: "#7C3AED", size: 7 },
+                text: volveriaEmp.map((r) => `${r.pct}%`),
+                textposition: "top center" as const,
+              },
+            ] as AnyObj[]}
+            layout={{
+              barmode: "stack",
+              yaxis2: { overlaying: "y", side: "right", ticksuffix: "%", showgrid: false, range: [0, 120] },
+              margin: { t: 30, r: 60, b: 80, l: 50 },
+              legend: { orientation: "h", y: -0.22 },
+            }}
+            height={320}
+          />
+        </ChartCard>
+      )}
+
+      {/* Tabla individual */}
+      {tabla.length > 0 && (
+        <div className="chart-card">
+          <h3 className="chart-title mb-4">Respuestas individuales</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs border-collapse">
+              <thead>
+                <tr style={{ borderBottom: "1px solid var(--border)" }}>
+                  {["Nombre", "Empresa", "Cargo", "Motivo principal", ...pCols.map((p) => RESP_LABEL[p] ?? p), "¿Volvería?", "¿Recomienda?"].map((h) => (
+                    <th key={h} className="text-left py-2 px-3 font-semibold whitespace-nowrap" style={{ color: "var(--text2)" }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {tabla.map((row, i) => (
+                  <tr key={i} style={{ borderBottom: "1px solid var(--border)" }}
+                    className="hover:bg-slate-50 transition-colors">
+                    <td className="py-2 px-3 whitespace-nowrap">{row.NOMBRE ?? "—"}</td>
+                    <td className="py-2 px-3 whitespace-nowrap">{row.EMPRESA ?? "—"}</td>
+                    <td className="py-2 px-3 whitespace-nowrap max-w-[140px] truncate">{row.CARGO ?? "—"}</td>
+                    <td className="py-2 px-3 max-w-[180px] truncate">{row.MOTIVO_PRINCIPAL ?? "—"}</td>
+                    {pCols.map((p) => {
+                      const v = row[p];
+                      const color = v == null ? "var(--text3)" : Number(v) < 3 ? "#DC2626" : Number(v) < 4 ? "#D97706" : "#059669";
+                      return (
+                        <td key={p} className="py-2 px-3 text-center font-semibold" style={{ color }}>{v ?? "—"}</td>
+                      );
+                    })}
+                    <td className="py-2 px-3 text-center">{row.VOLVERIA ?? "—"}</td>
+                    <td className="py-2 px-3 text-center">{row.RECOMIENDA ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>

@@ -9,7 +9,7 @@ from services import data_cache
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-VALID_MODULES = {"nomina", "rotacion", "costos", "reclutamiento"}
+VALID_MODULES = {"nomina", "rotacion", "costos", "reclutamiento", "respuestas"}
 
 
 @router.get("/{module}")
