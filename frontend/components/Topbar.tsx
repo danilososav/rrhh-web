@@ -9,7 +9,7 @@ interface TopbarProps {
 }
 
 export default function Topbar({ moduleLabel, pageTitle, onRefresh }: TopbarProps) {
-  const [dark, setDark] = useState(true);
+  const [dark, setDark] = useState(false);
   const [presenting, setPresenting] = useState(false);
 
   // Leer preferencia guardada
@@ -17,7 +17,7 @@ export default function Topbar({ moduleLabel, pageTitle, onRefresh }: TopbarProp
     const saved = localStorage.getItem("rrhh-theme");
     if (saved) {
       const { dark: savedDark } = JSON.parse(saved);
-      setDark(savedDark !== undefined ? savedDark : true);
+      setDark(savedDark !== undefined ? savedDark : false);
     }
   }, []);
 
