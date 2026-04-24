@@ -79,6 +79,39 @@ async def unhandled_exception_handler(request: Request, exc: Exception):
     )
 
 
+@app.on_event("startup")
+async def startup_check():
+    url = os.getenv("SUPABASE_URL", "")
+    key = os.getenv("SUPABASE_KEY", "")
+    if url and key:
+        print(f"[startup] SUPABASE_URL={url[:40]}... KEY={'set' if key else 'MISSING'}", flush=True)
+        try:
+            from services.data_cache import _get_client
+            c = _get_client()
+            c.table("dashboard_cache").select("username").limit(1).execute()
+            print("[startup] Supabase OK — conexion exitosa", flush=True)
+        except Exception as exc:
+            print(f"[startup] Supabase ERROR: {exc}", flush=True)
+    else:
+        print("[startup] SUPABASE_URL/KEY no configuradas — usando memoria", flush=True)
+
+
 @app.get("/")
 def health_check():
-    return {"status": "ok", "app": "RRHH Texo API"}
+    url = os.getenv("SUPABASE_URL", "")
+    return {"status": "ok", "app": "RRHH Texo API", "supabase": bool(url)}
+
+
+@app.get("/api/cache/ping")
+def cache_ping():
+    url = os.getenv("SUPABASE_URL", "")
+    key = os.getenv("SUPABASE_KEY", "")
+    if not url or not key:
+        return {"storage": "memory", "supabase": False}
+    try:
+        from services.data_cache import _get_client
+        c = _get_client()
+        c.table("dashboard_cache").select("username").limit(1).execute()
+        return {"storage": "supabase", "supabase": True, "url": url[:40]}
+    except Exception as exc:
+        return {"storage": "error", "supabase": False, "error": str(exc)}
