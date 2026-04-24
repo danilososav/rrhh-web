@@ -458,9 +458,9 @@ export default function RotacionPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
         <KpiCard title="Total Salidas"     value={kpis.salidas_totales} />
         <KpiCard title="Empresas"          value={kpis.empresas} />
-        <KpiCard title="Tasa Rot. Anual"   value={kpis.tasa_anual != null ? `${kpis.tasa_anual}%` : "—"} accentColor="var(--accent)" />
-        <KpiCard title="Voluntarias"       value={kpis.voluntarias} accentColor="var(--green)" />
-        <KpiCard title="Involuntarias"     value={kpis.involuntarias} accentColor="var(--red)" />
+        <KpiCard title="Tasa Rot. Anual"   value={kpis.tasa_anual != null ? `${kpis.tasa_anual}%` : "—"} />
+        <KpiCard title="Voluntarias"       value={kpis.voluntarias} />
+        <KpiCard title="Involuntarias"     value={kpis.involuntarias} />
         <KpiCard title="Permanencia Prom." value={kpis.permanencia_prom_meses != null ? `${kpis.permanencia_prom_meses} m` : "—"} />
       </div>
 
