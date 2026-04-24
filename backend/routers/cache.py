@@ -1,3 +1,4 @@
+import logging
 from typing import Any
 
 from fastapi import APIRouter, Body, Depends, HTTPException
@@ -6,6 +7,7 @@ from services.auth import verify_token
 from services import data_cache
 
 router = APIRouter()
+logger = logging.getLogger(__name__)
 
 VALID_MODULES = {"nomina", "rotacion", "costos", "reclutamiento"}
 
@@ -14,7 +16,11 @@ VALID_MODULES = {"nomina", "rotacion", "costos", "reclutamiento"}
 def get_module(module: str, username: str = Depends(verify_token)):
     if module not in VALID_MODULES:
         raise HTTPException(status_code=404, detail="Módulo no encontrado.")
-    return {"data": data_cache.load(username, module)}
+    try:
+        return {"data": data_cache.load(username, module)}
+    except Exception as exc:
+        logger.error("Cache GET %s/%s failed: %s", username, module, exc)
+        raise HTTPException(status_code=500, detail=f"Error al leer cache: {exc}")
 
 
 @router.put("/{module}")
@@ -25,5 +31,9 @@ def put_module(
 ):
     if module not in VALID_MODULES:
         raise HTTPException(status_code=404, detail="Módulo no encontrado.")
-    data_cache.save(username, module, payload.get("data"))
-    return {"ok": True}
+    try:
+        data_cache.save(username, module, payload.get("data"))
+        return {"ok": True}
+    except Exception as exc:
+        logger.error("Cache PUT %s/%s failed: %s", username, module, exc)
+        raise HTTPException(status_code=500, detail=f"Error al guardar cache: {exc}")

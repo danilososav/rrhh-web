@@ -41,10 +41,14 @@ async function fetchFromCache(module: Module): Promise<Record<string, unknown> |
     const res = await fetch(`${API_URL}/api/cache/${module}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error(`[cache] GET ${module} → ${res.status}`);
+      return null;
+    }
     const { data } = await res.json();
     return data ?? null;
-  } catch {
+  } catch (err) {
+    console.error(`[cache] GET ${module} error:`, err);
     return null;
   }
 }
@@ -59,7 +63,11 @@ function pushToCache(module: Module, data: Record<string, unknown>): void {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ data }),
-  }).catch(() => {});
+  })
+    .then((res) => {
+      if (!res.ok) console.error(`[cache] PUT ${module} → ${res.status}`);
+    })
+    .catch((err) => console.error(`[cache] PUT ${module} error:`, err));
 }
 
 interface DashboardContextValue {

@@ -14,21 +14,33 @@ Supabase table required (run once in the SQL editor):
 """
 from __future__ import annotations
 
+import logging
 import os
 from typing import Any
 
-# ── In-memory fallback (used when Supabase env vars are absent) ───────────────
+logger = logging.getLogger(__name__)
+
 _mem: dict[str, dict[str, Any]] = {}
+_client = None
 
 
 def _get_client():
-    """Return a Supabase client, or None if env vars are missing."""
-    url = os.getenv("SUPABASE_URL")
-    key = os.getenv("SUPABASE_KEY")
+    global _client
+    if _client is not None:
+        return _client
+    url = os.getenv("SUPABASE_URL", "").strip()
+    key = os.getenv("SUPABASE_KEY", "").strip()
     if not url or not key:
+        logger.warning("SUPABASE_URL/SUPABASE_KEY not set — using in-memory cache")
         return None
-    from supabase import create_client
-    return create_client(url, key)
+    try:
+        from supabase import create_client
+        _client = create_client(url, key)
+        logger.info("Supabase client initialized: %s", url)
+        return _client
+    except Exception as exc:
+        logger.error("Failed to create Supabase client: %s", exc)
+        return None
 
 
 def save(username: str, module: str, data: Any) -> None:
@@ -37,8 +49,7 @@ def save(username: str, module: str, data: Any) -> None:
         _mem.setdefault(username, {})[module] = data
         return
     client.table("dashboard_cache").upsert(
-        {"username": username, "module": module, "data": data},
-        on_conflict="username,module",
+        {"username": username, "module": module, "data": data}
     ).execute()
 
 
