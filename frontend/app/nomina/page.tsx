@@ -255,9 +255,9 @@ export default function NominaPage() {
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
         <KpiCard title="Colaboradores"  value={fmt(kpis.total)}          accentColor="var(--accent)" />
         <KpiCard title="Empresas"       value={fmt(kpis.empresas)} />
-        <KpiCard title="Agencias"       value={fmt(kpis.agencias)} />
-        <KpiCard title="TAC Media"      value={fmt(kpis.tac_media)} />
-        <KpiCard title="CSC"            value={fmt(kpis.csc)} />
+        <KpiCard title="Colaboradores en Agencias"  value={fmt(kpis.agencias)} />
+        <KpiCard title="Colaboradores en TAC Media" value={fmt(kpis.tac_media)} />
+        <KpiCard title="Colaboradores en CSC"       value={fmt(kpis.csc)} />
       </div>
 
       {/* Tabs */}

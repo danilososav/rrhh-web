@@ -8,7 +8,14 @@
       "Bash(python:*)",
       "Bash(npx tsc:*)",
       "Bash(npm install:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(npx next:*)",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git config *)",
+      "Bash(git push *)",
+      "PowerShell(Add-Type -AssemblyName DocumentFormat.OpenXml; $doc = [DocumentFormat.OpenXml.Packaging.WordprocessingDocument]::Open\\(\"C:\\\\Users\\\\Usuario\\\\Desktop\\\\rrhh-web\\\\implementar.docx\", $false\\); $body = $doc.MainDocumentPart.Document.Body; $body.InnerText)",
+      "Bash(git commit *)"
     ]
   }
 }
