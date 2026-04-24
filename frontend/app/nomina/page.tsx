@@ -170,45 +170,6 @@ function ChartCard({ title, children, span2 = false }: { title: string; children
   );
 }
 
-function FemalePictogram({ size = 80, color = "#d946ef" }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size * 1.4} viewBox="0 0 80 112" fill={color}>
-      {/* cabeza */}
-      <circle cx="40" cy="13" r="12" />
-      {/* cuello */}
-      <rect x="36" y="25" width="8" height="7" rx="2" />
-      {/* torso con cintura */}
-      <path d="M27 32 Q40 28 53 32 L51 58 Q40 63 29 58 Z" />
-      {/* brazo izq */}
-      <rect x="15" y="33" width="11" height="34" rx="5.5" />
-      {/* brazo der */}
-      <rect x="54" y="33" width="11" height="34" rx="5.5" />
-      {/* falda acampanada */}
-      <path d="M19 59 Q40 54 61 59 L68 105 Q40 112 12 105 Z" />
-    </svg>
-  );
-}
-
-function MalePictogram({ size = 80, color = "#818cf8" }: { size?: number; color?: string }) {
-  return (
-    <svg width={size} height={size * 1.4} viewBox="0 0 80 112" fill={color}>
-      {/* cabeza */}
-      <circle cx="40" cy="13" r="12" />
-      {/* cuello */}
-      <rect x="36" y="25" width="8" height="7" rx="2" />
-      {/* torso (incluye perfil de brazos) */}
-      <rect x="22" y="32" width="36" height="44" rx="8" />
-      {/* brazo izq */}
-      <rect x="10" y="33" width="11" height="38" rx="5.5" />
-      {/* brazo der */}
-      <rect x="59" y="33" width="11" height="38" rx="5.5" />
-      {/* pierna izq */}
-      <rect x="22" y="77" width="15" height="34" rx="7" />
-      {/* pierna der */}
-      <rect x="43" y="77" width="15" height="34" rx="7" />
-    </svg>
-  );
-}
 
 export default function NominaPage() {
   const { nominaData, setNominaData } = useDashboard();
@@ -312,17 +273,19 @@ export default function NominaPage() {
                 const pctM = kpis.total > 0 ? Math.round((genero.values[1] ?? 0) / kpis.total * 100) : 0;
                 return (
                   <div className="flex flex-col gap-5">
+                    <div className="flex justify-center">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/pictograma.png" alt="Distribución por género" style={{ height: 100, width: "auto" }} />
+                    </div>
                     <div className="grid grid-cols-2 gap-3">
                       <div className="flex flex-col items-center gap-2 py-5 px-3 rounded-2xl"
                         style={{ background: "rgba(217,70,239,0.08)", border: "1px solid rgba(217,70,239,0.18)" }}>
-                        <FemalePictogram size={72} color="#d946ef" />
                         <div className="text-5xl font-black leading-none" style={{ color: "#d946ef" }}>{pctF}%</div>
                         <div className="text-base font-semibold" style={{ color: "var(--text2)" }}>Mujeres</div>
                         <div className="text-3xl font-bold" style={{ color: "#fff" }}>{genero.values[0] ?? 0}</div>
                       </div>
                       <div className="flex flex-col items-center gap-2 py-5 px-3 rounded-2xl"
                         style={{ background: "rgba(129,140,248,0.08)", border: "1px solid rgba(129,140,248,0.18)" }}>
-                        <MalePictogram size={72} color="#818cf8" />
                         <div className="text-5xl font-black leading-none" style={{ color: "#818cf8" }}>{pctM}%</div>
                         <div className="text-base font-semibold" style={{ color: "var(--text2)" }}>Hombres</div>
                         <div className="text-3xl font-bold" style={{ color: "#fff" }}>{genero.values[1] ?? 0}</div>
