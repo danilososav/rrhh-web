@@ -21,7 +21,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="es" suppressHydrationWarning>
+    <html lang="es" className="light" suppressHydrationWarning>
       <body className={`${dmSans.className} antialiased`} style={{ background: "var(--bg)", color: "var(--text)" }} suppressHydrationWarning>
         <ThemeProvider>
           <DashboardProvider>
