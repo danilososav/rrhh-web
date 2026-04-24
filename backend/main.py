@@ -37,7 +37,7 @@ app.add_middleware(
 )
 
 # ─── Routers ──────────────────────────────────────────────────────────────────
-from routers import nomina, rotacion, reclutamiento, costos, resumen, auth as auth_router
+from routers import nomina, rotacion, reclutamiento, costos, resumen, auth as auth_router, cache as cache_router
 from services.auth import verify_token
 from fastapi import Depends
 
@@ -47,6 +47,7 @@ app.include_router(rotacion.router,       prefix="/api/rotacion",       tags=["r
 app.include_router(reclutamiento.router,  prefix="/api/reclutamiento",  tags=["reclutamiento"], dependencies=[Depends(verify_token)])
 app.include_router(costos.router,         prefix="/api/costos",         tags=["costos"],        dependencies=[Depends(verify_token)])
 app.include_router(resumen.router,        prefix="/api/resumen",        tags=["resumen"],       dependencies=[Depends(verify_token)])
+app.include_router(cache_router.router,   prefix="/api/cache",          tags=["cache"])
 
 
 def _cors_headers(request: Request) -> dict:
