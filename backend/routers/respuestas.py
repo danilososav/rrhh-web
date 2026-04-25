@@ -157,10 +157,19 @@ async def procesar_respuestas(file: UploadFile = File(...)):
                         "promedio":  _safe_float(row[p]),
                     })
 
-    # ── Motivos de salida ──────────────────────────────────────────────────────
+    # ── Motivos de salida — explotar multi-selección separada por coma ────────
     motivos: list = []
-    if "MOTIVO_PRINCIPAL" in df.columns:
-        mc = df["MOTIVO_PRINCIPAL"].dropna().value_counts().reset_index()
+    motivo_cols = [c for c in ["MOTIVO_PRINCIPAL", "MOTIVO_SEC", "OTROS_MOTIVOS"] if c in df.columns]
+    if motivo_cols:
+        todas = (
+            pd.concat([df[c].dropna() for c in motivo_cols])
+            .astype(str)
+            .str.strip()
+        )
+        # Cada celda puede tener varias opciones separadas por ", "
+        todas_exp = todas.str.split(r",\s*").explode().str.strip()
+        todas_exp = todas_exp[todas_exp.str.len() > 0]
+        mc = todas_exp.value_counts().reset_index()
         mc.columns = ["motivo", "cantidad"]
         motivos = _safe_records(mc)
 
