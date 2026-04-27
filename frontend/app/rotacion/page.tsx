@@ -1011,7 +1011,7 @@ function RespuestasTab({
   const analisisMejorar = (respData.analisis_mejorar as AnalisisTexto) ?? { temas: [], narrativa: null };
 
   // Top 5 motivos
-  const top5Motivos = [...motivos].sort((a, b) => b.cantidad - a.cantidad).slice(0, 5);
+  const top5Motivos = [...motivos].sort((a, b) => b.cantidad - a.cantidad).slice(0, 10);
 
   // Top 5 cargos con más renuncias — calculado desde tabla
   const cargoCounts = tabla.reduce((acc, row) => {
@@ -1100,7 +1100,7 @@ function RespuestasTab({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Top 5 motivos de salida */}
         {top5Motivos.length > 0 && (
-          <ChartCard title="Top 5 motivos de salida">
+          <ChartCard title="Top 10 motivos de salida">
             <PlotChart
               light
               data={[{
