@@ -1238,104 +1238,63 @@ function RespuestasTab({
             <div className="h-px flex-1" style={{ background: "var(--border)" }} />
           </div>
 
-          {/* Temas: qué mejorarían (= por qué se van) */}
-          {analisisMejorar.temas.length > 0 && (
-            <ChartCard title="¿Qué mejorarían? — temas principales identificados por IA">
-              <PlotChart
-                light
-                data={[{
-                  type: "bar",
-                  orientation: "h",
-                  x: [...analisisMejorar.temas].sort((a, b) => a.menciones - b.menciones).map((t) => t.menciones),
-                  y: [...analisisMejorar.temas].sort((a, b) => a.menciones - b.menciones).map((t) => t.tema),
-                  text: [...analisisMejorar.temas].sort((a, b) => a.menciones - b.menciones).map((t) => String(t.menciones)),
-                  textposition: "outside" as const,
-                  marker: {
-                    color: [...analisisMejorar.temas].sort((a, b) => a.menciones - b.menciones).map((_, i, arr) => {
-                      const pct = i / (arr.length - 1 || 1);
-                      return pct > 0.6 ? "#DC2626" : pct > 0.3 ? "#D97706" : "#2563EB";
-                    }),
-                  },
-                }]}
-                layout={{ margin: { t: 10, r: 60, b: 36, l: 280 }, xaxis: { zeroline: false } }}
-                height={Math.max(280, analisisMejorar.temas.length * 44)}
-              />
-              {analisisMejorar.narrativa && (
-                <div className="mt-4 rounded-lg px-4 py-3 text-sm leading-relaxed"
-                  style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)", color: "var(--text)" }}>
-                  <span className="font-semibold text-xs uppercase tracking-wide" style={{ color: "#DC2626" }}>Análisis IA · </span>
-                  {analisisMejorar.narrativa}
-                </div>
-              )}
-            </ChartCard>
-          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Donut: qué mejorarían (= por qué se van) */}
+            {analisisMejorar.temas.length > 0 && (
+              <ChartCard title="¿Qué mejorarían? — en sus palabras">
+                <PlotChart
+                  light
+                  data={[{
+                    type: "pie",
+                    labels: analisisMejorar.temas.map((t) => t.tema),
+                    values: analisisMejorar.temas.map((t) => t.menciones),
+                    hole: 0.45,
+                    textinfo: "label+percent" as const,
+                    textposition: "outside" as const,
+                    textfont: { color: "#1e293b", size: 11 },
+                    marker: { colors: LIGHT_COLOR_SEQ },
+                  } as AnyObj]}
+                  layout={{ margin: { t: 20, r: 20, b: 20, l: 20 }, showlegend: false }}
+                  height={340}
+                />
+                {analisisMejorar.narrativa && (
+                  <div className="mt-3 rounded-lg px-4 py-3 text-sm leading-relaxed"
+                    style={{ background: "rgba(220,38,38,0.06)", border: "1px solid rgba(220,38,38,0.2)", color: "var(--text)" }}>
+                    <span className="font-semibold text-xs uppercase tracking-wide" style={{ color: "#DC2626" }}>IA · </span>
+                    {analisisMejorar.narrativa}
+                  </div>
+                )}
+              </ChartCard>
+            )}
 
-          {/* Temas: qué valoraron */}
-          {analisisGusto.temas.length > 0 && (
-            <ChartCard title="¿Qué fue lo que más valoraron? — temas principales identificados por IA">
-              <PlotChart
-                light
-                data={[{
-                  type: "bar",
-                  orientation: "h",
-                  x: [...analisisGusto.temas].sort((a, b) => a.menciones - b.menciones).map((t) => t.menciones),
-                  y: [...analisisGusto.temas].sort((a, b) => a.menciones - b.menciones).map((t) => t.tema),
-                  text: [...analisisGusto.temas].sort((a, b) => a.menciones - b.menciones).map((t) => String(t.menciones)),
-                  textposition: "outside" as const,
-                  marker: { color: "#059669" },
-                }]}
-                layout={{ margin: { t: 10, r: 60, b: 36, l: 280 }, xaxis: { zeroline: false } }}
-                height={Math.max(280, analisisGusto.temas.length * 44)}
-              />
-              {analisisGusto.narrativa && (
-                <div className="mt-4 rounded-lg px-4 py-3 text-sm leading-relaxed"
-                  style={{ background: "rgba(5,150,105,0.06)", border: "1px solid rgba(5,150,105,0.2)", color: "var(--text)" }}>
-                  <span className="font-semibold text-xs uppercase tracking-wide" style={{ color: "#059669" }}>Análisis IA · </span>
-                  {analisisGusto.narrativa}
-                </div>
-              )}
-            </ChartCard>
-          )}
-
-          {/* Tarjetas de citas textuales */}
-          {(() => {
-            const citas = tabla.filter((r) => r.MEJORAR || r.GUSTO);
-            if (!citas.length) return null;
-            return (
-              <div className="chart-card">
-                <h3 className="chart-title mb-4">Lo que dicen en sus propias palabras</h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[520px] overflow-y-auto pr-1">
-                  {citas.map((r, i) => (
-                    <div key={i} className="rounded-xl p-4 space-y-2"
-                      style={{ background: "var(--bg)", border: "1px solid var(--border)" }}>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xs font-semibold" style={{ color: "var(--text)" }}>{r.NOMBRE ?? "Anónimo"}</span>
-                        {r.EMPRESA && (
-                          <span className="text-xs rounded px-1.5 py-0.5 font-medium"
-                            style={{ background: "rgba(79,142,247,0.12)", color: "var(--accent)" }}>{r.EMPRESA}</span>
-                        )}
-                        {r.CARGO && (
-                          <span className="text-xs truncate max-w-[120px]" style={{ color: "var(--text3)" }}>{r.CARGO}</span>
-                        )}
-                      </div>
-                      {r.MEJORAR && (
-                        <div>
-                          <p className="text-xs font-medium mb-0.5" style={{ color: "#D97706" }}>¿Qué mejorarías?</p>
-                          <p className="text-xs leading-relaxed" style={{ color: "var(--text2)" }}>"{r.MEJORAR}"</p>
-                        </div>
-                      )}
-                      {r.GUSTO && (
-                        <div>
-                          <p className="text-xs font-medium mb-0.5" style={{ color: "#059669" }}>¿Qué te gustó más?</p>
-                          <p className="text-xs leading-relaxed" style={{ color: "var(--text2)" }}>"{r.GUSTO}"</p>
-                        </div>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            );
-          })()}
+            {/* Donut: qué valoraron */}
+            {analisisGusto.temas.length > 0 && (
+              <ChartCard title="¿Qué fue lo que más valoraron? — en sus palabras">
+                <PlotChart
+                  light
+                  data={[{
+                    type: "pie",
+                    labels: analisisGusto.temas.map((t) => t.tema),
+                    values: analisisGusto.temas.map((t) => t.menciones),
+                    hole: 0.45,
+                    textinfo: "label+percent" as const,
+                    textposition: "outside" as const,
+                    textfont: { color: "#1e293b", size: 11 },
+                    marker: { colors: LIGHT_COLOR_SEQ },
+                  } as AnyObj]}
+                  layout={{ margin: { t: 20, r: 20, b: 20, l: 20 }, showlegend: false }}
+                  height={340}
+                />
+                {analisisGusto.narrativa && (
+                  <div className="mt-3 rounded-lg px-4 py-3 text-sm leading-relaxed"
+                    style={{ background: "rgba(5,150,105,0.06)", border: "1px solid rgba(5,150,105,0.2)", color: "var(--text)" }}>
+                    <span className="font-semibold text-xs uppercase tracking-wide" style={{ color: "#059669" }}>IA · </span>
+                    {analisisGusto.narrativa}
+                  </div>
+                )}
+              </ChartCard>
+            )}
+          </div>
         </div>
       )}
 
