@@ -7,7 +7,6 @@ export function getToken(): string | null {
 
 export function setToken(token: string): void {
   localStorage.setItem(TOKEN_KEY, token);
-  // También en cookie para que middleware (Edge runtime) pueda leerla
   document.cookie = `${TOKEN_KEY}=${token}; path=/; max-age=${8 * 3600}; SameSite=Lax`;
 }
 

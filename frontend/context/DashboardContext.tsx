@@ -30,18 +30,9 @@ function saveToStorage(key: string, data: unknown): void {
   } catch {}
 }
 
-function getAuthToken(): string | null {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("rrhh_token");
-}
-
 async function fetchFromCache(module: Module): Promise<Record<string, unknown> | null> {
-  const token = getAuthToken();
-  if (!token) return null;
   try {
-    const res = await fetch(`${API_URL}/api/cache/${module}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await fetch(`${API_URL}/api/cache/${module}`);
     if (!res.ok) {
       console.error(`[cache] GET ${module} → ${res.status}`);
       return null;
