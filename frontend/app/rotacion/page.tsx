@@ -1241,7 +1241,7 @@ function RespuestasTab({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Donut: qué mejorarían (= por qué se van) */}
             {analisisMejorar.temas.length > 0 && (
-              <ChartCard title="¿Qué mejorarían? — en sus palabras">
+              <ChartCard title="¿Qué mejorarían?">
                 <PlotChart
                   light
                   data={[{
@@ -1254,8 +1254,8 @@ function RespuestasTab({
                     textfont: { color: "#1e293b", size: 11 },
                     marker: { colors: LIGHT_COLOR_SEQ },
                   } as AnyObj]}
-                  layout={{ margin: { t: 20, r: 20, b: 20, l: 20 }, showlegend: false }}
-                  height={340}
+                  layout={{ margin: { t: 60, r: 60, b: 60, l: 60 }, showlegend: false }}
+                  height={480}
                 />
                 {analisisMejorar.narrativa && (
                   <div className="mt-3 rounded-lg px-4 py-3 text-sm leading-relaxed"
@@ -1269,7 +1269,7 @@ function RespuestasTab({
 
             {/* Donut: qué valoraron */}
             {analisisGusto.temas.length > 0 && (
-              <ChartCard title="¿Qué fue lo que más valoraron? — en sus palabras">
+              <ChartCard title="¿Qué fue lo que más valoraron?">
                 <PlotChart
                   light
                   data={[{
@@ -1282,8 +1282,8 @@ function RespuestasTab({
                     textfont: { color: "#1e293b", size: 11 },
                     marker: { colors: LIGHT_COLOR_SEQ },
                   } as AnyObj]}
-                  layout={{ margin: { t: 20, r: 20, b: 20, l: 20 }, showlegend: false }}
-                  height={340}
+                  layout={{ margin: { t: 60, r: 60, b: 60, l: 60 }, showlegend: false }}
+                  height={480}
                 />
                 {analisisGusto.narrativa && (
                   <div className="mt-3 rounded-lg px-4 py-3 text-sm leading-relaxed"
