@@ -996,8 +996,8 @@ function RespuestasTab({
   type EmpDim = { empresa: string; dimension: string; promedio: number | null };
   type Motivo = { motivo: string; cantidad: number };
   type VolvEmp = { EMPRESA: string; si: number; total: number; pct: number };
-  type Tema = { tema: string; menciones: number };
-  type AnalisisTexto = { temas: Tema[]; narrativa: string | null };
+  type Tema = { tema: string; personas: number; pct: number };
+  type AnalisisTexto = { temas: Tema[]; total: number; narrativa: string | null };
   type TablaRow = AnyObj;
 
   const kpis            = (respData.kpis as AnyObj) ?? {};
@@ -1239,23 +1239,26 @@ function RespuestasTab({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Donut: qué mejorarían (= por qué se van) */}
+            {/* Barras: qué mejorarían (= por qué se van) */}
             {analisisMejorar.temas.length > 0 && (
-              <ChartCard title="¿Qué mejorarían?">
+              <ChartCard title={`¿Qué mejorarían? — ${analisisMejorar.total} personas`}>
                 <PlotChart
                   light
                   data={[{
-                    type: "pie",
-                    labels: analisisMejorar.temas.map((t) => t.tema),
-                    values: analisisMejorar.temas.map((t) => t.menciones),
-                    hole: 0.45,
-                    textinfo: "label+percent" as const,
+                    type: "bar",
+                    orientation: "h",
+                    x: [...analisisMejorar.temas].sort((a, b) => a.pct - b.pct).map((t) => t.pct),
+                    y: [...analisisMejorar.temas].sort((a, b) => a.pct - b.pct).map((t) => t.tema),
+                    text: [...analisisMejorar.temas].sort((a, b) => a.pct - b.pct).map((t) => `${t.pct}% · ${t.personas}/${analisisMejorar.total}`),
                     textposition: "outside" as const,
-                    textfont: { color: "#1e293b", size: 11 },
-                    marker: { colors: LIGHT_COLOR_SEQ },
+                    marker: { color: "#DC2626" },
+                    hovertemplate: "<b>%{y}</b><br>%{text}<extra></extra>",
                   } as AnyObj]}
-                  layout={{ margin: { t: 60, r: 60, b: 60, l: 60 }, showlegend: false }}
-                  height={480}
+                  layout={{
+                    xaxis: { range: [0, 110], ticksuffix: "%", showgrid: true },
+                    margin: { t: 16, r: 120, b: 36, l: 220 },
+                  }}
+                  height={Math.max(320, analisisMejorar.temas.length * 50)}
                 />
                 {analisisMejorar.narrativa && (
                   <div className="mt-3 rounded-lg px-4 py-3 text-sm leading-relaxed"
@@ -1267,23 +1270,26 @@ function RespuestasTab({
               </ChartCard>
             )}
 
-            {/* Donut: qué valoraron */}
+            {/* Barras: qué valoraron */}
             {analisisGusto.temas.length > 0 && (
-              <ChartCard title="¿Qué fue lo que más valoraron?">
+              <ChartCard title={`¿Qué fue lo que más valoraron? — ${analisisGusto.total} personas`}>
                 <PlotChart
                   light
                   data={[{
-                    type: "pie",
-                    labels: analisisGusto.temas.map((t) => t.tema),
-                    values: analisisGusto.temas.map((t) => t.menciones),
-                    hole: 0.45,
-                    textinfo: "label+percent" as const,
+                    type: "bar",
+                    orientation: "h",
+                    x: [...analisisGusto.temas].sort((a, b) => a.pct - b.pct).map((t) => t.pct),
+                    y: [...analisisGusto.temas].sort((a, b) => a.pct - b.pct).map((t) => t.tema),
+                    text: [...analisisGusto.temas].sort((a, b) => a.pct - b.pct).map((t) => `${t.pct}% · ${t.personas}/${analisisGusto.total}`),
                     textposition: "outside" as const,
-                    textfont: { color: "#1e293b", size: 11 },
-                    marker: { colors: LIGHT_COLOR_SEQ },
+                    marker: { color: "#059669" },
+                    hovertemplate: "<b>%{y}</b><br>%{text}<extra></extra>",
                   } as AnyObj]}
-                  layout={{ margin: { t: 60, r: 60, b: 60, l: 60 }, showlegend: false }}
-                  height={480}
+                  layout={{
+                    xaxis: { range: [0, 110], ticksuffix: "%", showgrid: true },
+                    margin: { t: 16, r: 120, b: 36, l: 220 },
+                  }}
+                  height={Math.max(320, analisisGusto.temas.length * 50)}
                 />
                 {analisisGusto.narrativa && (
                   <div className="mt-3 rounded-lg px-4 py-3 text-sm leading-relaxed"

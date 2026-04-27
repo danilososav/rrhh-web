@@ -37,42 +37,49 @@ PREGUNTA_LABELS = [
 
 
 def analizar_texto_abierto(textos: list, tipo: str) -> dict:
-    """Llama a Claude para extraer temas de respuestas abiertas de entrevistas de salida."""
+    """Claude lee cada respuesta individualmente, identifica temas y cuenta personas exactas."""
     limpios = [
         str(t).strip() for t in textos
         if t and str(t).strip() and str(t).strip().lower() not in ("nan", "ninguno", "nada", "-", "n/a", "none", "")
     ]
+    total = len(limpios)
     if not limpios:
-        return {"temas": [], "narrativa": None}
+        return {"temas": [], "total": 0, "narrativa": None}
 
     tipo_label = (
         "aspectos que mejorarían o razones por las que decidieron irse"
         if tipo == "mejorar"
         else "aspectos que más valoraron o les gustaron de trabajar en la empresa"
     )
-    lista_resp = "\n".join(f'- "{t}"' for t in limpios[:80])
+    numeradas = "\n".join(f'{i + 1}. "{t}"' for i, t in enumerate(limpios[:80]))
 
-    prompt = f"""Analizá estas respuestas abiertas de empleados del holding Texo (empresa de publicidad en Paraguay) sobre {tipo_label}:
+    prompt = f"""Tenés {total} respuestas abiertas de empleados del holding Texo (Paraguay) sobre {tipo_label}.
+Cada respuesta está numerada.
 
-{lista_resp}
+RESPUESTAS:
+{numeradas}
 
-Tarea:
-1. Identificá entre 5 y 8 TEMAS o patrones principales. Sé concreto y específico, usa lenguaje directo de RRHH.
-2. Para cada tema estimá cuántas respuestas lo mencionan (pueden solaparse).
-3. Escribí una narrativa ejecutiva breve (máx 100 palabras) con los hallazgos clave.
+INSTRUCCIONES:
+1. Identificá entre 5 y 8 temas principales que aparecen. Sé concreto, usa lenguaje de RRHH.
+2. Para cada tema, revisá UNA POR UNA las {total} respuestas y contá exactamente cuántas personas lo mencionan (una persona puede contar en más de un tema).
+3. Calculá el porcentaje: personas_que_mencionan / {total} × 100, redondeado a 1 decimal.
+4. Ordená de mayor a menor porcentaje.
+5. Escribí una narrativa ejecutiva breve (máx 80 palabras).
 
-Respondé ÚNICAMENTE con JSON válido en este formato exacto (sin markdown, sin texto extra):
-{{"temas": [{{"tema": "nombre del tema", "menciones": número}}, ...], "narrativa": "texto ejecutivo aquí"}}"""
+Respondé ÚNICAMENTE con JSON válido (sin markdown, sin texto extra):
+{{"total": {total}, "temas": [{{"tema": "nombre", "personas": N, "pct": porcentaje}}, ...], "narrativa": "..."}}"""
 
     try:
         response = client.messages.create(
-            model="claude-sonnet-4-20250514", max_tokens=1000,
+            model="claude-sonnet-4-20250514", max_tokens=1200,
             messages=[{"role": "user", "content": prompt}]
         )
         texto = re.sub(r"```json|```", "", response.content[0].text.strip()).strip()
-        return json.loads(texto)
+        data = json.loads(texto)
+        data["total"] = total
+        return data
     except Exception:
-        return {"temas": [], "narrativa": None}
+        return {"temas": [], "total": total, "narrativa": None}
 
 
 def _safe_records(df: pd.DataFrame) -> list:
