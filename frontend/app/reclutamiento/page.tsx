@@ -77,7 +77,7 @@ function computeFromRows(rows: Row[]) {
   const top15  = Object.entries(posMap)
     .map(([pos, r]) => ({ POSICION: pos, busquedas: r.length }))
     .sort((a, b) => b.busquedas - a.busquedas)
-    .slice(0, 15);
+    .slice(0, 10);
 
   const respMap  = groupBy(rows, "RESPONSABLE");
   const tasaResp = Object.entries(respMap)
@@ -252,7 +252,7 @@ export default function ReclutamientoPage() {
             </ChartCard>
           )}
           {top15.length > 0 && (
-            <ChartCard title="Top 15 Puestos más Solicitados">
+            <ChartCard title="Top 10 Puestos más Solicitados">
               <PlotChart
                 light
                 data={[{ type: "bar", x: top15.map((r) => r.POSICION), y: top15.map((r) => r.busquedas), marker: { color: barColors(top15.length) } }]}
