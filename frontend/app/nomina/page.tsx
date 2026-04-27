@@ -284,10 +284,10 @@ export default function NominaPage() {
                   <div className="flex flex-col gap-5">
                     <div className="grid grid-cols-2 gap-3">
                       <div className="flex flex-col items-center gap-2 py-5 px-3 rounded-2xl"
-                        style={{ background: "rgba(124,58,237,0.06)", border: "1px solid rgba(124,58,237,0.15)" }}>
+                        style={{ background: "rgba(236,72,153,0.06)", border: "1px solid rgba(236,72,153,0.2)" }}>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img src="/mujer.png" alt="Mujeres" style={{ height: 100, width: "auto" }} />
-                        <div className="text-5xl font-black leading-none" style={{ color: "#7C3AED" }}>{pctF}%</div>
+                        <div className="text-5xl font-black leading-none" style={{ color: "#EC4899" }}>{pctF}%</div>
                         <div className="text-base font-semibold" style={{ color: "var(--text2)" }}>Mujeres</div>
                         <div className="text-3xl font-bold" style={{ color: "var(--text)" }}>{genero.values[0] ?? 0}</div>
                       </div>
@@ -302,7 +302,7 @@ export default function NominaPage() {
                     </div>
                     <div>
                       <div className="flex rounded-full overflow-hidden h-2.5">
-                        <div style={{ width: `${pctF}%`, background: "linear-gradient(90deg,#6d28d9,#7C3AED)" }} />
+                        <div style={{ width: `${pctF}%`, background: "linear-gradient(90deg,#db2777,#EC4899)" }} />
                         <div style={{ flex: 1, background: "linear-gradient(90deg,#2563EB,#1d4ed8)" }} />
                       </div>
                       <div className="flex justify-between text-xs mt-1.5" style={{ color: "var(--text2)" }}>
