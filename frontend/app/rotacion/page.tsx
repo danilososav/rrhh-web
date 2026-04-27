@@ -1232,12 +1232,6 @@ function RespuestasTab({
       {/* ── Voz de los empleados: respuestas abiertas ── */}
       {(analisisMejorar.temas.length > 0 || analisisGusto.temas.length > 0) && (
         <div className="space-y-4">
-          <div className="flex items-center gap-3 mt-2">
-            <div className="h-px flex-1" style={{ background: "var(--border)" }} />
-            <span className="text-xs font-semibold tracking-widest uppercase" style={{ color: "var(--accent)" }}>Voz de los empleados</span>
-            <div className="h-px flex-1" style={{ background: "var(--border)" }} />
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Barras: qué mejorarían (= por qué se van) */}
             {analisisMejorar.temas.length > 0 && (
