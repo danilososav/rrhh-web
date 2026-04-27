@@ -274,8 +274,8 @@ export default function ReclutamientoPage() {
                 data={[{ type: "pie", labels: canal.labels, values: canal.values, hole: 0.4,
                   textinfo: "label+percent", textposition: "outside", textfont: { color: "#1e293b" },
                   marker: { colors: LIGHT_COLOR_SEQ } }]}
-                layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
-                height={300}
+                layout={{ margin: { t: 40, r: 80, b: 60, l: 80 } }}
+                height={360}
               />
             </ChartCard>
           )}
@@ -288,8 +288,8 @@ export default function ReclutamientoPage() {
                   values: agBusc.map((r) => r.busquedas),
                   hole: 0.4, textinfo: "label+percent", textposition: "outside", textfont: { color: "#1e293b" },
                   marker: { colors: LIGHT_COLOR_SEQ } }]}
-                layout={{ margin: { t: 16, r: 16, b: 16, l: 16 } }}
-                height={300}
+                layout={{ margin: { t: 40, r: 80, b: 60, l: 80 } }}
+                height={360}
               />
             </ChartCard>
           )}
