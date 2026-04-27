@@ -319,7 +319,7 @@ export default function NominaPage() {
                 <PlotChart
                   light
                   data={[
-                    { type: "bar", name: "Mujeres", x: genero.por_empresa.map((r) => r.EMPRESA), y: genero.por_empresa.map((r) => r.Mujeres), marker: { color: "#7C3AED" } },
+                    { type: "bar", name: "Mujeres", x: genero.por_empresa.map((r) => r.EMPRESA), y: genero.por_empresa.map((r) => r.Mujeres), marker: { color: "#EC4899" } },
                     { type: "bar", name: "Hombres", x: genero.por_empresa.map((r) => r.EMPRESA), y: genero.por_empresa.map((r) => r.Hombres), marker: { color: "#2563EB" } },
                   ]}
                   layout={{ barmode: "group" }}

@@ -136,11 +136,11 @@ function computeFromRows(allRows: Row[]) {
     .filter((r) => r.meses > 0).sort((a, b) => a.meses - b.meses);
 
   const topCargos = Object.entries(groupBy(salidas.filter((r) => r.CARGO && String(r.CARGO).toUpperCase() !== "NAN"), "CARGO"))
-    .map(([cargo, r]) => ({ cargo, salidas: r.length })).sort((a, b) => b.salidas - a.salidas).slice(0, 15);
+    .map(([cargo, r]) => ({ cargo, salidas: r.length })).sort((a, b) => b.salidas - a.salidas).slice(0, 10);
 
   const permCargo = Object.entries(groupBy(salidas.filter((r) => r.CARGO && r.MESES_PERMANENCIA != null), "CARGO"))
     .map(([cargo, r]) => ({ cargo, meses: Math.round(r.reduce((a, x) => a + Number(x.MESES_PERMANENCIA), 0) / r.length * 10) / 10 }))
-    .filter((r) => r.meses > 0).sort((a, b) => a.meses - b.meses).slice(0, 15);
+    .filter((r) => r.meses > 0).sort((a, b) => a.meses - b.meses).slice(0, 10);
 
   const topAreas = Object.entries(groupBy(salidas.filter((r) => r.AREA && String(r.AREA).toUpperCase() !== "NAN"), "AREA"))
     .map(([area, r]) => ({ area, salidas: r.length })).sort((a, b) => b.salidas - a.salidas).slice(0, 10);
@@ -834,7 +834,7 @@ export default function RotacionPage() {
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {topCargos.length > 0 && (
-              <ChartCard title="Top 15 Cargos con Más Rotación">
+              <ChartCard title="Top 10 Cargos con Más Rotación">
                 <PlotChart
                   light
                   data={[{ type: "bar", orientation: "h",
@@ -846,7 +846,7 @@ export default function RotacionPage() {
               </ChartCard>
             )}
             {permCargo.length > 0 && (
-              <ChartCard title="Top 15 Cargos con Menor Permanencia">
+              <ChartCard title="Top 10 Cargos con Menor Permanencia">
                 <PlotChart
                   light
                   data={[{ type: "bar", orientation: "h",
