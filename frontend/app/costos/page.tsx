@@ -198,12 +198,12 @@ function UploadIllustration() {
 }
 
 export default function CostosPage() {
-  const { costosData, setCostosData } = useDashboard();
+  const { costosData, setCostosData, hydrating } = useDashboard();
   const { selected, register } = useFilter();
-  const [data, setData]               = useState<AnyObj | null>(costosData);
+  const [data, setData]               = useState<AnyObj | null>(null);
   const [storedFiles, setStoredFiles] = useState<File[]>([]);
-  const [hojas, setHojas]             = useState<string[]>((costosData?.hojas as string[]) ?? []);
-  const [hojaActiva, setHojaActiva]   = useState<string>((costosData?.hoja_activa as string) ?? "");
+  const [hojas, setHojas]             = useState<string[]>([]);
+  const [hojaActiva, setHojaActiva]   = useState<string>("");
   const [loading, setLoading]         = useState(false);
   const [error, setError]             = useState<string | null>(null);
   const [dragging, setDragging]       = useState(false);
@@ -212,12 +212,15 @@ export default function CostosPage() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (costosData) {
+    if (costosData && !data) {
+      setData(costosData);
+      setHojas((costosData.hojas as string[]) ?? []);
+      setHojaActiva((costosData.hoja_activa as string) ?? "");
       const rows = (costosData.raw_rows as Row[]) ?? [];
       register(FILTER_CONFIGS, rows, defaultYear2025(rows, "ANO_SALIDA"));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [costosData]);
 
   async function postFiles(files: File[], hoja?: string) {
     setLoading(true);
@@ -276,6 +279,14 @@ export default function CostosPage() {
   }
 
   // ── Sin datos ─────────────────────────────────────────────────────────────
+  if (hydrating && !data) {
+    return (
+      <div className="flex items-center justify-center min-h-[72vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#4f8ef7] border-t-transparent" />
+      </div>
+    );
+  }
+
   if (!data && !loading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[72vh] gap-6">

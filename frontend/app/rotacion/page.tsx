@@ -332,21 +332,27 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 }
 
 export default function RotacionPage() {
-  const { rotacionData, setRotacionData, respuestasData, setRespuestasData } = useDashboard();
+  const { rotacionData, setRotacionData, respuestasData, setRespuestasData, hydrating } = useDashboard();
   const { selected, register } = useFilter();
-  const [data, setData]       = useState<AnyObj | null>(rotacionData);
+  const [data, setData]       = useState<AnyObj | null>(null);
   const [activeTab, setActiveTab] = useState("general");
   const [showUpload, setShowUpload] = useState(false);
-  const [respData, setRespData]     = useState<AnyObj | null>(respuestasData as AnyObj | null);
+  const [respData, setRespData]     = useState<AnyObj | null>(null);
   const [showRespUpload, setShowRespUpload] = useState(false);
 
   useEffect(() => {
-    if (rotacionData) {
+    if (rotacionData && !data) {
+      setData(rotacionData);
       const rows = (rotacionData.raw_rows as Row[]) ?? [];
       register(FILTER_CONFIGS, rows, defaultYear2025(rows, "ANO_REPORTE"));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [rotacionData]);
+
+  useEffect(() => {
+    if (respuestasData && !respData) setRespData(respuestasData as AnyObj);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [respuestasData]);
 
   function handleResult(result: AnyObj) {
     setData(result);
@@ -360,6 +366,14 @@ export default function RotacionPage() {
     setRespData(result);
     setRespuestasData(result);
     setShowRespUpload(false);
+  }
+
+  if (hydrating && !data) {
+    return (
+      <div className="flex items-center justify-center min-h-[72vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#4f8ef7] border-t-transparent" />
+      </div>
+    );
   }
 
   if (!data) {

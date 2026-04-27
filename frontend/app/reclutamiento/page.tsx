@@ -132,19 +132,20 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 }
 
 export default function ReclutamientoPage() {
-  const { reclutamientoData, setReclutamientoData } = useDashboard();
+  const { reclutamientoData, setReclutamientoData, hydrating } = useDashboard();
   const { selected, register } = useFilter();
-  const [data, setData]     = useState<AnyObj | null>(reclutamientoData);
+  const [data, setData]     = useState<AnyObj | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [tab, setTab]       = useState("general");
 
   useEffect(() => {
-    if (reclutamientoData) {
+    if (reclutamientoData && !data) {
+      setData(reclutamientoData);
       const rows = (reclutamientoData.tabla as Row[]) ?? [];
       register(FILTER_CONFIGS, rows, defaultYear2025(rows, "ANO"));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [reclutamientoData]);
 
   function handleResult(result: AnyObj) {
     setData(result);
@@ -152,6 +153,14 @@ export default function ReclutamientoPage() {
     setShowUpload(false);
     const rows = (result.tabla as Row[]) ?? [];
     register(FILTER_CONFIGS, rows, defaultYear2025(rows, "ANO"));
+  }
+
+  if (hydrating && !data) {
+    return (
+      <div className="flex items-center justify-center min-h-[72vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#4f8ef7] border-t-transparent" />
+      </div>
+    );
   }
 
   if (!data) {

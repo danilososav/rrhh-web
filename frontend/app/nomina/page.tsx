@@ -172,23 +172,32 @@ function ChartCard({ title, children, span2 = false }: { title: string; children
 
 
 export default function NominaPage() {
-  const { nominaData, setNominaData } = useDashboard();
+  const { nominaData, setNominaData, hydrating } = useDashboard();
   const { selected, register } = useFilter();
   const [mounted, setMounted] = useState(false);
   const [data, setData] = useState<AnyObj | null>(null);
   const [showUpload, setShowUpload] = useState(false);
   const [tab, setTab] = useState("distribucion");
 
+  useEffect(() => { setMounted(true); }, []);
+
   useEffect(() => {
-    setMounted(true);
-    if (nominaData) {
+    if (nominaData && !data) {
       setData(nominaData);
       register(FILTER_CONFIGS, (nominaData.tabla as Row[]) ?? []);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [nominaData]);
 
   if (!mounted) return null;
+
+  if (hydrating && !data) {
+    return (
+      <div className="flex items-center justify-center min-h-[72vh]">
+        <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#4f8ef7] border-t-transparent" />
+      </div>
+    );
+  }
 
   function handleRefresh() {
     setShowUpload(true);

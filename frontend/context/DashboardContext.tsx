@@ -64,6 +64,7 @@ function pushToCache(module: Module, data: Record<string, unknown>): void {
 }
 
 interface DashboardContextValue {
+  hydrating: boolean;
   nominaData: Record<string, unknown> | null;
   rotacionData: Record<string, unknown> | null;
   costosData: Record<string, unknown> | null;
@@ -79,6 +80,7 @@ interface DashboardContextValue {
 const DashboardContext = createContext<DashboardContextValue | null>(null);
 
 export function DashboardProvider({ children }: { children: ReactNode }) {
+  const [hydrating, setHydrating] = useState(true);
   const [nominaData, setNominaDataState] = useState<Record<string, unknown> | null>(null);
   const [rotacionData, setRotacionDataState] = useState<Record<string, unknown> | null>(null);
   const [costosData, setCostosDataState] = useState<Record<string, unknown> | null>(null);
@@ -99,6 +101,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
       setCostosDataState(costos ?? loadFromStorage(STORAGE_KEYS.costos));
       setReclutamientoDataState(reclutamiento ?? loadFromStorage(STORAGE_KEYS.reclutamiento));
       setRespuestasDataState(respuestas ?? loadFromStorage(STORAGE_KEYS.respuestas));
+      setHydrating(false);
     }
     hydrate();
   }, []);
@@ -136,6 +139,7 @@ export function DashboardProvider({ children }: { children: ReactNode }) {
   return (
     <DashboardContext.Provider
       value={{
+        hydrating,
         nominaData,
         rotacionData,
         costosData,
