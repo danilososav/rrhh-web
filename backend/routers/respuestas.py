@@ -5,8 +5,11 @@ Estructura fija: 26 columnas — metadata (8), preguntas numéricas (8), abierto
 """
 
 import io
+import json
 import os
+import re
 
+import anthropic
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
@@ -17,6 +20,7 @@ from fastapi.responses import JSONResponse
 from services.utils import validar_excel
 
 load_dotenv()
+client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
 
 router = APIRouter()
 
@@ -30,6 +34,45 @@ PREGUNTA_LABELS = [
     "7. Apoyo del superior inmediato",
     "8. Apertura a sugerencias",
 ]
+
+
+def analizar_texto_abierto(textos: list, tipo: str) -> dict:
+    """Llama a Claude para extraer temas de respuestas abiertas de entrevistas de salida."""
+    limpios = [
+        str(t).strip() for t in textos
+        if t and str(t).strip() and str(t).strip().lower() not in ("nan", "ninguno", "nada", "-", "n/a", "none", "")
+    ]
+    if not limpios:
+        return {"temas": [], "narrativa": None}
+
+    tipo_label = (
+        "aspectos que mejorarían o razones por las que decidieron irse"
+        if tipo == "mejorar"
+        else "aspectos que más valoraron o les gustaron de trabajar en la empresa"
+    )
+    lista_resp = "\n".join(f'- "{t}"' for t in limpios[:80])
+
+    prompt = f"""Analizá estas respuestas abiertas de empleados del holding Texo (empresa de publicidad en Paraguay) sobre {tipo_label}:
+
+{lista_resp}
+
+Tarea:
+1. Identificá entre 5 y 8 TEMAS o patrones principales. Sé concreto y específico, usa lenguaje directo de RRHH.
+2. Para cada tema estimá cuántas respuestas lo mencionan (pueden solaparse).
+3. Escribí una narrativa ejecutiva breve (máx 100 palabras) con los hallazgos clave.
+
+Respondé ÚNICAMENTE con JSON válido en este formato exacto (sin markdown, sin texto extra):
+{{"temas": [{{"tema": "nombre del tema", "menciones": número}}, ...], "narrativa": "texto ejecutivo aquí"}}"""
+
+    try:
+        response = client.messages.create(
+            model="claude-sonnet-4-20250514", max_tokens=1000,
+            messages=[{"role": "user", "content": prompt}]
+        )
+        texto = re.sub(r"```json|```", "", response.content[0].text.strip()).strip()
+        return json.loads(texto)
+    except Exception:
+        return {"temas": [], "narrativa": None}
 
 
 def _safe_records(df: pd.DataFrame) -> list:
@@ -191,6 +234,13 @@ async def procesar_respuestas(file: UploadFile = File(...)):
     ] if c in df.columns]
     tabla = _safe_records(df[tabla_cols].copy())
 
+    # ── Análisis IA de respuestas abiertas ────────────────────────────────────
+    gusto_textos   = df["GUSTO"].dropna().astype(str).tolist()   if "GUSTO"   in df.columns else []
+    mejorar_textos = df["MEJORAR"].dropna().astype(str).tolist() if "MEJORAR" in df.columns else []
+
+    analisis_gusto   = analizar_texto_abierto(gusto_textos,   "gusto")
+    analisis_mejorar = analizar_texto_abierto(mejorar_textos, "mejorar")
+
     result = {
         "kpis":                   kpis,
         "dimensiones":            dimensiones,
@@ -199,5 +249,7 @@ async def procesar_respuestas(file: UploadFile = File(...)):
         "motivos":                motivos,
         "volveria_emp":           volveria_emp,
         "tabla":                  tabla,
+        "analisis_gusto":         analisis_gusto,
+        "analisis_mejorar":       analisis_mejorar,
     }
     return JSONResponse(content=jsonable_encoder(result))
