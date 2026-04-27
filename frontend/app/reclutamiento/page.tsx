@@ -272,10 +272,11 @@ export default function ReclutamientoPage() {
               <PlotChart
                 light
                 data={[{ type: "pie", labels: canal.labels, values: canal.values, hole: 0.4,
-                  textinfo: "label+percent", textposition: "outside", textfont: { color: "#1e293b" },
+                  textinfo: "percent", textposition: "inside", insidetextorientation: "radial",
+                  textfont: { color: "#ffffff", size: 13 },
                   marker: { colors: LIGHT_COLOR_SEQ } }]}
-                layout={{ margin: { t: 40, r: 80, b: 60, l: 80 } }}
-                height={360}
+                layout={{ margin: { t: 16, r: 16, b: 16, l: 16 }, showlegend: true }}
+                height={320}
               />
             </ChartCard>
           )}
@@ -286,10 +287,11 @@ export default function ReclutamientoPage() {
                 data={[{ type: "pie",
                   labels: agBusc.map((r) => r.AGENCIA),
                   values: agBusc.map((r) => r.busquedas),
-                  hole: 0.4, textinfo: "label+percent", textposition: "outside", textfont: { color: "#1e293b" },
+                  hole: 0.4, textinfo: "percent", textposition: "inside", insidetextorientation: "radial",
+                  textfont: { color: "#ffffff", size: 12 },
                   marker: { colors: LIGHT_COLOR_SEQ } }]}
-                layout={{ margin: { t: 40, r: 80, b: 60, l: 80 } }}
-                height={360}
+                layout={{ margin: { t: 16, r: 16, b: 16, l: 16 }, showlegend: true }}
+                height={320}
               />
             </ChartCard>
           )}
