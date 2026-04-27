@@ -183,7 +183,7 @@ function FilterGroups() {
   );
 }
 
-export default function Sidebar() {
+export default function Sidebar({ open = true }: { open?: boolean }) {
   const pathname = usePathname();
   const router   = useRouter();
   const [imgError, setImgError] = useState(false);
@@ -201,6 +201,8 @@ export default function Sidebar() {
         width: 270,
         background: "var(--bg2)",
         borderRight: "1px solid var(--border)",
+        transform: open ? "translateX(0)" : "translateX(-270px)",
+        transition: "transform 0.25s ease",
       }}
     >
       {/* Logo */}
