@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { getToken } from "@/lib/auth";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
@@ -46,7 +47,7 @@ async function fetchFromCache(module: Module): Promise<Record<string, unknown> |
 }
 
 function pushToCache(module: Module, data: Record<string, unknown>): void {
-  const token = getAuthToken();
+  const token = getToken();
   if (!token) return;
   fetch(`${API_URL}/api/cache/${module}`, {
     method: "PUT",
